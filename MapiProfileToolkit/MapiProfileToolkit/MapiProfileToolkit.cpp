@@ -19,8 +19,8 @@
 
 #include "stdafx.h"
 
-#include <MAPIX.h>
-#include <MAPIUtil.h>
+#include "MAPIX.h"
+#include "MAPIUtil.h"
 #include "ProfileFunctions.h"
 #include "MapiProfileToolkit.h"
 #include "ToolkitObjects.h"
