@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="XML">
+      <UniqueIdentifier>{19ebcb65-210e-45c1-9072-34ebaa133898}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Registry">
+      <UniqueIdentifier>{3afda82a-313c-4757-a948-58fc02c3145e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -24,6 +30,27 @@
     <ClInclude Include="targetver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="MapiProfileToolkit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Logger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ToolkitObjects.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="XMLHelper.h">
+      <Filter>XML</Filter>
+    </ClInclude>
+    <ClInclude Include="XMLHelper2.h">
+      <Filter>XML</Filter>
+    </ClInclude>
+    <ClInclude Include="XMLParser.h">
+      <Filter>XML</Filter>
+    </ClInclude>
+    <ClInclude Include="RegistryHelper.h">
+      <Filter>Registry</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -31,6 +58,12 @@
     </ClCompile>
     <ClCompile Include="MapiProfileToolkit.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Logger.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RegistryHelper.cpp">
+      <Filter>Registry</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
