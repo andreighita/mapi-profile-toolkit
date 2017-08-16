@@ -1,55 +1,66 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
-    </Filter>
     <Filter Include="Resource Files">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="XML">
-      <UniqueIdentifier>{19ebcb65-210e-45c1-9072-34ebaa133898}</UniqueIdentifier>
+    <Filter Include="Active Directory">
+      <UniqueIdentifier>{a119b3b5-cf54-4370-9891-5d0a90f89569}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Address Book">
+      <UniqueIdentifier>{8ce2d3eb-08bd-487a-9824-597f481c5d00}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Outlook Account">
+      <UniqueIdentifier>{04e18d9c-187b-4aa0-bd43-ed5da4d48955}</UniqueIdentifier>
     </Filter>
     <Filter Include="Registry">
-      <UniqueIdentifier>{3afda82a-313c-4757-a948-58fc02c3145e}</UniqueIdentifier>
+      <UniqueIdentifier>{0d0c0cfc-bad6-41e1-9dfc-dfd363f35288}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="XML">
+      <UniqueIdentifier>{c35aaf28-b7a1-4af7-ab58-26e9d1027abb}</UniqueIdentifier>
     </Filter>
     <Filter Include="MAPI">
-      <UniqueIdentifier>{9b162423-6536-453f-a3dd-3b8fb8ea3281}</UniqueIdentifier>
+      <UniqueIdentifier>{48ae9b0e-eea4-4586-8ee3-b63f89f7144b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Active Directory">
-      <UniqueIdentifier>{cc394174-48d6-4870-83a0-af176458e4df}</UniqueIdentifier>
+    <Filter Include="Logger">
+      <UniqueIdentifier>{baee9ab7-e91e-4f1f-a21c-139b9af1aaa1}</UniqueIdentifier>
     </Filter>
-    <Filter Include="AcountManagement">
-      <UniqueIdentifier>{a412772f-6d0a-4cb9-9db5-cdb86bdb6f5d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="MAPI\Outlook 2010 MAPI Header Files">
-      <UniqueIdentifier>{8ef4f4e2-0528-4c3f-8fec-c81d1501652b}</UniqueIdentifier>
+    <Filter Include="Utility">
+      <UniqueIdentifier>{9cfa2971-0b37-45fd-a8b0-1de62e460f24}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="stdafx.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="MapiProfileToolkit.h" />
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="ToolkitObjects.h" />
+    <ClInclude Include="targetver.h" />
+    <ClInclude Include="ADHelper.h">
+      <Filter>Active Directory</Filter>
     </ClInclude>
-    <ClInclude Include="targetver.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="AccountFunctions.h">
+      <Filter>Outlook Account</Filter>
     </ClInclude>
-    <ClInclude Include="MapiProfileToolkit.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="AccountHelper.h">
+      <Filter>Outlook Account</Filter>
     </ClInclude>
-    <ClInclude Include="Logger.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="AccountMgmt.h">
+      <Filter>Outlook Account</Filter>
     </ClInclude>
-    <ClInclude Include="ToolkitObjects.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="AccountObjects.h">
+      <Filter>Outlook Account</Filter>
+    </ClInclude>
+    <ClInclude Include="ABProviderObjects.h">
+      <Filter>Address Book</Filter>
+    </ClInclude>
+    <ClInclude Include="ProfileFunctions.h">
+      <Filter>MAPI</Filter>
+    </ClInclude>
+    <ClInclude Include="RegistryHelper.h">
+      <Filter>Registry</Filter>
     </ClInclude>
     <ClInclude Include="XMLHelper.h">
       <Filter>XML</Filter>
@@ -57,136 +68,48 @@
     <ClInclude Include="XMLHelper2.h">
       <Filter>XML</Filter>
     </ClInclude>
-    <ClInclude Include="XMLParser.h">
+    <ClInclude Include="XmlParser.h">
       <Filter>XML</Filter>
-    </ClInclude>
-    <ClInclude Include="RegistryHelper.h">
-      <Filter>Registry</Filter>
-    </ClInclude>
-    <ClInclude Include="ProfileFunctions.h">
-      <Filter>MAPI</Filter>
     </ClInclude>
     <ClInclude Include="MAPIObjects.h">
       <Filter>MAPI</Filter>
     </ClInclude>
-    <ClInclude Include="ABProviderObjects.h">
-      <Filter>MAPI</Filter>
+    <ClInclude Include="Logger.h">
+      <Filter>Logger</Filter>
     </ClInclude>
-    <ClInclude Include="ADHelper.h">
-      <Filter>Active Directory</Filter>
-    </ClInclude>
-    <ClInclude Include="AccountFunctions.h">
-      <Filter>AcountManagement</Filter>
-    </ClInclude>
-    <ClInclude Include="AccountHelper.h">
-      <Filter>AcountManagement</Filter>
-    </ClInclude>
-    <ClInclude Include="AccountMgmt.h">
-      <Filter>AcountManagement</Filter>
-    </ClInclude>
-    <ClInclude Include="AccountObjects.h">
-      <Filter>AcountManagement</Filter>
-    </ClInclude>
-    <ClInclude Include="MAPIHook.h">
-      <Filter>MAPI\Outlook 2010 MAPI Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MAPIOID.h">
-      <Filter>MAPI\Outlook 2010 MAPI Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="mimeole.h">
-      <Filter>MAPI\Outlook 2010 MAPI Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MSPST.h">
-      <Filter>MAPI\Outlook 2010 MAPI Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="abhelp.h">
-      <Filter>MAPI\Outlook 2010 MAPI Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="EdkGuid.h">
-      <Filter>MAPI\Outlook 2010 MAPI Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="EdkMdb.h">
-      <Filter>MAPI\Outlook 2010 MAPI Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="EMSABTAG.H">
-      <Filter>MAPI\Outlook 2010 MAPI Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ExchForm.h">
-      <Filter>MAPI\Outlook 2010 MAPI Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="IMessage.h">
-      <Filter>MAPI\Outlook 2010 MAPI Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MAPI.h">
-      <Filter>MAPI\Outlook 2010 MAPI Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MAPIAux.h">
-      <Filter>MAPI\Outlook 2010 MAPI Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MAPICode.h">
-      <Filter>MAPI\Outlook 2010 MAPI Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MAPIDbg.h">
-      <Filter>MAPI\Outlook 2010 MAPI Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MAPIDefS.h">
-      <Filter>MAPI\Outlook 2010 MAPI Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MAPIForm.h">
-      <Filter>MAPI\Outlook 2010 MAPI Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MAPIGuid.h">
-      <Filter>MAPI\Outlook 2010 MAPI Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MAPINls.h">
-      <Filter>MAPI\Outlook 2010 MAPI Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MAPISPI.h">
-      <Filter>MAPI\Outlook 2010 MAPI Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MAPITags.h">
-      <Filter>MAPI\Outlook 2010 MAPI Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MAPIUtil.h">
-      <Filter>MAPI\Outlook 2010 MAPI Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MAPIVal.h">
-      <Filter>MAPI\Outlook 2010 MAPI Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MAPIWin.h">
-      <Filter>MAPI\Outlook 2010 MAPI Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MAPIWz.h">
-      <Filter>MAPI\Outlook 2010 MAPI Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MAPIX.h">
-      <Filter>MAPI\Outlook 2010 MAPI Header Files</Filter>
+    <ClInclude Include="StringOperations.h">
+      <Filter>Utility</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="stdafx.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MapiProfileToolkit.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Logger.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="RegistryHelper.cpp">
-      <Filter>Registry</Filter>
-    </ClCompile>
-    <ClCompile Include="ProfileFunctions.cpp">
-      <Filter>MAPI</Filter>
-    </ClCompile>
+    <ClCompile Include="MapiProfileToolkit.cpp" />
+    <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="ADHelper.cpp">
       <Filter>Active Directory</Filter>
     </ClCompile>
     <ClCompile Include="AccountFunctions.cpp">
-      <Filter>AcountManagement</Filter>
+      <Filter>Outlook Account</Filter>
     </ClCompile>
     <ClCompile Include="AccountHelper.cpp">
-      <Filter>AcountManagement</Filter>
+      <Filter>Outlook Account</Filter>
+    </ClCompile>
+    <ClCompile Include="ProfileFunctions.cpp">
+      <Filter>MAPI</Filter>
+    </ClCompile>
+    <ClCompile Include="RegistryHelper.cpp">
+      <Filter>Registry</Filter>
+    </ClCompile>
+    <ClCompile Include="MapiStubLibrary.cpp">
+      <Filter>MAPI</Filter>
+    </ClCompile>
+    <ClCompile Include="StubUtils.cpp">
+      <Filter>MAPI</Filter>
+    </ClCompile>
+    <ClCompile Include="Logger.cpp">
+      <Filter>Logger</Filter>
+    </ClCompile>
+    <ClCompile Include="StringOperations.cpp">
+      <Filter>Utility</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

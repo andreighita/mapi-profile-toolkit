@@ -1,7 +1,7 @@
 #pragma once
 
 #include "stdafx.h"
-#include "MAPIX.h"
+#include <MAPIX.h>
 #define USES_IID_IMAPISession
 #include <windows.h>
 #include <strsafe.h>

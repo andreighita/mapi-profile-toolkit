@@ -1,6 +1,3 @@
-// MapiProfileToolkit.cpp : Defines the entry point for the console application.
-//
-
 /*
 * © 2015 Microsoft Corporation
 *
@@ -19,8 +16,8 @@
 
 #include "stdafx.h"
 
-#include "MAPIX.h"
-#include "MAPIUtil.h"
+#include <MAPIX.h>
+#include <MAPIUtil.h>
 #include "ProfileFunctions.h"
 #include "MapiProfileToolkit.h"
 #include "ToolkitObjects.h"
@@ -115,11 +112,301 @@ BOOL _cdecl IsCorrectBitness()
 	else return FALSE;
 }
 
-BOOL ParseArgs(int argc, _TCHAR* argv[], ToolkitOptions * pRunOpts)
+BOOL RunScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
+{
+	if (!pRunOpts) return FALSE;
+	ZeroMemory(pRunOpts, sizeof(RuntimeOptions));
+
+	for (int i = 1; i < argc; i++)
+	{
+		switch (argv[i][0])
+		{
+		case '-':
+		case '/':
+		case '\\':
+			if (0 == argv[i][1])
+			{
+				// Bad argument - get out of here
+				return false;
+			}
+			switch (tolower(argv[i][1]))
+			{
+			case 's':
+				if (tolower(argv[i][2]) == 'c')
+				{
+					if (i + 1 < argc)
+					{
+						std::wstring runningMode = argv[i + 1];
+						std::transform(runningMode.begin(), runningMode.end(), runningMode.begin(), ::tolower);
+						if (runningMode == L"all")
+						{
+							pRunOpts->ulProfileMode = (ULONG)PROFILEMODE_ALL;
+							i++;
+						}
+						else if (runningMode == L"one")
+						{
+							pRunOpts->ulProfileMode = (ULONG)PROFILEMODE_SPECIFIC;
+							i++;
+						}
+						else if (runningMode == L"default")
+						{
+							pRunOpts->ulProfileMode = (ULONG)PROFILEMODE_DEFAULT;
+							i++;
+						}
+						else
+						{
+							return false;
+						}
+					}
+				}
+				else if (tolower(argv[i][2]) == 'n')
+				{
+					if (i + 1 < argc)
+					{
+						pRunOpts->szProfileName = argv[i + 1];
+						i++;
+					}
+					else return false;
+				}
+				else return false;
+				break;
+			case 'c':
+				if (tolower(argv[i][2]) == 'm')
+				{
+					if ((tolower(argv[i][3]) == 'o'))
+					{
+						if (i + 1 < argc)
+						{
+							std::wstring runningMode = argv[i + 1];
+							std::transform(runningMode.begin(), runningMode.end(), runningMode.begin(), ::tolower);
+							if (runningMode == L"enable")
+							{
+								pRunOpts->ulCachedModeOwner = CACHEDMODE_ENABLED;
+								pRunOpts->ulReadWriteMode = READWRITEMODE_WRITE;
+								i++;
+							}
+							else if (runningMode == L"disable")
+							{
+								pRunOpts->ulCachedModeOwner = CACHEDMODE_DISABLED;
+								pRunOpts->ulReadWriteMode = READWRITEMODE_WRITE;
+								i++;
+							}
+							else
+							{
+								return false;
+							}
+						}
+						else return false;
+					}
+					else if ((tolower(argv[i][3]) == 'm'))
+					{
+						if (i + 1 < argc)
+						{
+							pRunOpts->iCachedModeMonths = _wtoi(argv[i + 1]);
+							i++;
+						}
+						else return false;
+					}
+					else if ((tolower(argv[i][3]) == 's'))
+					{
+						if (i + 1 < argc)
+						{
+
+							std::wstring runningMode = argv[i + 1];
+							std::transform(runningMode.begin(), runningMode.end(), runningMode.begin(), ::tolower);
+							if (runningMode == L"enable")
+							{
+								pRunOpts->ulCachedModeShared = CACHEDMODE_ENABLED;
+								pRunOpts->ulReadWriteMode = READWRITEMODE_WRITE;
+								i++;
+							}
+							else if (runningMode == L"disable")
+							{
+								pRunOpts->ulCachedModeShared = CACHEDMODE_DISABLED;
+								pRunOpts->ulReadWriteMode = READWRITEMODE_WRITE;
+								i++;
+							}
+							else
+							{
+								return false;
+							}
+						}
+						else return false;
+					}
+					else if ((tolower(argv[i][3]) == 'p'))
+					{
+						if (i + 1 < argc)
+						{
+
+							std::wstring runningMode = argv[i + 1];
+							std::transform(runningMode.begin(), runningMode.end(), runningMode.begin(), ::tolower);
+							if (runningMode == L"enable")
+							{
+								pRunOpts->ulCachedModePublicFolder = CACHEDMODE_ENABLED;
+								pRunOpts->ulReadWriteMode = READWRITEMODE_WRITE;
+								i++;
+							}
+							else if (runningMode == L"disable")
+							{
+								pRunOpts->ulCachedModePublicFolder = CACHEDMODE_DISABLED;
+								pRunOpts->ulReadWriteMode = READWRITEMODE_WRITE;
+								i++;
+							}
+							else
+							{
+								return false;
+							}
+						}
+						else return false;
+					}
+					else return false;
+					break;
+				}
+				else return false;
+				break;
+			case 's':
+				if (tolower(argv[i][2]) == 'i')
+				{
+					if (i + 1 < argc)
+					{
+						pRunOpts->ulServiceIndex = _wtoi(argv[i + 1]);
+						i++;
+					}
+					else return false;
+				}
+				else return false;
+				break;
+			case 'r':
+				if (tolower(argv[i][2]) == 'm')
+				{
+					if (i + 1 < argc)
+					{
+						std::wstring runningMode = argv[i + 1];
+						std::transform(runningMode.begin(), runningMode.end(), runningMode.begin(), ::tolower);
+						if (runningMode == L"profile")
+						{
+							pRunOpts->ulRunningMode = (ULONG)RUNNINGMODE_PROFILE;
+							i++;
+						}
+						else if (runningMode == L"pst")
+						{
+							pRunOpts->ulRunningMode = (ULONG)RUNNINGMODE_PST;
+							i++;
+						}
+						else if (runningMode == L"addressbook")
+						{
+							pRunOpts->ulProfileMode = (ULONG)PROFILEMODE_DEFAULT;
+							i++;
+						}
+						else
+						{
+							return false;
+						}
+					}
+				}
+				else return false;
+				break;
+			case 'n':
+				if (tolower(argv[i][2]) == 'h')
+				{
+					pRunOpts->bNoHeader = true;
+					i++;
+				}
+				else if (tolower(argv[i][2]) == 'p')
+				{
+					pRunOpts->szPstNewPath = argv[i + 1];
+					i++;
+				}
+				else return false;
+				break;
+			case 'm':
+				if (tolower(argv[i][2]) == 'f')
+				{
+					pRunOpts->bPstMoveFiles = true;
+					i++;
+				}
+				else return false;
+				break;
+			case 'e':
+				if (tolower(argv[i][2]) == 'p')
+				{
+					std::wstring exportPath = argv[i + 1];
+					std::transform(exportPath.begin(), exportPath.end(), exportPath.begin(), ::tolower);
+					pRunOpts->szExportPath = exportPath;
+					pRunOpts->bExportMode = EXPORTMODE_EXPORT;
+					i++;
+				}
+				else return false;
+				break;
+			case 'o':
+				if (tolower(argv[i][2]) == 'p')
+				{
+					pRunOpts->szPstOldPath = argv[i + 1];
+					i++;
+				}
+				else return false;
+				break;
+			case 'l':
+				if (tolower(argv[i][2]) == 'm')
+				{
+					pRunOpts->ulLoggingMode = _wtoi(argv[i + 1]);
+					i++;
+				}
+				else if (tolower(argv[i][2]) == 'p')
+				{
+					pRunOpts->szLogFilePath = argv[i + 1];
+					Logger::Initialise(pRunOpts->szLogFilePath);
+					i++;
+				}
+				else return false;
+				break;
+			case '?':
+			default:
+				// display help
+				pRunOpts->ulLoggingMode = LOGGINGMODE_CONSOLE;
+				return false;
+				break;
+			}
+		}
+	}
+
+	if (pRunOpts->ulLoggingMode == loggingModeConsoleandFile && pRunOpts->szLogFilePath.empty())
+	{
+		pRunOpts->ulLoggingMode = loggingModeConsole;
+	}
+
+	if (pRunOpts->ulLoggingMode == loggingModeFile && pRunOpts->szLogFilePath.empty())
+	{
+		pRunOpts->ulLoggingMode = loggingModeNone;
+	}
+
+	// If no profile mode or index or name specified then use default
+	if (!pRunOpts->szProfileName.empty())
+	{
+		if (pRunOpts->ulProfileMode == 0)
+		{
+			pRunOpts->ulProfileMode = PROFILEMODE_DEFAULT;
+		}
+
+	}
+
+	// If running mode is RUNNINGMODE_WRITE then expect a profile section name or a service index or a service type
+	if (pRunOpts->ulReadWriteMode == READWRITEMODE_WRITE)
+	{
+		if (pRunOpts->ulServiceIndex >= 1)
+		{
+			return true;
+		}
+		else return false;
+	}
+	return true;
+}
+
+BOOL ParseArgs(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 {
 	if (!pRunOpts) return FALSE;
 
-	ZeroMemory(pRunOpts, sizeof(ToolkitOptions));
+	
 
 	// Setting running mode to Read as a default
 	pRunOpts->ulReadWriteMode = READWRITEMODE_READ;
@@ -373,6 +660,7 @@ BOOL ParseArgs(int argc, _TCHAR* argv[], ToolkitOptions * pRunOpts)
 			case '?':
 			default:
 				// display help
+				pRunOpts->ulLoggingMode = LOGGINGMODE_CONSOLE;
 				return false;
 				break;
 			}
@@ -464,7 +752,7 @@ void _tmain(int argc, _TCHAR* argv[])
 	HRESULT hRes = S_OK;
 
 	// Using the toolkip options to manage the runtime options
-	ToolkitOptions tkOptions = { 0 };
+	RuntimeOptions tkOptions = { 0 };
 	loggingMode = loggingModeNone;
 	// Parse the command line arguments
 	if (!ParseArgs(argc, argv, &tkOptions))

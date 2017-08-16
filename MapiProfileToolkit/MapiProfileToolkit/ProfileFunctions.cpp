@@ -16,12 +16,13 @@
 #define USES_IID_IMAPIProp 
 #include "ProfileFunctions.h"
 #include "MAPIObjects.h"
-#include "EdkMdb.h"
-#include "MAPIGuid.h"
-#include "MSPST.h"
+#include <EdkMdb.h>
+#include <MAPIGuid.h>
+#include <MSPST.h>
 #include "Logger.h"
 #include <WinBase.h>
 #include <Shlwapi.h>
+#include "StringOperations.h"
 
 
 #define MAPI_FORCE_ACCESS 0x00080000
@@ -39,55 +40,7 @@
 #define CONFIG_OST_CACHE_PUBLIC				((ULONG)0x00000400)
 #endif
 
-std::string ConvertMultiByteToStdString(LPSTR lpStr)
-{
-	return std::string(lpStr);
-}
 
-std::wstring ConvertWideCharToStdWstring(LPWSTR lpwStr)
-{
-	return std::wstring(lpwStr);
-}
-
-std::string ConvertWideCharToStdString(LPWSTR lpwStr)
-{
-	LPSTR lpszMultiByte = new CHAR[lstrlenW(lpwStr) + 1];
-	WideCharToMultiByte(CP_ACP, 0,
-		lpwStr,
-		-1,
-		lpszMultiByte,
-		lstrlenW(lpwStr) + 1,
-		0, 0);
-	return std::string(lpszMultiByte);
-}
-
-LPWSTR ConvertMultiByteToWideChar(LPSTR lpStr)
-{
-	int a = lstrlenA(lpStr);
-	BSTR unicodestr = SysAllocStringLen(NULL, a);
-	MultiByteToWideChar(CP_ACP, 0, lpStr, a, unicodestr, a);
-	return unicodestr;
-}
-
-LPSTR ConvertWideCharToMultiByte(LPWSTR lpwStr)
-{
-	LPSTR lpszMultiByte = new CHAR[lstrlenW(lpwStr) + 1];
-	WideCharToMultiByte(CP_ACP, 0,
-		lpwStr,
-		-1,
-		lpszMultiByte,
-		lstrlenW(lpwStr) + 1,
-		0, 0);
-	return lpszMultiByte;
-}
-
-bool WStringReplace(std::wstring * wstr, const std::wstring original, const std::wstring replacement) {
-	size_t start_pos = wstr->find(original);
-	if (start_pos == std::wstring::npos)
-		return false;
-	wstr->replace(start_pos, original.length(), replacement);
-	return true;
-}
 
 std::wstring GetDefaultProfileName(LoggingMode loggingMode)
 {
@@ -108,7 +61,7 @@ std::wstring GetDefaultProfileName(LoggingMode loggingMode)
 	SizedSPropTagArray(cptaProps, sptaProps) = { cptaProps, PR_DISPLAY_NAME_A, PR_PROVIDER_UID, PR_SERVICE_UID };
 	EC_HRES_LOG(MAPIAdminProfiles(0, // Flags
 		&lpProfAdmin), loggingMode); // Pointer to new IProfAdmin
-									 // Get an IProfAdmin interface.
+						// Get an IProfAdmin interface.
 
 	EC_HRES_LOG(lpProfAdmin->GetProfileTable(0,
 		&lpProfTable), loggingMode);
@@ -187,7 +140,7 @@ ULONG GetProfileCount(LoggingMode loggingMode)
 
 	EC_HRES_LOG(MAPIAdminProfiles(0, // Flags
 		&lpProfAdmin), loggingMode); // Pointer to new IProfAdmin
-									 // Get an IProfAdmin interface.
+						// Get an IProfAdmin interface.
 
 	EC_HRES_LOG(lpProfAdmin->GetProfileTable(0,
 		&lpProfTable), loggingMode);
@@ -218,7 +171,7 @@ HRESULT GetProfiles(ULONG ulProfileCount, ProfileInfo * profileInfo, LoggingMode
 
 	EC_HRES_LOG(MAPIAdminProfiles(0, // Flags
 		&lpProfAdmin), loggingMode); // Pointer to new IProfAdmin
-									 // Get an IProfAdmin interface.
+						// Get an IProfAdmin interface.
 
 	EC_HRES_LOG(lpProfAdmin->GetProfileTable(0,
 		&lpProfTable), loggingMode);
@@ -267,7 +220,7 @@ HRESULT GetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo, LoggingMod
 
 	EC_HRES_LOG(MAPIAdminProfiles(0, // Flags
 		&lpProfAdmin), loggingMode); // Pointer to new IProfAdmin
-									 // Get an IProfAdmin interface.
+						// Get an IProfAdmin interface.
 
 	EC_HRES_LOG(lpProfAdmin->GetProfileTable(0,
 		&lpProfTable), loggingMode);
@@ -833,7 +786,7 @@ HRESULT GetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo, LoggingMod
 			}
 			if (lpSvcRows) FreeProws(lpSvcRows);
 			// End loop services
-
+			 
 
 		}
 
@@ -864,9 +817,9 @@ HRESULT UpdateCachedModeConfig(LPSTR lpszProfileName, ULONG ulSectionIndex, ULON
 
 	EC_HRES_LOG(MAPIAdminProfiles(0, // Flags
 		&lpProfAdmin), loggingMode); // Pointer to new IProfAdmin
-									 // Get an IProfAdmin interface.
+						// Get an IProfAdmin interface.
 
-									 // Begin process services
+						// Begin process services
 	LPSERVICEADMIN lpServiceAdmin = NULL;
 	LPMAPITABLE lpServiceTable = NULL;
 	EC_HRES_LOG(lpProfAdmin->AdminServices((LPTSTR)lpszProfileName,
@@ -1108,7 +1061,7 @@ HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszOldPath, LPWSTR lpszNew
 
 	EC_HRES_LOG(MAPIAdminProfiles(0, // Flags
 		&lpProfAdmin), loggingMode); // Pointer to new IProfAdmin
-									 // Get an IProfAdmin interface.
+						// Get an IProfAdmin interface.
 
 	EC_HRES_LOG(lpProfAdmin->GetProfileTable(0,
 		&lpProfTable), loggingMode);
@@ -1250,125 +1203,125 @@ HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszOldPath, LPWSTR lpszNew
 			for (unsigned int i = 0; i < lpSvcRows->cRows; i++)
 			{
 
-				LPPROVIDERADMIN lpProvAdmin = NULL;
+					LPPROVIDERADMIN lpProvAdmin = NULL;
 
-				if (SUCCEEDED(lpServiceAdmin->AdminProviders((LPMAPIUID)lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb,
-					0,
-					&lpProvAdmin)))
-				{
-					// Loop providers
-					LPMAPITABLE lpProvTable = NULL;
-					LPSRestriction lpProvRes = NULL;
-					LPSRestriction lpProvResLvl1 = NULL;
-					LPSPropValue lpProvPropVal = NULL;
-					LPSRowSet lpProvRows = NULL;
-
-					// Setting up an enum and a prop tag array with the props we'll use
-					enum { iProvInstanceKey, cptaProvProps };
-					SizedSPropTagArray(cptaProvProps, sptaProvProps) = { cptaProvProps, PR_INSTANCE_KEY };
-
-					// Allocate memory for the restriction
-					EC_HRES_LOG(MAPIAllocateBuffer(
-						sizeof(SRestriction),
-						(LPVOID*)&lpProvRes), loggingMode);
-
-					EC_HRES_LOG(MAPIAllocateBuffer(
-						sizeof(SRestriction) * 2,
-						(LPVOID*)&lpProvResLvl1), loggingMode);
-
-					EC_HRES_LOG(MAPIAllocateBuffer(
-						sizeof(SPropValue),
-						(LPVOID*)&lpProvPropVal), loggingMode);
-
-					// Set up restriction to query the provider table
-					lpProvRes->rt = RES_AND;
-					lpProvRes->res.resAnd.cRes = 0x00000002;
-					lpProvRes->res.resAnd.lpRes = lpProvResLvl1;
-
-					lpProvResLvl1[0].rt = RES_EXIST;
-					lpProvResLvl1[0].res.resExist.ulPropTag = PR_SERVICE_UID;
-					lpProvResLvl1[0].res.resExist.ulReserved1 = 0x00000000;
-					lpProvResLvl1[0].res.resExist.ulReserved2 = 0x00000000;
-					lpProvResLvl1[1].rt = RES_PROPERTY;
-					lpProvResLvl1[1].res.resProperty.relop = RELOP_EQ;
-					lpProvResLvl1[1].res.resProperty.ulPropTag = PR_SERVICE_UID;
-					lpProvResLvl1[1].res.resProperty.lpProp = lpProvPropVal;
-
-					lpProvPropVal->ulPropTag = PR_SERVICE_UID;
-					lpProvPropVal->Value = lpSvcRows->aRow[i].lpProps[iServiceUid].Value;
-
-					lpProvAdmin->GetProviderTable(0,
-						&lpProvTable);
-
-					// Query the table to get the the default profile only
-					EC_HRES_LOG(HrQueryAllRows(lpProvTable,
-						(LPSPropTagArray)&sptaProvProps,
-						lpProvRes,
-						NULL,
+					if (SUCCEEDED(lpServiceAdmin->AdminProviders((LPMAPIUID)lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb,
 						0,
-						&lpProvRows), loggingMode);
-
-					if (lpProvRows->cRows > 0)
+						&lpProvAdmin)))
 					{
+						// Loop providers
+						LPMAPITABLE lpProvTable = NULL;
+						LPSRestriction lpProvRes = NULL;
+						LPSRestriction lpProvResLvl1 = NULL;
+						LPSPropValue lpProvPropVal = NULL;
+						LPSRowSet lpProvRows = NULL;
 
-						LPPROFSECT lpProfSection = NULL;
-						if (SUCCEEDED(lpServiceAdmin->OpenProfileSection((LPMAPIUID)lpProvRows->aRow->lpProps[iProvInstanceKey].Value.bin.lpb, NULL, MAPI_MODIFY | MAPI_FORCE_ACCESS, &lpProfSection)))
+						// Setting up an enum and a prop tag array with the props we'll use
+						enum { iProvInstanceKey, cptaProvProps };
+						SizedSPropTagArray(cptaProvProps, sptaProvProps) = { cptaProvProps, PR_INSTANCE_KEY };
+
+						// Allocate memory for the restriction
+						EC_HRES_LOG(MAPIAllocateBuffer(
+							sizeof(SRestriction),
+							(LPVOID*)&lpProvRes), loggingMode);
+
+						EC_HRES_LOG(MAPIAllocateBuffer(
+							sizeof(SRestriction) * 2,
+							(LPVOID*)&lpProvResLvl1), loggingMode);
+
+						EC_HRES_LOG(MAPIAllocateBuffer(
+							sizeof(SPropValue),
+							(LPVOID*)&lpProvPropVal), loggingMode);
+
+						// Set up restriction to query the provider table
+						lpProvRes->rt = RES_AND;
+						lpProvRes->res.resAnd.cRes = 0x00000002;
+						lpProvRes->res.resAnd.lpRes = lpProvResLvl1;
+
+						lpProvResLvl1[0].rt = RES_EXIST;
+						lpProvResLvl1[0].res.resExist.ulPropTag = PR_SERVICE_UID;
+						lpProvResLvl1[0].res.resExist.ulReserved1 = 0x00000000;
+						lpProvResLvl1[0].res.resExist.ulReserved2 = 0x00000000;
+						lpProvResLvl1[1].rt = RES_PROPERTY;
+						lpProvResLvl1[1].res.resProperty.relop = RELOP_EQ;
+						lpProvResLvl1[1].res.resProperty.ulPropTag = PR_SERVICE_UID;
+						lpProvResLvl1[1].res.resProperty.lpProp = lpProvPropVal;
+
+						lpProvPropVal->ulPropTag = PR_SERVICE_UID;
+						lpProvPropVal->Value = lpSvcRows->aRow[i].lpProps[iServiceUid].Value;
+
+						lpProvAdmin->GetProviderTable(0,
+							&lpProvTable);
+
+						// Query the table to get the the default profile only
+						EC_HRES_LOG(HrQueryAllRows(lpProvTable,
+							(LPSPropTagArray)&sptaProvProps,
+							lpProvRes,
+							NULL,
+							0,
+							&lpProvRows), loggingMode);
+
+						if (lpProvRows->cRows > 0)
 						{
-							LPMAPIPROP lpMAPIProp = NULL;
-							if (SUCCEEDED(lpProfSection->QueryInterface(IID_IMAPIProp, (void**)&lpMAPIProp)))
+
+							LPPROFSECT lpProfSection = NULL;
+							if (SUCCEEDED(lpServiceAdmin->OpenProfileSection((LPMAPIUID)lpProvRows->aRow->lpProps[iProvInstanceKey].Value.bin.lpb, NULL, MAPI_MODIFY | MAPI_FORCE_ACCESS, &lpProfSection)))
 							{
-								LPSPropValue prDisplayName = NULL;
-								if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_DISPLAY_NAME_W, &prDisplayName)))
+								LPMAPIPROP lpMAPIProp = NULL;
+								if (SUCCEEDED(lpProfSection->QueryInterface(IID_IMAPIProp, (void**)&lpMAPIProp)))
 								{
-									// bind to the PR_PST_PATH_W property
-									LPSPropValue pstPathW = NULL;
-									if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_PST_PATH_W, &pstPathW)))
+									LPSPropValue prDisplayName = NULL;
+									if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_DISPLAY_NAME_W, &prDisplayName)))
 									{
-										if (pstPathW)
+										// bind to the PR_PST_PATH_W property
+										LPSPropValue pstPathW = NULL;
+										if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_PST_PATH_W, &pstPathW)))
 										{
-											std::wstring szCurrentPath = ConvertWideCharToStdWstring(pstPathW->Value.lpszW);
-											if (WStringReplace(&szCurrentPath, ConvertWideCharToStdWstring(lpszOldPath), ConvertWideCharToStdWstring(lpszNewPath)))
+											if (pstPathW)
 											{
-												if (bMoveFiles)
+												std::wstring szCurrentPath = ConvertWideCharToStdWstring(pstPathW->Value.lpszW);
+												if (WStringReplace(&szCurrentPath, ConvertWideCharToStdWstring(lpszOldPath), ConvertWideCharToStdWstring(lpszNewPath)))
 												{
-													wprintf(L"Moving file %s to new location %s\n", pstPathW->Value.lpszW, szCurrentPath.c_str());
-													BOOL bFileMoved = false;
-													bFileMoved = MoveFileExW(pstPathW->Value.lpszW, (LPCWSTR)szCurrentPath.c_str(), MOVEFILE_COPY_ALLOWED | MOVEFILE_WRITE_THROUGH);
-													if (bFileMoved)
+													if (bMoveFiles)
+													{
+														wprintf(L"Moving file %s to new location %s\n", pstPathW->Value.lpszW, szCurrentPath.c_str());
+														BOOL bFileMoved = false;
+														bFileMoved = MoveFileExW(pstPathW->Value.lpszW, (LPCWSTR)szCurrentPath.c_str(), MOVEFILE_COPY_ALLOWED | MOVEFILE_WRITE_THROUGH);
+														if (bFileMoved)
+														{
+															wprintf(L"Updating path for data file named %s\n", pstPathW->Value.lpszW);
+															pstPathW[0].Value.lpszW = (LPWSTR)szCurrentPath.c_str();
+															EC_HRES_LOG(lpProfSection->SetProps(1, pstPathW, NULL), loggingMode);
+														}
+														else
+														{
+															wprintf(L"Unable to move file\n");
+														}
+													}
+													else
 													{
 														wprintf(L"Updating path for data file named %s\n", pstPathW->Value.lpszW);
 														pstPathW[0].Value.lpszW = (LPWSTR)szCurrentPath.c_str();
 														EC_HRES_LOG(lpProfSection->SetProps(1, pstPathW, NULL), loggingMode);
 													}
-													else
-													{
-														wprintf(L"Unable to move file\n");
-													}
 												}
-												else
-												{
-													wprintf(L"Updating path for data file named %s\n", pstPathW->Value.lpszW);
-													pstPathW[0].Value.lpszW = (LPWSTR)szCurrentPath.c_str();
-													EC_HRES_LOG(lpProfSection->SetProps(1, pstPathW, NULL), loggingMode);
-												}
+												if (pstPathW) MAPIFreeBuffer(pstPathW);
 											}
-											if (pstPathW) MAPIFreeBuffer(pstPathW);
 										}
+										if (prDisplayName) MAPIFreeBuffer(prDisplayName);
 									}
-									if (prDisplayName) MAPIFreeBuffer(prDisplayName);
 								}
 							}
-						}
 
-						if (lpProvRows) FreeProws(lpProvRows);
+							if (lpProvRows) FreeProws(lpProvRows);
+						}
+						if (lpProvPropVal) MAPIFreeBuffer(lpProvPropVal);
+						if (lpProvResLvl1) MAPIFreeBuffer(lpProvResLvl1);
+						if (lpProvRes) MAPIFreeBuffer(lpProvRes);
+						if (lpProvTable) lpProvTable->Release();
+						//End Loop Providers
+						if (lpProvAdmin) lpProvAdmin->Release();
 					}
-					if (lpProvPropVal) MAPIFreeBuffer(lpProvPropVal);
-					if (lpProvResLvl1) MAPIFreeBuffer(lpProvResLvl1);
-					if (lpProvRes) MAPIFreeBuffer(lpProvRes);
-					if (lpProvTable) lpProvTable->Release();
-					//End Loop Providers
-					if (lpProvAdmin) lpProvAdmin->Release();
-				}
 			}
 			if (lpSvcRows) FreeProws(lpSvcRows);
 			// End loop services
@@ -1414,7 +1367,7 @@ HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszNewPath, bool bMoveFile
 
 	EC_HRES_LOG(MAPIAdminProfiles(0, // Flags
 		&lpProfAdmin), loggingMode); // Pointer to new IProfAdmin
-									 // Get an IProfAdmin interface.
+						// Get an IProfAdmin interface.
 
 	EC_HRES_LOG(lpProfAdmin->GetProfileTable(0,
 		&lpProfTable), loggingMode);

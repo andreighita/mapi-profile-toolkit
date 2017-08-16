@@ -2,7 +2,7 @@
 #pragma once
 
 #include <initguid.h>
-#include "mapiguid.h"
+#include <mapiguid.h>
 
 #include "AccountMgmt.h"
 

@@ -47,27 +47,27 @@ class XmlParser
 struct TXmlElement
 {
 	CComPtr<IXMLDOMElement> elem;
-	CComPtr<IXMLDOMNodeList> nlist;
-	int pos;
+	CComPtr<IXMLDOMNodeList> nlist; 
+	int pos; 
 	long clen;
 	//
-	TXmlElement() : elem(0), nlist(0), pos(-1), clen(0)
+	TXmlElement() : elem(0), nlist(0), pos(-1), clen(0) 
 	{
 	}
-	TXmlElement() :
-		TXmlElement(int _clen) : elem(0), nlist(0), pos(-1), clen(_clen)
+	TXmlElement() : 
+	TXmlElement(int _clen) : elem(0), nlist(0), pos(-1), clen(_clen) 
 	{
 	}
-
-	TXmlElement(CComPtr<IXMLDOMElement> _elem) : elem(_elem), nlist(0), pos(-1), clen(0)
-	{
-		get();
+	
+	TXmlElement(CComPtr<IXMLDOMElement> _elem) : elem(_elem), nlist(0), pos(-1), clen(0) 
+	{ 
+		get(); 
 	}
-	TXmlElement(CComPtr<IXMLDOMNodeList> _nlist) : elem(0), nlist(_nlist), pos(0), clen(0)
-	{
-		get();
+	TXmlElement(CComPtr<IXMLDOMNodeList> _nlist) : elem(0), nlist(_nlist), pos(0), clen(0) 
+	{ 
+		get(); 
 	}
-
+	
 	void get()
 	{
 		if (pos != -1)

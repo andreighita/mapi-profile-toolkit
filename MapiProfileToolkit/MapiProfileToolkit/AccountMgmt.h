@@ -5,7 +5,6 @@
 #include <mapidefs.h>
 #include <guiddef.h>
 #include <MAPIUTIL.H>
-#include "OlkAccount.h"
 #include "AccountObjects.h"
 
 typedef unsigned long PT_DWORD;

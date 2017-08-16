@@ -14,14 +14,14 @@ HRESULT ParseXml(LPTSTR lpszABConfigurationPath, ABProvider* abProvider)
 	CComPtr<IXMLDOMDocument> pXMLDoc;
 	EC_HRES(pXMLDoc.CoCreateInstance(__uuidof(DOMDocument)));
 	CComPtr<IXMLDOMElement> xmlElement;
-
+	
 	// Load the file. 
 	VARIANT_BOOL bSuccess = false;
 	// Can load it from a url/filename...
 	//iXMLDoc->load(CComVariant(url),&bSuccess);
 	// or from a BSTR...
 	EC_HRES(pXMLDoc->loadXML(CComBSTR(lpszABConfigurationPath), &bSuccess));
-
+	
 	if (bSuccess)
 	{
 		// Get a pointer to the root

@@ -650,7 +650,7 @@ Cleanup:
 	return szAccountName;
 }
 
-HRESULT ProcessAccounts(LPMAPISESSION lpSession, LPWSTR lpProfileName, ToolkitOptions runtimeOptions)
+HRESULT ProcessAccounts(LPMAPISESSION lpSession, LPWSTR lpProfileName, RuntimeOptions runtimeOptions)
 {
 	HRESULT hRes = S_OK;
 	DWORD dwCount = 0;

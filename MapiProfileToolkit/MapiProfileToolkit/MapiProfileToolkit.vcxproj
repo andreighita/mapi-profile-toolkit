@@ -31,6 +31,7 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
+    <UseOfMfc>Static</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -38,12 +39,14 @@
     <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
+    <UseOfMfc>Static</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
+    <UseOfMfc>Static</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -51,6 +54,7 @@
     <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
+    <UseOfMfc>Static</UseOfMfc>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -72,19 +76,31 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>C:\Users\catagh\Source\Repos\Include;$(IncludePath)</IncludePath>
+    <OutDir>$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\Intermediate\$(Platform)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>C:\Users\catagh\Source\Repos\Include;$(IncludePath)</IncludePath>
+    <OutDir>$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\Intermediate\$(Platform)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>C:\Users\catagh\Source\Repos\Include;$(IncludePath)</IncludePath>
+    <OutDir>$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\Intermediate\$(Platform)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>C:\Users\catagh\Source\Repos\Include;$(IncludePath)</IncludePath>
+    <OutDir>$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\Intermediate\$(Platform)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -95,7 +111,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -107,7 +123,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -122,7 +138,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -138,48 +154,24 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="abhelp.h" />
     <ClInclude Include="ABProviderObjects.h" />
     <ClInclude Include="AccountFunctions.h" />
     <ClInclude Include="AccountHelper.h" />
     <ClInclude Include="AccountMgmt.h" />
     <ClInclude Include="AccountObjects.h" />
     <ClInclude Include="ADHelper.h" />
-    <ClInclude Include="EdkGuid.h" />
-    <ClInclude Include="EdkMdb.h" />
-    <ClInclude Include="EMSABTAG.H" />
-    <ClInclude Include="ExchForm.h" />
-    <ClInclude Include="IMessage.h" />
     <ClInclude Include="Logger.h" />
-    <ClInclude Include="MAPI.h" />
-    <ClInclude Include="MAPIAux.h" />
-    <ClInclude Include="MAPICode.h" />
-    <ClInclude Include="MAPIDbg.h" />
-    <ClInclude Include="MAPIDefS.h" />
-    <ClInclude Include="MAPIForm.h" />
-    <ClInclude Include="MAPIGuid.h" />
-    <ClInclude Include="MAPIHook.h" />
-    <ClInclude Include="MAPINls.h" />
     <ClInclude Include="MAPIObjects.h" />
-    <ClInclude Include="MAPIOID.h" />
     <ClInclude Include="MapiProfileToolkit.h" />
-    <ClInclude Include="MAPISPI.h" />
-    <ClInclude Include="MAPITags.h" />
-    <ClInclude Include="MAPIUtil.h" />
-    <ClInclude Include="MAPIVal.h" />
-    <ClInclude Include="MAPIWin.h" />
-    <ClInclude Include="MAPIWz.h" />
-    <ClInclude Include="MAPIX.h" />
-    <ClInclude Include="mimeole.h" />
-    <ClInclude Include="MSPST.h" />
     <ClInclude Include="ProfileFunctions.h" />
     <ClInclude Include="RegistryHelper.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="StringOperations.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="ToolkitObjects.h" />
     <ClInclude Include="XMLHelper.h" />
     <ClInclude Include="XMLHelper2.h" />
-    <ClInclude Include="XMLParser.h" />
+    <ClInclude Include="XmlParser.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AccountFunctions.cpp" />
@@ -187,14 +179,12 @@
     <ClCompile Include="ADHelper.cpp" />
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="MapiProfileToolkit.cpp" />
+    <ClCompile Include="MapiStubLibrary.cpp" />
     <ClCompile Include="ProfileFunctions.cpp" />
     <ClCompile Include="RegistryHelper.cpp" />
-    <ClCompile Include="stdafx.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
-    </ClCompile>
+    <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="StringOperations.cpp" />
+    <ClCompile Include="StubUtils.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

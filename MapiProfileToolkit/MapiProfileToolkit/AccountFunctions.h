@@ -16,4 +16,4 @@ HRESULT UpdateAcctName(LPMAPISESSION lpSession, LPWSTR lpwszProfile, long lAcctI
 HRESULT GetAccountData(LPOLKACCOUNT *lpAccount, OlkAccount * pOlkAccount);
 HRESULT GetAccounts(LPWSTR lpwszProfile, DWORD* pcAccounts, OlkAccount** ppAccounts);
 std::wstring GetDefaultAccountNameW(LPMAPISESSION lpSession, LPWSTR lpszProfileName);
-HRESULT ProcessAccounts(LPMAPISESSION lpSession, LPWSTR lpProfileName, ToolkitOptions runtimeOptions);
+HRESULT ProcessAccounts(LPMAPISESSION lpSession, LPWSTR lpProfileName, RuntimeOptions runtimeOptions);

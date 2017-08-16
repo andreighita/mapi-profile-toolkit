@@ -18,4 +18,6 @@ typedef IDirectorySearch FAR * LPDIRECTORYSEARCH;
 #pragma comment (lib, "adsiid.lib")
 
 std::wstring GetUserDn();
+std::wstring GetDCName();
+std::wstring LDAPSearchUserDN(std::wstring wszSearchAttributeName, std::wstring wszSearchValue, ULONG ulAdTimeout);
 std::wstring FindPrimarySMTPAddress(std::wstring wszUserDn);

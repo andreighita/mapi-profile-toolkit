@@ -9,7 +9,6 @@
 enum LogLevel { logLevelInfo, logLevelWarning, logLevelError, logLevelSuccess, logLevelFailed, logLevelDebug };
 enum LogCallStatus { logCallStatusSuccess, logCallStatusError, logCallStatusNoFile, logCallStatusLoggingDisabled };
 enum LoggingMode { loggingModeNone, loggingModeConsole, loggingModeFile, loggingModeConsoleandFile };
-
 class Logger
 {
 public:

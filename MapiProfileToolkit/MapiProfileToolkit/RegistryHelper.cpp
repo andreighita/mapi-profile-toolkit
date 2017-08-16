@@ -104,7 +104,7 @@ bool __cdecl GetValue(HKEY hRegistryHive, LPCTSTR lpszKeyName, LPCTSTR lpszValue
 		0,
 		regSam,
 		&hKey);
-	if (lStatus == ERROR_SUCCESS
+	if ( lStatus == ERROR_SUCCESS
 		)
 	{
 		DWORD dwType;
