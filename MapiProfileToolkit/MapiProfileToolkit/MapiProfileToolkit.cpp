@@ -121,9 +121,7 @@ BOOL RunScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 	{
 		switch (argv[i][0])
 		{
-		case '-':
-		case '/':
-		case '\\':
+		case '#':
 			if (0 == argv[i][1])
 			{
 				// Bad argument - get out of here
@@ -131,7 +129,7 @@ BOOL RunScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 			}
 			switch (tolower(argv[i][1]))
 			{
-			case 's':
+			case '4':
 				if (tolower(argv[i][2]) == 'c')
 				{
 					if (i + 1 < argc)

@@ -13,9 +13,20 @@
 
 #include "stdafx.h"
 #include "Logger.h"
+#include <initguid.h>
+#define USES_IID_IMAPIProp 
 #include "MAPIObjects.h"
 #include <MAPIX.h>
 #include <MAPIUtil.h>
+#include <MAPIAux.h>
+#include "MAPIObjects.h"
+#include <EdkMdb.h>
+#include <MAPIGuid.h>
+#include <MAPIAux.h>	
+#include <MSPST.h>
+#include <WinBase.h>
+#include <Shlwapi.h>
+
 
 std::wstring GetDefaultProfileName(LoggingMode loggingMode);
 ULONG GetProfileCount(LoggingMode loggingMode);
@@ -24,3 +35,21 @@ HRESULT GetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo, LoggingMod
 HRESULT UpdateCachedModeConfig(LPSTR lpszProfileName, ULONG ulSectionIndex, ULONG ulCachedModeOwner, ULONG ulCachedModeShared, ULONG ulCachedModePublicFolders, int iCachedModeMonths, LoggingMode loggingMode);
 HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszOldPath, LPWSTR lpszNewPath, bool bMoveFiles, LoggingMode loggingMode);
 HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszNewPath, bool bMoveFiles, LoggingMode loggingMode);
+
+HRESULT HrAddDelegateMailboxModern(MAPIUID uidService,
+	LPSERVICEADMIN2 lpSvcAdmin,
+	LPWSTR lpszwDisplayName,
+	LPWSTR lpszwSMTPAddress);
+HRESULT HrAddDelegateMailbox(MAPIUID uidService,
+	LPSERVICEADMIN2 lpSvcAdmin,
+	LPWSTR lpszwMailboxDisplay,
+	LPWSTR lpszwMailboxDN,
+	LPWSTR lpszwServer,
+	LPWSTR lpszwServerDN,
+	LPWSTR lpszwSMTPAddress);
+HRESULT HrAddDelegateMailboxLegacy(MAPIUID uidService,
+	LPSERVICEADMIN2 lpSvcAdmin,
+	LPWSTR lpszwMailboxDisplay,
+	LPWSTR lpszwMailboxDN,
+	LPWSTR lpszwServer,
+	LPWSTR lpszwServerDN);
