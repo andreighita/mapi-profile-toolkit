@@ -15,6 +15,7 @@
 #include "Logger.h"
 #include <initguid.h>
 #define USES_IID_IMAPIProp 
+#define USES_IID_IMsgServiceAdmin2
 #include "MAPIObjects.h"
 #include <MAPIX.h>
 #include <MAPIUtil.h>
@@ -35,6 +36,47 @@ HRESULT GetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo, LoggingMod
 HRESULT UpdateCachedModeConfig(LPSTR lpszProfileName, ULONG ulSectionIndex, ULONG ulCachedModeOwner, ULONG ulCachedModeShared, ULONG ulCachedModePublicFolders, int iCachedModeMonths, LoggingMode loggingMode);
 HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszOldPath, LPWSTR lpszNewPath, bool bMoveFiles, LoggingMode loggingMode);
 HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszNewPath, bool bMoveFiles, LoggingMode loggingMode);
+HRESULT HrCreateProfile(LPWSTR lpszProfileName, LPSERVICEADMIN2 *lppSvcAdmin2);
+HRESULT HrSetDefaultProfile(LPWSTR lpszProfileName);
+HRESULT HrCloneProfile(ProfileInfo * profileInfo, LoggingMode loggingMode);
+VOID PrintProfile(ProfileInfo * profileInfo);
+HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo, LoggingMode loggingMode);
+
+HRESULT HrCreatePstService(LPSERVICEADMIN2 lpServiceAdmin2, LPMAPIUID * lppServiceUid, LPWSTR lpszServiceName, ULONG ulResourceFlags, ULONG ulPstConfigFlag, LPWSTR lpszPstPathW, LPWSTR lpszDisplayName);
+
+HRESULT HrGetSections(LPSERVICEADMIN2 lpSvcAdmin, LPMAPIUID lpServiceUid, LPPROFSECT * lppEmsMdbSection, LPPROFSECT * lppStoreProviderSection);
+HRESULT HrCreateMsemsServiceModernExt(LPSERVICEADMIN2 lpServiceAdmin2,
+	LPMAPIUID * lppServiceUid,
+	ULONG ulResourceFlags,
+	ULONG ulProfileConfigFlags,
+	ULONG ulCachedModeMonths,
+	LPWSTR lpszSmtpAddress,
+	LPWSTR lpszDisplayName);
+HRESULT HrCreateMsemsServiceModern(LPSERVICEADMIN2 lpServiceAdmin2,
+	LPMAPIUID * lppServiceUid,
+	LPWSTR lpszSmtpAddress,
+	LPWSTR lpszDisplayName);
+HRESULT HrCreateMsemsServiceLegacyUnresolved(LPSERVICEADMIN2 lpServiceAdmin2,
+	LPMAPIUID * lppServiceUid,
+	LPWSTR lpszwMailboxDN,
+	LPWSTR lpszwServer);
+HRESULT HrCreateMsemsServiceROH(LPSERVICEADMIN2 lpServiceAdmin2,
+	LPMAPIUID * lppServiceUid,
+	LPWSTR lpszSmtpAddress,
+	LPWSTR lpszMailboxLegacyDn,
+	LPWSTR lpszUnresolvedServer,
+	LPWSTR lpszRohProxyServer,
+	LPWSTR lpszProfileServerDn,
+	LPWSTR lpszAutodiscoverUrl);
+HRESULT HrCreateMsemsServiceMOH(LPSERVICEADMIN2 lpServiceAdmin2,
+	LPMAPIUID * lppServiceUid,
+	LPWSTR lpszSmtpAddress,
+	LPWSTR lpszMailboxDn,
+	LPWSTR lpszMailStoreInternalUrl,
+	LPWSTR lpszMailStoreExternalUrl,
+	LPWSTR lpszAddressBookInternalUrl,
+	LPWSTR lpszAddressBookExternalUrl);
+
 
 HRESULT HrAddDelegateMailboxModern(MAPIUID uidService,
 	LPSERVICEADMIN2 lpSvcAdmin,

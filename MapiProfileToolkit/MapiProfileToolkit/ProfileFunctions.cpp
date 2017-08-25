@@ -46,6 +46,8 @@
 #define CONFIG_OST_CACHE_PUBLIC				((ULONG)0x00000400)
 #endif
 
+#pragma region // Profile Methods //
+
 std::wstring GetDefaultProfileName(LoggingMode loggingMode)
 {
 	std::wstring szDefaultProfileName;
@@ -209,7 +211,7 @@ Cleanup:
 HRESULT GetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo, LoggingMode loggingMode)
 {
 	HRESULT hRes = S_OK;
-	profileInfo->szProfileName = ConvertWideCharToStdWstring(lpszProfileName);
+	profileInfo->wszProfileName = ConvertWideCharToStdWstring(lpszProfileName);
 
 	LPPROFADMIN lpProfAdmin = NULL;     // Profile Admin pointer
 	LPSRestriction lpProfRes = NULL;
@@ -348,7 +350,7 @@ HRESULT GetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo, LoggingMod
 			// Start loop services
 			for (unsigned int i = 0; i < lpSvcRows->cRows; i++)
 			{
-				profileInfo->profileServices[i].szServiceName = ConvertWideCharToStdWstring(ConvertMultiByteToWideChar(lpSvcRows->aRow[i].lpProps[iServiceName].Value.lpszA));
+				profileInfo->profileServices[i].wszServiceName = ConvertWideCharToStdWstring(ConvertMultiByteToWideChar(lpSvcRows->aRow[i].lpProps[iServiceName].Value.lpszA));
 				profileInfo->profileServices[i].bDefaultStore = (lpSvcRows->aRow[i].lpProps[iServiceResFlags].Value.l & SERVICE_DEFAULT_STORE);
 				profileInfo->profileServices[i].ulServiceType = SERVICETYPE_OTHER;
 				// Exchange account
@@ -356,8 +358,8 @@ HRESULT GetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo, LoggingMod
 				{
 					profileInfo->profileServices[i].ulServiceType = SERVICETYPE_EXCHANGEACCOUNT;
 					profileInfo->profileServices[i].exchangeAccountInfo = new ExchangeAccountInfo;
-					profileInfo->profileServices[i].exchangeAccountInfo->szDatafilePath = std::wstring(L" ");
-					profileInfo->profileServices[i].exchangeAccountInfo->szServiceDisplayName = std::wstring(L" ");
+					profileInfo->profileServices[i].exchangeAccountInfo->wszDatafilePath = std::wstring(L" ");
+					profileInfo->profileServices[i].exchangeAccountInfo->wszDisplayName = std::wstring(L" ");
 					profileInfo->profileServices[i].exchangeAccountInfo->szUserEmailSmtpAddress = std::wstring(L" ");
 					profileInfo->profileServices[i].exchangeAccountInfo->szUserName = std::wstring(L" ");
 					profileInfo->profileServices[i].exchangeAccountInfo->wszHomeServerDN = std::wstring(L" ");
@@ -520,12 +522,12 @@ HRESULT GetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo, LoggingMod
 								{
 									if (profileOfflineStorePath)
 									{
-										profileInfo->profileServices[i].exchangeAccountInfo->szDatafilePath = ConvertWideCharToStdWstring(ConvertMultiByteToWideChar(profileOfflineStorePath->Value.lpszA));
+										profileInfo->profileServices[i].exchangeAccountInfo->wszDatafilePath = ConvertWideCharToStdWstring(ConvertMultiByteToWideChar(profileOfflineStorePath->Value.lpszA));
 										if (profileOfflineStorePath) MAPIFreeBuffer(profileOfflineStorePath);
 									}
 									else
 									{
-										profileInfo->profileServices[i].exchangeAccountInfo->szDatafilePath = std::wstring(L" ");
+										profileInfo->profileServices[i].exchangeAccountInfo->wszDatafilePath = std::wstring(L" ");
 									}
 								}
 								LPSPropValue profileDisplayName = NULL;
@@ -533,12 +535,12 @@ HRESULT GetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo, LoggingMod
 								{
 									if (profileDisplayName)
 									{
-										profileInfo->profileServices[i].exchangeAccountInfo->szServiceDisplayName = ConvertWideCharToStdWstring(ConvertMultiByteToWideChar(profileDisplayName->Value.lpszA));
+										profileInfo->profileServices[i].exchangeAccountInfo->wszDisplayName = ConvertWideCharToStdWstring(ConvertMultiByteToWideChar(profileDisplayName->Value.lpszA));
 										if (profileDisplayName) MAPIFreeBuffer(profileDisplayName);
 									}
 									else
 									{
-										profileInfo->profileServices[i].exchangeAccountInfo->szServiceDisplayName = std::wstring(L" ");
+										profileInfo->profileServices[i].exchangeAccountInfo->wszDisplayName = std::wstring(L" ");
 									}
 								}
 							}
@@ -604,7 +606,7 @@ HRESULT GetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo, LoggingMod
 
 							for (unsigned int j = 0; j < lpProvRows->cRows; j++)
 							{
-								profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].szDisplayName = std::wstring(L" ");
+								profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszDisplayName = std::wstring(L" ");
 								LPPROFSECT lpProfSection = NULL;
 								if (SUCCEEDED(lpServiceAdmin->OpenProfileSection((LPMAPIUID)lpProvRows->aRow[j].lpProps[iProvInstanceKey].Value.bin.lpb, NULL, MAPI_MODIFY | MAPI_FORCE_ACCESS, &lpProfSection)))
 								{
@@ -614,12 +616,12 @@ HRESULT GetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo, LoggingMod
 										LPSPropValue prDisplayName = NULL;
 										if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_DISPLAY_NAME, &prDisplayName)))
 										{
-											profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].szDisplayName = ConvertWideCharToStdWstring(prDisplayName->Value.lpszW);
+											profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszDisplayName = ConvertWideCharToStdWstring(prDisplayName->Value.lpszW);
 											if (prDisplayName) MAPIFreeBuffer(prDisplayName);
 										}
 										else
 										{
-											profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].szDisplayName = std::wstring(L" ");
+											profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszDisplayName = std::wstring(L" ");
 										}
 
 										LPSPropValue prProfileType = NULL;
@@ -669,8 +671,8 @@ HRESULT GetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo, LoggingMod
 				{
 					profileInfo->profileServices[i].ulServiceType = SERVICETYPE_PST;
 					profileInfo->profileServices[i].pstInfo = new PstInfo;
-					profileInfo->profileServices[i].pstInfo->szDisplayName = std::wstring(L" ");
-					profileInfo->profileServices[i].pstInfo->szPstPath = std::wstring(L" ");
+					profileInfo->profileServices[i].pstInfo->wszDisplayName = std::wstring(L" ");
+					profileInfo->profileServices[i].pstInfo->wszPstPath = std::wstring(L" ");
 
 					LPPROVIDERADMIN lpProvAdmin = NULL;
 
@@ -741,12 +743,12 @@ HRESULT GetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo, LoggingMod
 									LPSPropValue prDisplayName = NULL;
 									if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_DISPLAY_NAME_W, &prDisplayName)))
 									{
-										profileInfo->profileServices[i].pstInfo->szDisplayName = ConvertWideCharToStdWstring(prDisplayName->Value.lpszW);
+										profileInfo->profileServices[i].pstInfo->wszDisplayName = ConvertWideCharToStdWstring(prDisplayName->Value.lpszW);
 										if (prDisplayName) MAPIFreeBuffer(prDisplayName);
 									}
 									else
 									{
-										profileInfo->profileServices[i].pstInfo->szDisplayName = std::wstring(L" ");
+										profileInfo->profileServices[i].pstInfo->wszDisplayName = std::wstring(L" ");
 									}
 									// bind to the PR_PST_PATH_W property
 									LPSPropValue pstPathW = NULL;
@@ -754,12 +756,12 @@ HRESULT GetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo, LoggingMod
 									{
 										if (pstPathW)
 										{
-											profileInfo->profileServices[i].pstInfo->szPstPath = ConvertWideCharToStdWstring(pstPathW->Value.lpszW);
+											profileInfo->profileServices[i].pstInfo->wszPstPath = ConvertWideCharToStdWstring(pstPathW->Value.lpszW);
 											if (pstPathW) MAPIFreeBuffer(pstPathW);
 										}
 										else
 										{
-											profileInfo->profileServices[i].pstInfo->szPstPath = std::wstring(L" ");
+											profileInfo->profileServices[i].pstInfo->wszPstPath = std::wstring(L" ");
 										}
 									}
 									// bind to the PR_PST_CONFIG_FLAGS property to get the ammount to sync
@@ -1664,6 +1666,772 @@ Cleanup:
 	return hRes;
 }
 
+
+
+HRESULT HrCreateProfile(LPWSTR lpszProfileName, LPSERVICEADMIN2 *lppSvcAdmin2)
+{
+	HRESULT				hRes = S_OK;            // Result from MAPI calls.
+	LPPROFADMIN			lpProfAdmin = NULL;     // Profile Admin object.
+	LPSERVICEADMIN		lpSvcAdmin = NULL;      // Service Admin object.
+	LPSERVICEADMIN2		lpSvcAdmin2 = NULL;
+
+	// This indicates columns we want returned from HrQueryAllRows.
+	enum { iSvcName, iSvcUID, cptaSvc };
+	SizedSPropTagArray(cptaSvc, sptCols) = { cptaSvc, PR_SERVICE_NAME, PR_SERVICE_UID };
+
+	// Get an IProfAdmin interface.
+
+	EC_HRES_MSG(MAPIAdminProfiles(0,              // Flags.
+		&lpProfAdmin), L"HrCreateProfile", L"0045"); // Pointer to new IProfAdmin.
+
+													 // Create a new profile.
+	hRes = lpProfAdmin->CreateProfile((LPTSTR)ConvertWideCharToMultiByte(lpszProfileName),     // Name of new profile.
+		nullptr,          // Password for profile.
+		0,          // Handle to parent window.
+		0);        // Flags.
+
+	if (hRes == E_ACCESSDENIED)
+	{
+		hRes = lpProfAdmin->DeleteProfile((LPTSTR)ConvertWideCharToMultiByte(lpszProfileName), NULL);
+		// Create a new profile.
+		EC_HRES_MSG(hRes, L"HrCreateProfile", L"0046"); // Just checking the result here.
+
+		EC_HRES_MSG(lpProfAdmin->CreateProfile((LPTSTR)ConvertWideCharToMultiByte(lpszProfileName),     // Name of new profile.
+			nullptr,          // Password for profile.
+			0,          // Handle to parent window.
+			0), L"HrCreateProfile", L"0046_1");        // Flags.
+	}
+
+	// Get an IMsgServiceAdmin interface off of the IProfAdmin interface.
+	EC_HRES_MSG(hRes = lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpszProfileName),     // Profile that we want to modify.
+		nullptr,          // Password for that profile.
+		0,          // Handle to parent window.
+		0,             // Flags.
+		&lpSvcAdmin), L"HrCreateProfile", L"0047"); // Pointer to new IMsgServiceAdmin.
+
+													// Create the new message service for Exchange.
+	if (lpSvcAdmin) EC_HRES_MSG(lpSvcAdmin->QueryInterface(IID_IMsgServiceAdmin2, (LPVOID*)&lpSvcAdmin2), L"HrCreateProfile", L"0048");
+
+	*lppSvcAdmin2 = lpSvcAdmin2;
+
+	goto Cleanup;
+
+Error:
+	goto Cleanup;
+
+Cleanup:
+	// Clean up
+	if (lpSvcAdmin) lpSvcAdmin->Release();
+	if (lpProfAdmin) lpProfAdmin->Release();
+
+	return 0;
+
+}
+
+HRESULT HrSetDefaultProfile(LPWSTR lpszProfileName)
+{
+	HRESULT				hRes = S_OK;            // Result from MAPI calls.
+	LPPROFADMIN			lpProfAdmin = NULL;     // Profile Admin object.
+
+												// This indicates columns we want returned from HrQueryAllRows.
+	enum { iSvcName, iSvcUID, cptaSvc };
+	SizedSPropTagArray(cptaSvc, sptCols) = { cptaSvc, PR_SERVICE_NAME, PR_SERVICE_UID };
+
+	// Get an IProfAdmin interface.
+
+	EC_HRES_MSG(MAPIAdminProfiles(0,              // Flags.
+		&lpProfAdmin), L"HrCreateProfile", L"0054"); // Pointer to new IProfAdmin.
+
+													 // Create a new profile.
+	EC_HRES_MSG(lpProfAdmin->SetDefaultProfile((LPTSTR)ConvertWideCharToMultiByte(lpszProfileName),     // Name of new profile.
+		0), L"HrCreateProfile", L"0054");        // Flags.
+
+
+	goto Cleanup;
+
+Error:
+	goto Cleanup;
+
+Cleanup:
+	// Clean up
+	if (lpProfAdmin) lpProfAdmin->Release();
+
+	return 0;
+
+}
+
+HRESULT HrCloneProfile(ProfileInfo * profileInfo, LoggingMode loggingMode)
+{
+	HRESULT hRes = S_OK;
+	LPSERVICEADMIN2 lpServiceAdmin = NULL;
+
+	profileInfo->wszProfileName = profileInfo->wszProfileName + L"_Clone";
+	Logger::Write(logLevelInfo, L"Creating new profile named: " + profileInfo->wszProfileName, loggingMode);
+	EC_HRES_MSG(HrCreateProfile((LPWSTR)profileInfo->wszProfileName.c_str(), &lpServiceAdmin), L"HrCloneProfile", L"0050");
+	for (unsigned int i = 0; i < profileInfo->ulServiceCount; i++)
+	{
+		MAPIUID uidService = { 0 };
+		LPMAPIUID lpServiceUid = &uidService;
+		if (profileInfo->profileServices[i].ulServiceType == SERVICETYPE_EXCHANGEACCOUNT)
+		{
+			Logger::Write(logLevelInfo, L"Adding exchange mailbox: " + profileInfo->profileServices[i].exchangeAccountInfo->wszEmailAddress, loggingMode);
+			EC_HRES_MSG(HrCreateMsemsServiceModernExt(lpServiceAdmin,
+				&lpServiceUid,
+				profileInfo->profileServices[i].ulResourceFlags,
+				profileInfo->profileServices[i].exchangeAccountInfo->ulProfileConfigFlags,
+				profileInfo->profileServices[i].exchangeAccountInfo->iCachedModeMonths,
+				(LPWSTR)profileInfo->profileServices[i].exchangeAccountInfo->wszEmailAddress.c_str(),
+				(LPWSTR)profileInfo->profileServices[i].exchangeAccountInfo->wszDisplayName.c_str()), L"HrCloneProfile", L"0051");
+			MAPIUID uidService = { 0 };
+			memcpy((LPVOID)&uidService, lpServiceUid, sizeof(MAPIUID));
+			for (unsigned int j = 0; j < profileInfo->profileServices[i].exchangeAccountInfo->ulMailboxCount; j++)
+			{
+				if (profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulProfileType == PROFILE_DELEGATE)
+				{
+					Logger::Write(logLevelInfo, L"Adding additional mailbox: " + profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszEmailAddress, loggingMode);
+					EC_HRES_MSG(HrAddDelegateMailboxModern(uidService,
+						lpServiceAdmin,
+						(LPWSTR)profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszDisplayName.c_str(),
+						(LPWSTR)profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszEmailAddress.c_str()), L"HrCloneProfile", L"0052");
+				}
+			}
+		}
+		else if (profileInfo->profileServices[i].ulServiceType == SERVICETYPE_PST)
+		{
+			Logger::Write(logLevelInfo, L"Adding PST file: " + profileInfo->profileServices[i].pstInfo->wszPstPath, loggingMode);
+			EC_HRES_MSG(HrCreatePstService(lpServiceAdmin,
+				&lpServiceUid,
+				(LPWSTR)profileInfo->profileServices[i].wszServiceName.c_str(),
+				profileInfo->profileServices[i].ulResourceFlags,
+				profileInfo->profileServices[i].pstInfo->ulPstConfigFlags,
+				(LPWSTR)profileInfo->profileServices[i].pstInfo->wszPstPath.c_str(),
+				(LPWSTR)profileInfo->profileServices[i].pstInfo->wszDisplayName.c_str()), L"HrCloneProfile", L"0053");
+		}
+	}
+
+	Logger::Write(logLevelInfo, L"Setting profile as default.", loggingMode);
+	EC_HRES_MSG(HrSetDefaultProfile((LPWSTR)profileInfo->wszProfileName.c_str()), L"HrCloneProfile", L"0053_1");
+	goto Cleanup;
+
+Error:
+	goto Cleanup;
+Cleanup:
+	return hRes;
+}
+
+VOID PrintProfile(ProfileInfo * profileInfo)
+{
+	if (profileInfo)
+	{
+		wprintf(L"Profile name: %ls\n", profileInfo->wszProfileName.c_str());
+		wprintf(L"Service count: %i\n", profileInfo->ulServiceCount);
+		for (unsigned int i = 0; i < profileInfo->ulServiceCount; i++)
+		{
+			wprintf(L" -> Service #%i\n", i);
+			wprintf(L" -> [%i] Display name: %ls\n", i, profileInfo->profileServices[i].wszDisplayName.c_str());
+			wprintf(L" -> [%i] Service name: %ls\n", i, profileInfo->profileServices[i].wszServiceName.c_str());
+			wprintf(L" -> [%i] Service resource flags: %#x\n", i, profileInfo->profileServices[i].ulResourceFlags);
+			MAPIUID uidService = { 0 };
+			LPMAPIUID lpServiceUid = &uidService;
+			if (profileInfo->profileServices[i].ulServiceType == SERVICETYPE_EXCHANGEACCOUNT)
+			{
+				wprintf(L" -> [%i] Service type: %ls\n", i, L"Exchange Mailbox");
+				wprintf(L" -> [%i] E-mail address: %ls\n", i, profileInfo->profileServices[i].exchangeAccountInfo->wszEmailAddress.c_str());
+				wprintf(L" -> [%i] User display name: %ls\n", i, profileInfo->profileServices[i].exchangeAccountInfo->wszDisplayName.c_str());
+				wprintf(L" -> [%i] OST path: %ls\n", i, profileInfo->profileServices[i].exchangeAccountInfo->wszDatafilePath.c_str());
+				wprintf(L" -> [%i] Config flags: %#x\n", i, profileInfo->profileServices[i].exchangeAccountInfo->ulProfileConfigFlags);
+				wprintf(L" -> [%i] Cached mode months: %i\n", i, profileInfo->profileServices[i].exchangeAccountInfo->iCachedModeMonths);
+				wprintf(L" -> [%i] Mailbox count: %i\n", i, profileInfo->profileServices[i].exchangeAccountInfo->ulMailboxCount);
+				for (unsigned int j = 0; j < profileInfo->profileServices[i].exchangeAccountInfo->ulMailboxCount; j++)
+				{
+					wprintf(L" -> [%i] -> Mailbox #%i\n", i, j);
+					if (profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulProfileType == PROFILE_DELEGATE)
+					{
+						wprintf(L" -> [%i] -> [%i] (Delegate) -> E-mail address: %ls\n", i, j, profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszEmailAddress.c_str());
+						wprintf(L" -> [%i] -> [%i] (Delegate) -> User display name: %ls\n", i, j, profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszDisplayName.c_str());
+					}
+					else
+					{
+						wprintf(L" -> [%i] -> [%i] (Other)-> E-mail address:%ls\n", i, j, profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszEmailAddress.c_str());
+						wprintf(L" -> [%i] -> [%i] (Other) -> User display name:%ls\n", i, j, profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszDisplayName.c_str());
+					}
+				}
+			}
+			else if (profileInfo->profileServices[i].ulServiceType == SERVICETYPE_PST)
+			{
+				wprintf(L" -> [%i] Service type: %ls\n", i, L"PST");
+				wprintf(L" -> [%i] Display name: %ls\n", i, profileInfo->profileServices[i].pstInfo->wszDisplayName.c_str());
+				wprintf(L" -> [%i] PST path: %ls\n", i, profileInfo->profileServices[i].pstInfo->wszPstPath.c_str());
+				wprintf(L" -> [%i] Config flags: %#x\n", i, profileInfo->profileServices[i].pstInfo->ulPstConfigFlags);
+			}
+		}
+	}
+
+}
+
+HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo, LoggingMode loggingMode)
+{
+	HRESULT hRes = S_OK;
+	profileInfo->wszProfileName = ConvertWideCharToStdWstring(lpszProfileName);
+
+	LPPROFADMIN lpProfAdmin = NULL;     // Profile Admin pointer
+	LPSRestriction lpProfRes = NULL;
+	LPSRestriction lpProfResLvl1 = NULL;
+	LPSPropValue lpProfPropVal = NULL;
+	LPMAPITABLE lpProfTable = NULL;
+	LPSRowSet lpProfRows = NULL;
+
+	// Setting up an enum and a prop tag array with the props we'll use
+	enum { iDisplayName, iDefaultProfile, cptaProps };
+	SizedSPropTagArray(cptaProps, sptaProps) = { cptaProps, PR_DISPLAY_NAME, PR_DEFAULT_PROFILE };
+
+	EC_HRES_MSG(MAPIAdminProfiles(0, // Flags
+		&lpProfAdmin), L"HrGetProfile", L"0029"); // Pointer to new IProfAdmin
+												  // Get an IProfAdmin interface.
+
+	EC_HRES_MSG(lpProfAdmin->GetProfileTable(0,
+		&lpProfTable), L"HrGetProfile", L"0030");
+
+	// Allocate memory for the restriction
+	EC_HRES_MSG(MAPIAllocateBuffer(
+		sizeof(SRestriction),
+		(LPVOID*)&lpProfRes), L"HrGetProfile", L"0031");
+
+	EC_HRES_MSG(MAPIAllocateBuffer(
+		sizeof(SRestriction) * 2,
+		(LPVOID*)&lpProfResLvl1), L"HrGetProfile", L"0032");
+
+	EC_HRES_MSG(MAPIAllocateBuffer(
+		sizeof(SPropValue),
+		(LPVOID*)&lpProfPropVal), L"HrGetProfile", L"0033");
+
+	// Set up restriction to query the profile table
+	lpProfRes->rt = RES_AND;
+	lpProfRes->res.resAnd.cRes = 0x00000002;
+	lpProfRes->res.resAnd.lpRes = lpProfResLvl1;
+
+	lpProfResLvl1[0].rt = RES_EXIST;
+	lpProfResLvl1[0].res.resExist.ulPropTag = PR_DISPLAY_NAME_A;
+	lpProfResLvl1[0].res.resExist.ulReserved1 = 0x00000000;
+	lpProfResLvl1[0].res.resExist.ulReserved2 = 0x00000000;
+	lpProfResLvl1[1].rt = RES_PROPERTY;
+	lpProfResLvl1[1].res.resProperty.relop = RELOP_EQ;
+	lpProfResLvl1[1].res.resProperty.ulPropTag = PR_DISPLAY_NAME_A;
+	lpProfResLvl1[1].res.resProperty.lpProp = lpProfPropVal;
+
+	lpProfPropVal->ulPropTag = PR_DISPLAY_NAME_A;
+	lpProfPropVal->Value.lpszA = ConvertWideCharToMultiByte(lpszProfileName);
+
+	// Query the table to get the the default profile only
+	EC_HRES_MSG(HrQueryAllRows(lpProfTable,
+		(LPSPropTagArray)&sptaProps,
+		lpProfRes,
+		NULL,
+		0,
+		&lpProfRows), L"HrGetProfile", L"0034");
+
+	if (lpProfRows->cRows == 0)
+	{
+		return MAPI_E_NOT_FOUND;
+	}
+	else if (lpProfRows->cRows == 1)
+	{
+		profileInfo->bDefaultProfile = lpProfRows->aRow->lpProps[iDefaultProfile].Value.b;
+	}
+	else
+	{
+		return MAPI_E_CALL_FAILED;
+	}
+
+	// Begin process services
+	LPSERVICEADMIN lpServiceAdmin = NULL;
+	LPMAPITABLE lpServiceTable = NULL;
+	EC_HRES_MSG(lpProfAdmin->AdminServices((LPTSTR)lpszProfileName,
+		LPTSTR(""),            // Password for that profile.
+		NULL,                // Handle to parent window.
+		MAPI_UNICODE,                    // Flags.
+		&lpServiceAdmin), L"HrGetProfile", L"0035");        // Pointer to new IMsgServiceAdmin.
+
+	if (lpServiceAdmin)
+	{
+		lpServiceAdmin->GetMsgServiceTable(0,
+			&lpServiceTable);
+		LPSRestriction lpSvcRes = NULL;
+		LPSRestriction lpsvcResLvl1 = NULL;
+		LPSPropValue lpSvcPropVal = NULL;
+		LPSRowSet lpSvcRows = NULL;
+
+		// Setting up an enum and a prop tag array with the props we'll use
+		enum { iServiceUid, iServiceName, iDisplayNameW, iEmsMdbSectUid, iServiceResFlags, cptaSvcProps };
+		SizedSPropTagArray(cptaSvcProps, sptaSvcProps) = { cptaSvcProps, PR_SERVICE_UID ,PR_SERVICE_NAME_A, PR_DISPLAY_NAME_W, PR_EMSMDB_SECTION_UID, PR_RESOURCE_FLAGS };
+
+		// Query the table to get the the default profile only
+		EC_HRES_MSG(HrQueryAllRows(lpServiceTable,
+			(LPSPropTagArray)&sptaSvcProps,
+			NULL,
+			NULL,
+			0,
+			&lpSvcRows), L"HrGetProfile", L"0036");
+
+		if (lpSvcRows->cRows > 0)
+		{
+			profileInfo->ulServiceCount = lpSvcRows->cRows;
+			profileInfo->profileServices = new ServiceInfo[lpSvcRows->cRows];
+
+			// Start loop services
+			for (unsigned int i = 0; i < lpSvcRows->cRows; i++)
+			{
+				profileInfo->profileServices[i].wszServiceName = ConvertWideCharToStdWstring(ConvertMultiByteToWideChar(lpSvcRows->aRow[i].lpProps[iServiceName].Value.lpszA));
+				profileInfo->profileServices[i].ulResourceFlags = lpSvcRows->aRow[i].lpProps[iServiceResFlags].Value.l;
+				profileInfo->profileServices[i].wszDisplayName = lpSvcRows->aRow[i].lpProps[iDisplayNameW].Value.lpszW;
+				profileInfo->profileServices[i].ulServiceType = SERVICETYPE_OTHER;;
+				// Exchange account
+				if (0 == strcmp(lpSvcRows->aRow[i].lpProps[iServiceName].Value.lpszA, "MSEMS"))
+				{
+					profileInfo->profileServices[i].exchangeAccountInfo = new ExchangeAccountInfo();
+					profileInfo->profileServices[i].ulServiceType = SERVICETYPE_EXCHANGEACCOUNT;
+					LPPROVIDERADMIN lpProvAdmin = NULL;
+
+					if (SUCCEEDED(lpServiceAdmin->AdminProviders((LPMAPIUID)lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb,
+						0,
+						&lpProvAdmin)))
+					{
+
+						// Read the EMSMDB section
+						LPPROFSECT lpProfSect = NULL;
+						if (SUCCEEDED(lpProvAdmin->OpenProfileSection((LPMAPIUID)lpSvcRows->aRow[i].lpProps[iEmsMdbSectUid].Value.bin.lpb,
+							NULL,
+							0L,
+							&lpProfSect)))
+						{
+							LPMAPIPROP pMAPIProp = NULL;
+							if (SUCCEEDED(lpProfSect->QueryInterface(IID_IMAPIProp, (void**)&pMAPIProp)))
+							{
+								// bind to the PR_RULE_ACTION_TYPE property to get the ammount to sync
+								LPSPropValue profilePrRuleActionType = NULL;
+								if (SUCCEEDED(HrGetOneProp(pMAPIProp, PR_RULE_ACTION_TYPE, &profilePrRuleActionType)))
+								{
+									if (profilePrRuleActionType)
+									{
+										profileInfo->profileServices[i].exchangeAccountInfo->iCachedModeMonths = profilePrRuleActionType->Value.i;
+										if (profilePrRuleActionType) MAPIFreeBuffer(profilePrRuleActionType);
+									}
+
+								}
+								else
+								{
+									profileInfo->profileServices[i].exchangeAccountInfo->iCachedModeMonths = 0;
+								}
+
+								// PR_PROFILE_OFFLINE_STORE_PATH_W
+								LPSPropValue profileOfflineStorePath = NULL;
+								if (SUCCEEDED(HrGetOneProp(pMAPIProp, PR_PROFILE_OFFLINE_STORE_PATH_W, &profileOfflineStorePath)))
+								{
+									if (profileOfflineStorePath)
+									{
+										profileInfo->profileServices[i].exchangeAccountInfo->wszDatafilePath = profileOfflineStorePath->Value.lpszW;
+										if (profileOfflineStorePath) MAPIFreeBuffer(profileOfflineStorePath);
+									}
+									else
+									{
+										profileInfo->profileServices[i].exchangeAccountInfo->wszDatafilePath = L"";
+									}
+
+								}
+								else
+								{
+									profileInfo->profileServices[i].exchangeAccountInfo->iCachedModeMonths = 0;
+								}
+								// bind to the PR_PROFILE_CONFIG_FLAGS property
+								LPSPropValue profileConfigFlags = NULL;
+								if (SUCCEEDED(HrGetOneProp(pMAPIProp, PR_PROFILE_CONFIG_FLAGS, &profileConfigFlags)))
+								{
+									if (profileConfigFlags)
+									{
+										profileInfo->profileServices[i].exchangeAccountInfo->ulProfileConfigFlags = profileConfigFlags->Value.l;
+									}
+									MAPIFreeBuffer(profileConfigFlags);
+								}
+								// bind to the PR_PROFILE_USER_SMTP_EMAIL_ADDRESS property
+								LPSPropValue profileUserSmtpEmailAddress = NULL;
+								if (SUCCEEDED(HrGetOneProp(pMAPIProp, PR_PROFILE_USER_SMTP_EMAIL_ADDRESS, &profileUserSmtpEmailAddress)))
+								{
+									if (profileUserSmtpEmailAddress)
+									{
+										profileInfo->profileServices[i].exchangeAccountInfo->wszEmailAddress = ConvertWideCharToStdWstring(ConvertMultiByteToWideChar(profileUserSmtpEmailAddress->Value.lpszA));
+										if (profileUserSmtpEmailAddress) MAPIFreeBuffer(profileUserSmtpEmailAddress);
+									}
+									else
+									{
+										profileInfo->profileServices[i].exchangeAccountInfo->wszEmailAddress = std::wstring(L" ");
+									}
+								}
+								LPSPropValue profileDisplayName = NULL;
+								if (SUCCEEDED(HrGetOneProp(pMAPIProp, PR_DISPLAY_NAME_A, &profileDisplayName)))
+								{
+									if (profileDisplayName)
+									{
+										profileInfo->profileServices[i].exchangeAccountInfo->wszDisplayName = ConvertWideCharToStdWstring(ConvertMultiByteToWideChar(profileDisplayName->Value.lpszA));
+										if (profileDisplayName) MAPIFreeBuffer(profileDisplayName);
+									}
+									else
+									{
+										profileInfo->profileServices[i].exchangeAccountInfo->wszDisplayName = std::wstring(L" ");
+									}
+								}
+							}
+							if (lpProfSect) lpProfSect->Release();
+						}
+						// End read the EMSMDB section
+
+						// Loop providers
+						LPMAPITABLE lpProvTable = NULL;
+						LPSRestriction lpProvRes = NULL;
+						LPSRestriction lpProvResLvl1 = NULL;
+						LPSPropValue lpProvPropVal = NULL;
+						LPSRowSet lpProvRows = NULL;
+
+						// Setting up an enum and a prop tag array with the props we'll use
+						enum { iProvInstanceKey, cptaProvProps };
+						SizedSPropTagArray(cptaProvProps, sptaProvProps) = { cptaProvProps, PR_INSTANCE_KEY };
+
+						// Allocate memory for the restriction
+						EC_HRES_MSG(MAPIAllocateBuffer(
+							sizeof(SRestriction),
+							(LPVOID*)&lpProvRes), L"HrGetProfile", L"0037");
+
+						EC_HRES_MSG(MAPIAllocateBuffer(
+							sizeof(SRestriction) * 2,
+							(LPVOID*)&lpProvResLvl1), L"HrGetProfile", L"0038");
+
+						EC_HRES_MSG(MAPIAllocateBuffer(
+							sizeof(SPropValue),
+							(LPVOID*)&lpProvPropVal), L"HrGetProfile", L"0039");
+
+						// Set up restriction to query the provider table
+						lpProvRes->rt = RES_AND;
+						lpProvRes->res.resAnd.cRes = 0x00000002;
+						lpProvRes->res.resAnd.lpRes = lpProvResLvl1;
+
+						lpProvResLvl1[0].rt = RES_EXIST;
+						lpProvResLvl1[0].res.resExist.ulPropTag = PR_PROVIDER_DISPLAY_A;
+						lpProvResLvl1[0].res.resExist.ulReserved1 = 0x00000000;
+						lpProvResLvl1[0].res.resExist.ulReserved2 = 0x00000000;
+						lpProvResLvl1[1].rt = RES_CONTENT;
+						lpProvResLvl1[1].res.resContent.ulFuzzyLevel = FL_FULLSTRING;
+						lpProvResLvl1[1].res.resContent.ulPropTag = PR_PROVIDER_DISPLAY_A;
+						lpProvResLvl1[1].res.resContent.lpProp = lpProvPropVal;
+
+						lpProvPropVal->ulPropTag = PR_PROVIDER_DISPLAY_A;
+						lpProvPropVal->Value.lpszA = "Microsoft Exchange Message Store";
+
+						lpProvAdmin->GetProviderTable(0,
+							&lpProvTable);
+						// Query the table to get the the default profile only
+						EC_HRES_MSG(HrQueryAllRows(lpProvTable,
+							(LPSPropTagArray)&sptaProvProps,
+							lpProvRes,
+							NULL,
+							0,
+							&lpProvRows), L"HrGetProfile", L"0040");
+
+						if (lpProvRows->cRows > 0)
+						{
+							profileInfo->profileServices[i].exchangeAccountInfo->ulMailboxCount = lpProvRows->cRows;
+							profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes = new MailboxInfo[lpProvRows->cRows];
+
+							for (unsigned int j = 0; j < lpProvRows->cRows; j++)
+							{
+								profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszDisplayName = std::wstring(L" ");
+								LPPROFSECT lpProfSection = NULL;
+								if (SUCCEEDED(lpServiceAdmin->OpenProfileSection((LPMAPIUID)lpProvRows->aRow[j].lpProps[iProvInstanceKey].Value.bin.lpb, NULL, MAPI_MODIFY | MAPI_FORCE_ACCESS, &lpProfSection)))
+								{
+									LPMAPIPROP lpMAPIProp = NULL;
+									if (SUCCEEDED(lpProfSection->QueryInterface(IID_IMAPIProp, (void**)&lpMAPIProp)))
+									{
+										LPSPropValue prDisplayName = NULL;
+										if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_DISPLAY_NAME, &prDisplayName)))
+										{
+											profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszDisplayName = ConvertWideCharToStdWstring(prDisplayName->Value.lpszW);
+											if (prDisplayName) MAPIFreeBuffer(prDisplayName);
+										}
+										else
+										{
+											profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszDisplayName = std::wstring(L" ");
+										}
+
+										LPSPropValue prProfileType = NULL;
+										if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_PROFILE_TYPE, &prProfileType)))
+										{
+											profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulProfileType = prProfileType->Value.l;
+										}
+										LPSPropValue profileUserSmtpEmailAddress = NULL;
+										if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_PROFILE_USER_SMTP_EMAIL_ADDRESS, &profileUserSmtpEmailAddress)))
+										{
+											if (profileUserSmtpEmailAddress)
+											{
+												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszEmailAddress = ConvertWideCharToStdWstring(ConvertMultiByteToWideChar(profileUserSmtpEmailAddress->Value.lpszA));
+												if (profileUserSmtpEmailAddress) MAPIFreeBuffer(profileUserSmtpEmailAddress);
+											}
+											else
+											{
+												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszEmailAddress = std::wstring(L" ");
+											}
+										}
+									}
+								}
+							}
+							if (lpProvRows) FreeProws(lpProvRows);
+						}
+						else
+						{
+							profileInfo->profileServices[i].exchangeAccountInfo->ulMailboxCount = lpProvRows->cRows;
+							profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes = new MailboxInfo();
+						}
+						if (lpProvPropVal) MAPIFreeBuffer(lpProvPropVal);
+						if (lpProvResLvl1) MAPIFreeBuffer(lpProvResLvl1);
+						if (lpProvRes) MAPIFreeBuffer(lpProvRes);
+						if (lpProvTable) lpProvTable->Release();
+						//End Loop Providers
+						if (lpProvAdmin) lpProvAdmin->Release();
+					}
+
+				}
+
+				else if ((0 == strcmp(lpSvcRows->aRow[i].lpProps[iServiceName].Value.lpszA, "MSPST MS")) || (0 == strcmp(lpSvcRows->aRow[i].lpProps[iServiceName].Value.lpszA, "MSUPST MS")))
+				{
+					profileInfo->profileServices[i].pstInfo = new PstInfo();
+					profileInfo->profileServices[i].pstInfo->wszDisplayName = std::wstring(L" ");
+					profileInfo->profileServices[i].pstInfo->wszPstPath = std::wstring(L" ");
+					profileInfo->profileServices[i].pstInfo->ulPstConfigFlags = 0;
+					profileInfo->profileServices[i].ulServiceType = SERVICETYPE_PST;
+
+					LPPROVIDERADMIN lpProvAdmin = NULL;
+
+					if (SUCCEEDED(lpServiceAdmin->AdminProviders((LPMAPIUID)lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb,
+						0,
+						&lpProvAdmin)))
+					{
+						// Loop providers
+						LPMAPITABLE lpProvTable = NULL;
+						LPSRestriction lpProvRes = NULL;
+						LPSRestriction lpProvResLvl1 = NULL;
+						LPSPropValue lpProvPropVal = NULL;
+						LPSRowSet lpProvRows = NULL;
+
+						// Setting up an enum and a prop tag array with the props we'll use
+						enum { iProvInstanceKey, cptaProvProps };
+						SizedSPropTagArray(cptaProvProps, sptaProvProps) = { cptaProvProps, PR_INSTANCE_KEY };
+
+						// Allocate memory for the restriction
+						EC_HRES_MSG(MAPIAllocateBuffer(
+							sizeof(SRestriction),
+							(LPVOID*)&lpProvRes), L"HrGetProfile", L"0041");
+
+						EC_HRES_MSG(MAPIAllocateBuffer(
+							sizeof(SRestriction) * 2,
+							(LPVOID*)&lpProvResLvl1), L"HrGetProfile", L"0042");
+
+						EC_HRES_MSG(MAPIAllocateBuffer(
+							sizeof(SPropValue),
+							(LPVOID*)&lpProvPropVal), L"HrGetProfile", L"0043");
+
+						// Set up restriction to query the provider table
+						lpProvRes->rt = RES_AND;
+						lpProvRes->res.resAnd.cRes = 0x00000002;
+						lpProvRes->res.resAnd.lpRes = lpProvResLvl1;
+
+						lpProvResLvl1[0].rt = RES_EXIST;
+						lpProvResLvl1[0].res.resExist.ulPropTag = PR_SERVICE_UID;
+						lpProvResLvl1[0].res.resExist.ulReserved1 = 0x00000000;
+						lpProvResLvl1[0].res.resExist.ulReserved2 = 0x00000000;
+						lpProvResLvl1[1].rt = RES_PROPERTY;
+						lpProvResLvl1[1].res.resProperty.relop = RELOP_EQ;
+						lpProvResLvl1[1].res.resProperty.ulPropTag = PR_SERVICE_UID;
+						lpProvResLvl1[1].res.resProperty.lpProp = lpProvPropVal;
+
+						lpProvPropVal->ulPropTag = PR_SERVICE_UID;
+						lpProvPropVal->Value = lpSvcRows->aRow[i].lpProps[iServiceUid].Value;
+
+						lpProvAdmin->GetProviderTable(0,
+							&lpProvTable);
+						// Query the table to get the the default profile only
+						EC_HRES_MSG(HrQueryAllRows(lpProvTable,
+							(LPSPropTagArray)&sptaProvProps,
+							lpProvRes,
+							NULL,
+							0,
+							&lpProvRows), L"HrGetProfile", L"0044");
+
+						if (lpProvRows->cRows > 0)
+						{
+
+							LPPROFSECT lpProfSection = NULL;
+							if (SUCCEEDED(lpServiceAdmin->OpenProfileSection((LPMAPIUID)lpProvRows->aRow->lpProps[iProvInstanceKey].Value.bin.lpb, NULL, MAPI_MODIFY | MAPI_FORCE_ACCESS, &lpProfSection)))
+							{
+								LPMAPIPROP lpMAPIProp = NULL;
+								if (SUCCEEDED(lpProfSection->QueryInterface(IID_IMAPIProp, (void**)&lpMAPIProp)))
+								{
+									LPSPropValue prDisplayName = NULL;
+									if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_DISPLAY_NAME_W, &prDisplayName)))
+									{
+										profileInfo->profileServices[i].pstInfo->wszDisplayName = ConvertWideCharToStdWstring(prDisplayName->Value.lpszW);
+										if (prDisplayName) MAPIFreeBuffer(prDisplayName);
+									}
+									else
+									{
+										profileInfo->profileServices[i].pstInfo->wszDisplayName = std::wstring(L" ");
+									}
+									// bind to the PR_PST_PATH_W property
+									LPSPropValue pstPathW = NULL;
+									if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_PST_PATH_W, &pstPathW)))
+									{
+										if (pstPathW)
+										{
+											profileInfo->profileServices[i].pstInfo->wszPstPath = ConvertWideCharToStdWstring(pstPathW->Value.lpszW);
+											if (pstPathW) MAPIFreeBuffer(pstPathW);
+										}
+										else
+										{
+											profileInfo->profileServices[i].pstInfo->wszPstPath = std::wstring(L" ");
+										}
+									}
+									// bind to the PR_PST_CONFIG_FLAGS property to get the ammount to sync
+									LPSPropValue pstConfigFlags = NULL;
+									if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_PST_CONFIG_FLAGS, &pstConfigFlags)))
+									{
+										if (pstConfigFlags)
+										{
+											profileInfo->profileServices[i].pstInfo->ulPstConfigFlags = pstConfigFlags->Value.l;
+											if (pstConfigFlags) MAPIFreeBuffer(pstConfigFlags);
+										}
+									}
+								}
+							}
+
+							if (lpProvRows) FreeProws(lpProvRows);
+						}
+						if (lpProvPropVal) MAPIFreeBuffer(lpProvPropVal);
+						if (lpProvResLvl1) MAPIFreeBuffer(lpProvResLvl1);
+						if (lpProvRes) MAPIFreeBuffer(lpProvRes);
+						if (lpProvTable) lpProvTable->Release();
+						//End Loop Providers
+						if (lpProvAdmin) lpProvAdmin->Release();
+					}
+
+				}
+
+			}
+			if (lpSvcRows) FreeProws(lpSvcRows);
+			// End loop services
+
+
+		}
+
+		if (lpSvcPropVal) MAPIFreeBuffer(lpSvcPropVal);
+		if (lpsvcResLvl1) MAPIFreeBuffer(lpsvcResLvl1);
+		if (lpSvcRes) MAPIFreeBuffer(lpSvcRes);
+		if (lpServiceTable) lpServiceTable->Release();
+		if (lpServiceAdmin) lpServiceAdmin->Release();
+
+	}
+	// End process services
+
+Error:
+	goto Cleanup;
+Cleanup:
+	// Free up memory
+	if (lpProfRows) FreeProws(lpProfRows);
+	if (lpProfTable) lpProfTable->Release();
+	if (lpProfAdmin) lpProfAdmin->Release();
+
+	return hRes;
+}
+
+
+#pragma endregion
+
+#pragma region // PST Methods //
+
+HRESULT HrCreatePstService(LPSERVICEADMIN2 lpServiceAdmin2, LPMAPIUID * lppServiceUid, LPWSTR lpszServiceName, ULONG ulResourceFlags, ULONG ulPstConfigFlag, LPWSTR lpszPstPathW, LPWSTR lpszDisplayName)
+{
+	HRESULT			hRes = S_OK; // Result code returned from MAPI calls.
+	SPropValue		rgvalStoreProvider[3];
+	MAPIUID			uidService = { 0 };
+	LPMAPIUID		lpServiceUid = &uidService;
+	LPPROFSECT		lpProfSect = NULL;
+	LPPROFSECT		lpStoreProviderSect = nullptr;
+
+	// Adds a message service to the current profile and returns that newly added service UID.
+	EC_HRES_MSG(lpServiceAdmin2->CreateMsgServiceEx((LPTSTR)ConvertWideCharToMultiByte(lpszServiceName), (LPTSTR)ConvertWideCharToMultiByte(lpszDisplayName), NULL, 0, &uidService), L"HrCreatePstService", L"0007");
+
+	EC_HRES_MSG(lpServiceAdmin2->OpenProfileSection(&uidService,
+		0,
+		MAPI_FORCE_ACCESS | MAPI_MODIFY,
+		&lpProfSect), L"HrCreatePstService", L"0055");
+
+
+	LPMAPIPROP lpMapiProp = NULL;
+	EC_HRES_MSG(lpProfSect->QueryInterface(IID_IMAPIProp, (LPVOID*)&lpMapiProp), L"HrCreatePstService", L"0055_1");
+
+	if (lpMapiProp)
+	{
+		LPSPropValue prResourceFlags;
+		MAPIAllocateBuffer(sizeof(SPropValue), (LPVOID*)&prResourceFlags);
+
+		prResourceFlags->ulPropTag = PR_RESOURCE_FLAGS;
+		prResourceFlags->Value.l = ulResourceFlags;
+		EC_HRES_MSG(lpMapiProp->SetProps(1, prResourceFlags, NULL), L"HrCreateService", L"0008_3");
+
+		EC_HRES_MSG(lpMapiProp->SaveChanges(FORCE_SAVE), L"HrCreateService", L"0008_4");
+		MAPIFreeBuffer(prResourceFlags);
+		lpMapiProp->Release();
+	}
+
+	MAPIAllocateBuffer(sizeof(LPPROFSECT), (LPVOID*)&lpStoreProviderSect);
+	ZeroMemory(lpStoreProviderSect, sizeof(LPPROFSECT));
+
+	EC_HRES_MSG(HrGetSections(lpServiceAdmin2, lpServiceUid, NULL, &lpStoreProviderSect), L"HrCreatePstService", L"0056");
+
+	// Set up a SPropValue array for the properties you need to configure.
+	/*
+	PR_PST_CONFIG_FLAGS
+	PR_PST_PATH_W
+	PR_DISPLAY_NAME_W
+	*/
+
+	ZeroMemory(&rgvalStoreProvider[0], sizeof(SPropValue));
+	rgvalStoreProvider[0].ulPropTag = PR_PST_CONFIG_FLAGS;
+	rgvalStoreProvider[0].Value.l = ulPstConfigFlag;
+
+	ZeroMemory(&rgvalStoreProvider[1], sizeof(SPropValue));
+	rgvalStoreProvider[1].ulPropTag = PR_PST_PATH_W;
+	rgvalStoreProvider[1].Value.lpszW = lpszPstPathW;
+
+	ZeroMemory(&rgvalStoreProvider[2], sizeof(SPropValue));
+	rgvalStoreProvider[2].ulPropTag = PR_DISPLAY_NAME_W;
+	rgvalStoreProvider[2].Value.lpszW = lpszDisplayName;
+
+	EC_HRES_MSG(lpStoreProviderSect->SetProps(
+		2,
+		rgvalStoreProvider,
+		nullptr), L"HrCreateService", L"0057");
+
+	EC_HRES_MSG(lpStoreProviderSect->SaveChanges(KEEP_OPEN_READWRITE), L"HrCreateService", L"0058");
+
+	goto Cleanup;
+Error:
+	goto Cleanup;
+
+Cleanup:
+	// Clean up
+	if (lpStoreProviderSect) lpStoreProviderSect->Release();
+	if (lpProfSect) lpProfSect->Release();
+	return hRes;
+}
+
+#pragma endregion
+
 #pragma region // Delegate Mailbox Methods //
 
 // HrAddDelegateMailboxModern
@@ -2241,11 +3009,20 @@ cleanup:
 }
 
 // HrCreateMsemsServiceROH
-// Creates a new message store service and sets the following properties:
-// 
-//
-//
-
+// Creates a new message store service and sets it for RPC / HTTP with the following properties:
+// - PR_DISPLAY_NAME_A
+// - PR_PROFILE_HOME_SERVER
+// - PR_PROFILE_USER
+// - PR_PROFILE_HOME_SERVER_DN
+// - PR_PROFILE_CONFIG_FLAGS
+// - PR_ROH_PROXY_SERVER
+// - PR_ROH_FLAGS
+// - PR_ROH_PROXY_AUTH_SCHEME
+// - PR_PROFILE_AUTH_PACKAGE
+// - PR_PROFILE_SERVER_FQDN_W
+// Configures the Store Provider with the following properties:
+// - PR_PROFILE_USER_SMTP_EMAIL_ADDRESS_W
+// - PR_DIPLAY_NAME_W
 HRESULT HrCreateMsemsServiceROH(LPSERVICEADMIN2 lpServiceAdmin2,
 	LPMAPIUID * lppServiceUid,
 	LPWSTR lpszSmtpAddress, 
@@ -2431,6 +3208,144 @@ HRESULT HrCreateMsemsServiceROH(LPSERVICEADMIN2 lpServiceAdmin2,
 
 		hRes = lpStoreProviderSect->SetProps(
 			2,
+			rgvalStoreProvider,
+			nullptr);
+
+		if (FAILED(hRes))
+		{
+			goto Error;
+		}
+
+		printf("Saving changes.\n");
+		hRes = lpStoreProviderSect->SaveChanges(KEEP_OPEN_READWRITE);
+
+		if (FAILED(hRes))
+		{
+			goto Error;
+		}
+
+	}
+	goto cleanup;
+
+
+Error:
+	printf("ERROR: hRes = %0x\n", hRes);
+
+cleanup:
+	// Clean up
+	if (lpStoreProviderSect) lpStoreProviderSect->Release();
+	if (lpEmsMdbProfSect) lpEmsMdbProfSect->Release();
+	if (lpProfSect) lpProfSect->Release();
+	printf("Done cleaning up.\n");
+	return hRes;
+}
+
+// HrCreateMsemsServiceMOH
+// Creates a new message store service and sets it for MAPI / HTTP with the following properties:
+// - PR_PROFILE_CONFIG_FLAGS
+// - PR_PROFILE_AUTH_PACKAGE
+// - PR_PROFILE_MAPIHTTP_ADDRESSBOOK_INTERNAL_URL
+// - PR_PROFILE_MAPIHTTP_ADDRESSBOOK_EXTERNAL_URL
+// - PR_PROFILE_USER
+// Configures the Store Provider with the following properties:
+// - PR_PROFILE_USER_SMTP_EMAIL_ADDRESS_W
+// - PR_DIPLAY_NAME_W
+// - PR_PROFILE_MAPIHTTP_MAILSTORE_EXTERNAL_URL
+// - PR_PROFILE_MAPIHTTP_MAILSTORE_INTERNAL_URL
+HRESULT HrCreateMsemsServiceMOH(LPSERVICEADMIN2 lpServiceAdmin2,
+	LPMAPIUID * lppServiceUid,
+	LPWSTR lpszSmtpAddress,
+	LPWSTR lpszMailboxDn,
+	LPWSTR lpszMailStoreInternalUrl,
+	LPWSTR lpszMailStoreExternalUrl,
+	LPWSTR lpszAddressBookInternalUrl,
+	LPWSTR lpszAddressBookExternalUrl)
+{
+	HRESULT hRes = S_OK; // Result code returned from MAPI calls.
+	SPropValue rgvalSvc[4];
+	SPropValue rgvalEmsMdbSect[14]; // Property value structure to hold configuration info.
+	SPropValue rgvalStoreProvider[5];
+	LPPROVIDERADMIN lpProvAdmin = NULL;
+	LPMAPIUID lpServiceUid = NULL;
+	LPMAPIUID lpEmsMdbSectionUid = NULL;
+	MAPIUID				uidService = { 0 };
+	LPMAPIUID			lpuidService = &uidService;
+	LPPROFSECT lpProfSect = NULL;
+	LPPROFSECT		lpEmsMdbProfSect = nullptr;
+	LPPROFSECT lpStoreProviderSect = nullptr;
+	ULONG			cValues = 0;
+	LPSPropValue	lpProps = nullptr;
+
+	// Enumeration for convenience.
+	enum { iDispName, iSvcName, iSvcUID, iResourceFlags, iEmsMdbSectionUid, cptaSvc };
+	SizedSPropTagArray(cptaSvc, sptCols) = { cptaSvc, PR_DISPLAY_NAME, PR_SERVICE_NAME, PR_SERVICE_UID, PR_RESOURCE_FLAGS, PR_EMSMDB_SECTION_UID };
+	std::wstring wszSmtpAddress = ConvertWideCharToStdWstring(lpszSmtpAddress);
+	wszSmtpAddress = L"SMTP:" + wszSmtpAddress;
+	//// This structure tells our GetProps call what properties to get from the global profile section.
+	//SizedSPropTagArray(1, sptGlobal) = { 1, PR_STORE_PROVIDERS };
+
+	printf("Creating MsgService.\n");
+	// Adds a message service to the current profile and returns that newly added service UID.
+	hRes = lpServiceAdmin2->CreateMsgServiceEx((LPTSTR)"MSEMS", (LPTSTR)"Microsoft Exchange", NULL, 0, &uidService);
+	if (FAILED(hRes)) goto Error;
+
+	printf("Configuring MsgService.\n");
+
+	ZeroMemory(&rgvalSvc[0], sizeof(SPropValue));
+	rgvalSvc[0].ulPropTag = PR_PROFILE_CONFIG_FLAGS;
+	rgvalSvc[0].Value.l = CONFIG_PROMPT_FOR_CREDENTIALS | CONFIG_SHOW_CONNECT_UI;
+
+	ZeroMemory(&rgvalSvc[1], sizeof(SPropValue));
+	rgvalSvc[1].ulPropTag = PR_PROFILE_AUTH_PACKAGE;
+	rgvalSvc[1].Value.l = RPC_C_AUTHN_GSS_NEGOTIATE;
+
+	ZeroMemory(&rgvalSvc[2], sizeof(SPropValue));
+	rgvalSvc[2].ulPropTag = PR_PROFILE_MAPIHTTP_ADDRESSBOOK_INTERNAL_URL;
+	rgvalSvc[2].Value.lpszW = lpszAddressBookInternalUrl;
+
+	ZeroMemory(&rgvalSvc[3], sizeof(SPropValue));
+	rgvalSvc[3].ulPropTag = PR_PROFILE_MAPIHTTP_ADDRESSBOOK_INTERNAL_URL;
+	rgvalSvc[3].Value.lpszW = lpszAddressBookExternalUrl;
+
+	ZeroMemory(&rgvalSvc[4], sizeof(SPropValue));
+	rgvalSvc[4].ulPropTag = PR_PROFILE_USER;
+	rgvalSvc[4].Value.lpszA = ConvertWideCharToMultiByte(lpszMailboxDn);
+
+	// Create the message service with the above properties.
+	hRes = lpServiceAdmin2->ConfigureMsgService(&uidService,
+		NULL,
+		0,
+		5,
+		rgvalSvc);
+	if (FAILED(hRes)) goto Error;
+
+	printf("Accessing MsgService.\n");
+
+	//Updating store provider 
+	if (lpStoreProviderSect)
+	{
+		ZeroMemory(&rgvalStoreProvider[0], sizeof(SPropValue));
+		rgvalStoreProvider[0].ulPropTag = PR_PROFILE_USER_SMTP_EMAIL_ADDRESS_W;
+		rgvalStoreProvider[0].Value.lpszW = (LPWSTR)wszSmtpAddress.c_str();
+
+		ZeroMemory(&rgvalStoreProvider[1], sizeof(SPropValue));
+		rgvalStoreProvider[1].ulPropTag = PR_PROFILE_MAPIHTTP_MAILSTORE_EXTERNAL_URL;
+		rgvalStoreProvider[1].Value.lpszW = lpszAddressBookExternalUrl;
+
+		ZeroMemory(&rgvalStoreProvider[2], sizeof(SPropValue));
+		rgvalStoreProvider[2].ulPropTag = PR_DISPLAY_NAME_W;
+		rgvalStoreProvider[2].Value.lpszW = lpszSmtpAddress;
+
+		ZeroMemory(&rgvalStoreProvider[3], sizeof(SPropValue));
+		rgvalStoreProvider[3].ulPropTag = PR_PROFILE_MAPIHTTP_MAILSTORE_INTERNAL_URL;
+		rgvalStoreProvider[3].Value.lpszW = lpszMailStoreInternalUrl;
+
+		//ZeroMemory(&rgvalStoreProvider[4], sizeof(SPropValue));
+		//rgvalStoreProvider[4].ulPropTag = PR_PROFILE_USER;
+		//rgvalStoreProvider[4].Value.lpszA = ConvertWideCharToMultiByte(lpszMailboxDn);;
+
+		hRes = lpStoreProviderSect->SetProps(
+			4,
 			rgvalStoreProvider,
 			nullptr);
 

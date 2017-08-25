@@ -24,16 +24,19 @@ enum { PSTTYPE_ANSI = 0, PSTTYPE_UNICODE = 0x80000000};
 
 struct MailboxInfo
 {
-	std::wstring szDisplayName;
+	std::wstring wszDisplayName;
+	std::wstring wszEmailAddress;
 	BOOL bDefaultMailbox;
 	ULONG ulEntryType;
+	ULONG ulProfileType;
 };
 
 struct PstInfo
 {
-	std::wstring szDisplayName;
-	std::wstring szPstPath; // PR_PST_PATH_W
-	ULONG ulPstType; // PR_PST_CONFIG_FLAGS
+	std::wstring wszDisplayName;
+	std::wstring wszPstPath; // PR_PST_PATH_W
+	ULONG ulPstType; 
+	ULONG ulPstConfigFlags; // PR_PST_CONFIG_FLAGS
 };
 
 struct MapiProperty
@@ -50,8 +53,9 @@ struct ProviderInfo
 
 struct ExchangeAccountInfo
 {
-	std::wstring szServiceDisplayName;
-	std::wstring szDatafilePath;
+	std::wstring wszDisplayName;
+	std::wstring wszDatafilePath;
+	std::wstring wszEmailAddress;
 	BOOL bCachedModeEnabledOwner;
 	BOOL bCachedModeEnabledShared;
 	BOOL bCachedModeEnabledPublicFolders;
@@ -64,6 +68,7 @@ struct ExchangeAccountInfo
 	std::wstring wszHomeServerName;
 	std::wstring wszHomeServerDN;
 	MailboxInfo * accountMailboxes;
+	ULONG ulProfileConfigFlags;
 };
 
 struct AddressBookProviderInfo
@@ -93,9 +98,11 @@ struct OtherServiceInfo
 
 struct ServiceInfo
 {
-	std::wstring szServiceName;
+	std::wstring wszServiceName;
+	std::wstring wszDisplayName;
 	ULONG ulServiceType; // MSEMS = SERVICETYPE_EXCHANGEACCOUNT; EMABLT = SERVICETYPE_ADDRESSBOOKPROVIDER; MSPST_MS/MSUPST_MS = SERVICETYPE_PST; EAS = SERVICETYPE_EASACCOUNT;
-	BOOL bDefaultStore; // PR_RESOURCE_FLAGS = SERVICE_DEFAULT_STORE
+	BOOL bDefaultStore; // PR_RESOURCE_FLAGS = 
+	ULONG ulResourceFlags; // PR_RESOURCE_FLAGS = SERVICE_DEFAULT_STORE
 	EasAccountInfo * easAccountInfo;
 	ExchangeAccountInfo * exchangeAccountInfo;
 	AddressBookProviderInfo * addressBookProviderInfo;
@@ -104,7 +111,7 @@ struct ServiceInfo
 
 struct ProfileInfo
 {
-	std::wstring szProfileName;
+	std::wstring wszProfileName;
 	BOOL bDefaultProfile;
 	ULONG ulServiceCount;
 	ServiceInfo * profileServices;

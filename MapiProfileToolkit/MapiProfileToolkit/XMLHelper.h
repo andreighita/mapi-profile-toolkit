@@ -246,7 +246,7 @@ void ExportXML(ULONG cProfileInfo, ProfileInfo * profileInfo, std::wstring szExp
 		// Add ProfileName node and value
 		IXMLDOMElement *pProfileNameNode = NULL;
 		CHK_HR(CreateAndAddElementNode(pXMLDom, L"ProfileName", L"\n\t", pProfileNode, &pProfileNameNode));
-		CHK_HR(CreateAndAddTextNode(pXMLDom, profileInfo[i].szProfileName.c_str(), pProfileNameNode));
+		CHK_HR(CreateAndAddTextNode(pXMLDom, profileInfo[i].wszProfileName.c_str(), pProfileNameNode));
 		SAFE_RELEASE(pProfileNameNode);
 		// Add ProfileIndex node and value
 		IXMLDOMElement *pProfileIndexNode = NULL;
@@ -280,7 +280,7 @@ void ExportXML(ULONG cProfileInfo, ProfileInfo * profileInfo, std::wstring szExp
 					// Add ServiceName node and value
 					IXMLDOMElement *pServiceNameNode = NULL;
 					CHK_HR(CreateAndAddElementNode(pXMLDom, L"AccountName", L"\n\t", pServiceNode, &pServiceNameNode));
-					CHK_HR(CreateAndAddTextNode(pXMLDom, profileInfo[i].profileServices[j].szServiceName.c_str(), pServiceNameNode));
+					CHK_HR(CreateAndAddTextNode(pXMLDom, profileInfo[i].profileServices[j].wszServiceName.c_str(), pServiceNameNode));
 					SAFE_RELEASE(pServiceNameNode);
 					// Add ServiceIndex node and value
 					IXMLDOMElement *pServiceIndexNode = NULL;
@@ -290,7 +290,7 @@ void ExportXML(ULONG cProfileInfo, ProfileInfo * profileInfo, std::wstring szExp
 					// Add ServiceDisplayName node and value
 					IXMLDOMElement *pServiceDisplayNameNode = NULL;
 					CHK_HR(CreateAndAddElementNode(pXMLDom, L"AccountDisplayName", L"\n\t", pServiceNode, &pServiceDisplayNameNode));
-					CHK_HR(CreateAndAddTextNode(pXMLDom, profileInfo[i].profileServices[j].exchangeAccountInfo->szServiceDisplayName.c_str(), pServiceDisplayNameNode));
+					CHK_HR(CreateAndAddTextNode(pXMLDom, profileInfo[i].profileServices[j].exchangeAccountInfo->wszDisplayName.c_str(), pServiceDisplayNameNode));
 					SAFE_RELEASE(pServiceDisplayNameNode);
 					// Add DefaultService node and value
 					IXMLDOMElement *pDefaultServiceNode = NULL;
@@ -300,7 +300,7 @@ void ExportXML(ULONG cProfileInfo, ProfileInfo * profileInfo, std::wstring szExp
 					// Add DatafilePath node and value
 					IXMLDOMElement *pDatafilePathNode = NULL;
 					CHK_HR(CreateAndAddElementNode(pXMLDom, L"DatafilePath", L"\n\t", pServiceNode, &pDatafilePathNode));
-					CHK_HR(CreateAndAddTextNode(pXMLDom, profileInfo[i].profileServices[j].exchangeAccountInfo->szDatafilePath.c_str(), pDatafilePathNode));
+					CHK_HR(CreateAndAddTextNode(pXMLDom, profileInfo[i].profileServices[j].exchangeAccountInfo->wszDatafilePath.c_str(), pDatafilePathNode));
 					SAFE_RELEASE(pDatafilePathNode);
 					// Add UnresolvedServer node and value
 					IXMLDOMElement *pUnresolvedServerNode = NULL;
@@ -372,7 +372,7 @@ void ExportXML(ULONG cProfileInfo, ProfileInfo * profileInfo, std::wstring szExp
 							// Add DisplayName node and value
 							IXMLDOMElement *pDisplayNameNode = NULL;
 							CHK_HR(CreateAndAddElementNode(pXMLDom, L"DisplayName", L"\n\t", pMailboxNode, &pDisplayNameNode));
-							CHK_HR(CreateAndAddTextNode(pXMLDom, profileInfo[i].profileServices[j].exchangeAccountInfo->accountMailboxes[k].szDisplayName.c_str(), pDisplayNameNode));
+							CHK_HR(CreateAndAddTextNode(pXMLDom, profileInfo[i].profileServices[j].exchangeAccountInfo->accountMailboxes[k].wszDisplayName.c_str(), pDisplayNameNode));
 							SAFE_RELEASE(pDisplayNameNode);
 							// Add MailboxIndex node and value
 							IXMLDOMElement *pMailboxIndexNode = NULL;
@@ -419,7 +419,7 @@ void ExportXML(ULONG cProfileInfo, ProfileInfo * profileInfo, std::wstring szExp
 					// Add ServiceName node and value
 					IXMLDOMElement *pServiceNameNode = NULL;
 					CHK_HR(CreateAndAddElementNode(pXMLDom, L"ServiceName", L"\n\t", pServiceNode, &pServiceNameNode));
-					CHK_HR(CreateAndAddTextNode(pXMLDom, profileInfo[i].profileServices[j].szServiceName.c_str(), pServiceNameNode));
+					CHK_HR(CreateAndAddTextNode(pXMLDom, profileInfo[i].profileServices[j].wszServiceName.c_str(), pServiceNameNode));
 					SAFE_RELEASE(pServiceNameNode);
 					// Add ServiceIndex node and value
 					IXMLDOMElement *pServiceIndexNode = NULL;
@@ -429,12 +429,12 @@ void ExportXML(ULONG cProfileInfo, ProfileInfo * profileInfo, std::wstring szExp
 					// Add PstName node and value
 					IXMLDOMElement *pPstNameNode = NULL;
 					CHK_HR(CreateAndAddElementNode(pXMLDom, L"PstName", L"\n\t", pServiceNode, &pPstNameNode));
-					CHK_HR(CreateAndAddTextNode(pXMLDom, profileInfo[i].profileServices[j].pstInfo->szDisplayName.c_str(), pPstNameNode));
+					CHK_HR(CreateAndAddTextNode(pXMLDom, profileInfo[i].profileServices[j].pstInfo->wszDisplayName.c_str(), pPstNameNode));
 					SAFE_RELEASE(pPstNameNode);
 					// Add DatafilePath node and value
 					IXMLDOMElement *pDatafilePathNode = NULL;
 					CHK_HR(CreateAndAddElementNode(pXMLDom, L"DatafilePath", L"\n\t", pServiceNode, &pDatafilePathNode));
-					CHK_HR(CreateAndAddTextNode(pXMLDom, profileInfo[i].profileServices[j].pstInfo->szPstPath.c_str(), pDatafilePathNode));
+					CHK_HR(CreateAndAddTextNode(pXMLDom, profileInfo[i].profileServices[j].pstInfo->wszPstPath.c_str(), pDatafilePathNode));
 					SAFE_RELEASE(pDatafilePathNode);
 					// Add EntryType node and value
 					IXMLDOMElement *pEntryTypeNode = NULL;

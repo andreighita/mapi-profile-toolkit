@@ -55,17 +55,17 @@
 																} \
 								} while (0)
 
-#define EC_HRES_MSG(_hRes, uidErrorMsg) \
+#define EC_HRES_MSG(_hRes, wszMessage, wszTag) \
 	do { \
 		hRes = _hRes; \
 		if (FAILED(hRes)) \
 																		{ \
-			std::cout << "FAILED! hr = " << uidErrorMsg << std::hex << hRes << ".  LINE = " << std::dec << __LINE__ << "\n"; \
-			std::cout << " >>> " << (wchar_t*) L#_hRes <<  "\n"; \
+			std::wcout << L"METHOD: " << wszMessage << L". Tag: "<< wszTag << L"."; \
+			std::wcout << L"FILE: " << __FILEW__ << L".  LINE: " << std::dec << __LINE__ << L"\n"; \
+			std::wcout << "HRESULT: " << (wchar_t*) L#_hRes <<  L"\n"; \
 			goto Error; \
 																		} \
 									} while (0)
-
 
 std::wstring ConvertStringToWstring(std::string & szString);
 LPWSTR ConvertStdStringToWideChar(std::string szValue);
