@@ -2718,7 +2718,7 @@ HRESULT HrCreateMsemsServiceModernExt(LPSERVICEADMIN2 lpServiceAdmin2,
 	HRESULT			hRes = S_OK; // Result code returned from MAPI calls.
 	SPropValue		rgvalEmsMdbSect[7]; // Property value structure to hold configuration info.
 	SPropValue		rgvalStoreProvider[2];
-	SPropValue		rgvalService[1];
+//	SPropValue		rgvalService[1];
 	MAPIUID			uidService = { 0 };
 	LPMAPIUID		lpServiceUid = &uidService;
 	LPPROFSECT		lpProfSect = NULL;
@@ -2857,7 +2857,7 @@ HRESULT HrCreateMsemsServiceModern(LPSERVICEADMIN2 lpServiceAdmin2,
 	HRESULT			hRes = S_OK; // Result code returned from MAPI calls.
 	SPropValue		rgvalEmsMdbSect[5]; // Property value structure to hold configuration info.
 	SPropValue		rgvalStoreProvider[2];
-	SPropValue		rgvalService[1];
+//	SPropValue		rgvalService[1];
 	MAPIUID			uidService = { 0 };
 	LPMAPIUID		lpServiceUid = &uidService;
 	LPPROFSECT		lpProfSect = NULL;
@@ -3263,7 +3263,7 @@ HRESULT HrCreateMsemsServiceMOH(LPSERVICEADMIN2 lpServiceAdmin2,
 {
 	HRESULT hRes = S_OK; // Result code returned from MAPI calls.
 	SPropValue rgvalSvc[4];
-	SPropValue rgvalEmsMdbSect[14]; // Property value structure to hold configuration info.
+//	SPropValue rgvalEmsMdbSect[14]; // Property value structure to hold configuration info.
 	SPropValue rgvalStoreProvider[5];
 	LPPROVIDERADMIN lpProvAdmin = NULL;
 	LPMAPIUID lpServiceUid = NULL;

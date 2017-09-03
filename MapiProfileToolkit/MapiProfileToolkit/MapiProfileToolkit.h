@@ -12,5 +12,12 @@
 */
 
 #pragma once
+#include "stdafx.h"
+#include "ToolkitObjects.h"
 
+BOOL Is64BitProcess(void);
 BOOL IsCorrectBitness();
+BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts);
+BOOL ParseArgsProfile(int argc, _TCHAR* argv[], ProfileOptions * profileOptions);
+BOOL ParseArgsService(int argc, _TCHAR* argv[], ServiceOptions * serviceOptions);
+BOOL ParseArgsMailbox(int argc, _TCHAR* argv[], MailboxOptions * mailboxOptions);

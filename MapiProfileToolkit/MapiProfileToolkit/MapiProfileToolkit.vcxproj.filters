@@ -80,6 +80,10 @@
     <ClInclude Include="StringOperations.h">
       <Filter>Utility</Filter>
     </ClInclude>
+    <ClInclude Include="EdkMdb.h" />
+    <ClInclude Include="abhelp.h" />
+    <ClInclude Include="CBaseScenario.h" />
+    <ClInclude Include="CProfileScenario.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MapiProfileToolkit.cpp" />
@@ -111,5 +115,7 @@
     <ClCompile Include="StringOperations.cpp">
       <Filter>Utility</Filter>
     </ClCompile>
+    <ClCompile Include="CBaseScenario.cpp" />
+    <ClCompile Include="CProfileScenario.cpp" />
   </ItemGroup>
 </Project>

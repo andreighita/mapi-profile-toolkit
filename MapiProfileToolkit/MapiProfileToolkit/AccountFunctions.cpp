@@ -701,21 +701,21 @@ HRESULT ProcessAccounts(LPMAPISESSION lpSession, LPWSTR lpProfileName, RuntimeOp
 					//	}
 					//}
 					//else 
-					if (INPUTMODE_USERINPUT == runtimeOptions.ulRunningMode)
-					{
+					//if (INPUTMODE_USERINPUT == runtimeOptions.ulRunningMode)
+					//{
 
-						if (szAccountName.find(runtimeOptions.szOldDomainName) != std::wstring::npos)
-						{
-							std::wstring szNewSmtpAddress = szAccountName;
-							int pos = szNewSmtpAddress.find(runtimeOptions.szOldDomainName);
-							int len = runtimeOptions.szOldDomainName.length();
-							szNewSmtpAddress.replace(pos, len, runtimeOptions.szNewDomainName);
-							wprintf(L"Updating account name to: %s.\n", (LPWSTR)szNewSmtpAddress.c_str());
-							// If the current account name is not the primary SMTP address we then attempt to 
-							// update the account name with the correct value
-							EC_HRES(UpdateAcctName(lpSession, (LPWSTR)runtimeOptions.szProfileName.c_str(), pOlkAccounts[i].lAcctId, (LPWSTR)szNewSmtpAddress.c_str()));
-						}
-					}
+					//	if (szAccountName.find(runtimeOptions.szOldDomainName) != std::wstring::npos)
+					//	{
+					//		std::wstring szNewSmtpAddress = szAccountName;
+					//		int pos = szNewSmtpAddress.find(runtimeOptions.szOldDomainName);
+					//		int len = runtimeOptions.szOldDomainName.length();
+					//		szNewSmtpAddress.replace(pos, len, runtimeOptions.szNewDomainName);
+					//		wprintf(L"Updating account name to: %s.\n", (LPWSTR)szNewSmtpAddress.c_str());
+					//		// If the current account name is not the primary SMTP address we then attempt to 
+					//		// update the account name with the correct value
+					//		EC_HRES(UpdateAcctName(lpSession, (LPWSTR)runtimeOptions.szProfileName.c_str(), pOlkAccounts[i].lAcctId, (LPWSTR)szNewSmtpAddress.c_str()));
+					//	}
+					/*}*/
 				}
 				else
 				{

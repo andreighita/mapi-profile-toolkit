@@ -9,7 +9,7 @@
 #include <mapispi.h>
 #include <imessage.h>
 #include <tnef.h>
-#include <abhelp.h>
+#include "abhelp.h"
 
 #include <strsafe.h>
 

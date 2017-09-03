@@ -29,6 +29,8 @@
 #include "RegistryHelper.h"
 #include "Logger.h"
 
+// Is64BitProcess
+// Returns true if 64 bit process or false if 32 bit.
 BOOL Is64BitProcess(void)
 {
 #if defined(_WIN64)
@@ -38,6 +40,9 @@ BOOL Is64BitProcess(void)
 #endif
 }
 
+// IsCorrectBitness
+// Matches the App bitness against Outlook's bitness to avoid MAPI version errors at startup
+// The execution will only continue if the bitness is matched.
 BOOL _cdecl IsCorrectBitness()
 {
 
@@ -106,13 +111,18 @@ BOOL _cdecl IsCorrectBitness()
 				else return FALSE;
 			}
 		}
+		else if (szOLVer == L"Outlook.Application.12")
+		{
+			if (Is64BitProcess())
+				return FALSE;
+		}
 		else return FALSE;
 		return FALSE;
 	}
 	else return FALSE;
 }
 
-BOOL RunScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
+BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 {
 	if (!pRunOpts) return FALSE;
 	ZeroMemory(pRunOpts, sizeof(RuntimeOptions));
@@ -129,171 +139,115 @@ BOOL RunScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 			}
 			switch (tolower(argv[i][1]))
 			{
-			case '4':
-				if (tolower(argv[i][2]) == 'c')
-				{
-					if (i + 1 < argc)
-					{
-						std::wstring runningMode = argv[i + 1];
-						std::transform(runningMode.begin(), runningMode.end(), runningMode.begin(), ::tolower);
-						if (runningMode == L"all")
-						{
-							pRunOpts->ulProfileMode = (ULONG)PROFILEMODE_ALL;
-							i++;
-						}
-						else if (runningMode == L"one")
-						{
-							pRunOpts->ulProfileMode = (ULONG)PROFILEMODE_SPECIFIC;
-							i++;
-						}
-						else if (runningMode == L"default")
-						{
-							pRunOpts->ulProfileMode = (ULONG)PROFILEMODE_DEFAULT;
-							i++;
-						}
-						else
-						{
-							return false;
-						}
-					}
-				}
-				else if (tolower(argv[i][2]) == 'n')
-				{
-					if (i + 1 < argc)
-					{
-						pRunOpts->szProfileName = argv[i + 1];
-						i++;
-					}
-					else return false;
-				}
-				else return false;
-				break;
-			case 'c':
-				if (tolower(argv[i][2]) == 'm')
-				{
-					if ((tolower(argv[i][3]) == 'o'))
-					{
-						if (i + 1 < argc)
-						{
-							std::wstring runningMode = argv[i + 1];
-							std::transform(runningMode.begin(), runningMode.end(), runningMode.begin(), ::tolower);
-							if (runningMode == L"enable")
-							{
-								pRunOpts->ulCachedModeOwner = CACHEDMODE_ENABLED;
-								pRunOpts->ulReadWriteMode = READWRITEMODE_WRITE;
-								i++;
-							}
-							else if (runningMode == L"disable")
-							{
-								pRunOpts->ulCachedModeOwner = CACHEDMODE_DISABLED;
-								pRunOpts->ulReadWriteMode = READWRITEMODE_WRITE;
-								i++;
-							}
-							else
-							{
-								return false;
-							}
-						}
-						else return false;
-					}
-					else if ((tolower(argv[i][3]) == 'm'))
-					{
-						if (i + 1 < argc)
-						{
-							pRunOpts->iCachedModeMonths = _wtoi(argv[i + 1]);
-							i++;
-						}
-						else return false;
-					}
-					else if ((tolower(argv[i][3]) == 's'))
-					{
-						if (i + 1 < argc)
-						{
-
-							std::wstring runningMode = argv[i + 1];
-							std::transform(runningMode.begin(), runningMode.end(), runningMode.begin(), ::tolower);
-							if (runningMode == L"enable")
-							{
-								pRunOpts->ulCachedModeShared = CACHEDMODE_ENABLED;
-								pRunOpts->ulReadWriteMode = READWRITEMODE_WRITE;
-								i++;
-							}
-							else if (runningMode == L"disable")
-							{
-								pRunOpts->ulCachedModeShared = CACHEDMODE_DISABLED;
-								pRunOpts->ulReadWriteMode = READWRITEMODE_WRITE;
-								i++;
-							}
-							else
-							{
-								return false;
-							}
-						}
-						else return false;
-					}
-					else if ((tolower(argv[i][3]) == 'p'))
-					{
-						if (i + 1 < argc)
-						{
-
-							std::wstring runningMode = argv[i + 1];
-							std::transform(runningMode.begin(), runningMode.end(), runningMode.begin(), ::tolower);
-							if (runningMode == L"enable")
-							{
-								pRunOpts->ulCachedModePublicFolder = CACHEDMODE_ENABLED;
-								pRunOpts->ulReadWriteMode = READWRITEMODE_WRITE;
-								i++;
-							}
-							else if (runningMode == L"disable")
-							{
-								pRunOpts->ulCachedModePublicFolder = CACHEDMODE_DISABLED;
-								pRunOpts->ulReadWriteMode = READWRITEMODE_WRITE;
-								i++;
-							}
-							else
-							{
-								return false;
-							}
-						}
-						else return false;
-					}
-					else return false;
-					break;
-				}
-				else return false;
+			case 'p':
+				pRunOpts->ulScenario = SCENARIO_PROFILE;
 				break;
 			case 's':
-				if (tolower(argv[i][2]) == 'i')
+				pRunOpts->ulScenario = SCENARIO_SERVICE;
+				break;
+			case 'm':
+				pRunOpts->ulScenario = SCENARIO_MAILBOX;
+				break;
+			case 'd':
+				pRunOpts->ulScenario = SCENARIO_DATAFILE;
+				break;
+			case 'l':
+				pRunOpts->ulScenario = SCENARIO_LDAP;
+				break;
+			case 'c':
+				pRunOpts->ulScenario = SCENARIO_CUSTOM;
+				break;
+			default:
+				return false;
+			}
+			break;
+		case '-':
+		case '/':
+		case '\\':
+			if (0 == argv[i][1])
+			{
+				return false;
+			}
+			switch (tolower(argv[i][1]))
+			{
+			case 't':
+				if (i + 1 < argc)
 				{
-					if (i + 1 < argc)
+					std::wstring wszActionType = argv[i + 1];
+					std::transform(wszActionType.begin(), wszActionType.end(), wszActionType.begin(), ::tolower);
+					if (wszActionType == L"standard")
 					{
-						pRunOpts->ulServiceIndex = _wtoi(argv[i + 1]);
+						pRunOpts->ulActionType = ACTIONTYPE_STANDARD;
 						i++;
 					}
-					else return false;
-				}
-				else return false;
-				break;
-			case 'r':
-				if (tolower(argv[i][2]) == 'm')
-				{
-					if (i + 1 < argc)
+					else if (wszActionType == L"custom")
 					{
-						std::wstring runningMode = argv[i + 1];
-						std::transform(runningMode.begin(), runningMode.end(), runningMode.begin(), ::tolower);
-						if (runningMode == L"profile")
+						pRunOpts->ulActionType = ACTIONTYPE_CUSTOM;
+						i++;
+					}
+					else
+					{
+						return false;
+					}
+				}
+				break;
+			case 'a':
+				if (i + 1 < argc)
+				{
+					std::wstring wszAction = argv[i + 1];
+					std::transform(wszAction.begin(), wszAction.end(), wszAction.begin(), ::tolower);
+					if (pRunOpts->ulActionType == ACTIONTYPE_STANDARD)
+					{
+						if (wszAction == L"add")
 						{
-							pRunOpts->ulRunningMode = (ULONG)RUNNINGMODE_PROFILE;
+							pRunOpts->ulAction = STANDARDACTION_ADD;
 							i++;
 						}
-						else if (runningMode == L"pst")
+						else if (wszAction == L"remove")
 						{
-							pRunOpts->ulRunningMode = (ULONG)RUNNINGMODE_PST;
+							pRunOpts->ulAction = STANDARDACTION_REMOVE;
 							i++;
 						}
-						else if (runningMode == L"addressbook")
+						else if (wszAction == L"edit")
 						{
-							pRunOpts->ulProfileMode = (ULONG)PROFILEMODE_DEFAULT;
+							pRunOpts->ulAction = STANDARDACTION_EDIT;
+							i++;
+						}
+						else if (wszAction == L"list")
+						{
+							pRunOpts->ulAction = STANDARDACTION_LIST;
+							i++;
+						}
+						else
+						{
+							return false;
+						}
+					}
+					else if (pRunOpts->ulActionType == ACTIONTYPE_CUSTOM)
+					{
+						if (wszAction == L"promotemailboxtoservice")
+						{
+							pRunOpts->ulAction = CUSTOMACTION_PROMOTEMAILBOXTOSERVICE;
+							i++;
+						}
+						else if (wszAction == L"editcachedmodeconfiguration")
+						{
+							pRunOpts->ulAction = CUSTOMACTION_EDITCACHEDMODECONFIGURATION;
+							i++;
+						}
+						else if (wszAction == L"updatesmtpaddress")
+						{
+							pRunOpts->ulAction = CUSTOMACTION_UPDATESMTPADDRESS;
+							i++;
+						}
+						else if (wszAction == L"changepstlocation")
+						{
+							pRunOpts->ulAction = CUSTOMACTION_CHANGEPSTLOCATION;
+							i++;
+						}
+						else if (wszAction == L"removeorphaneddatafiles")
+						{
+							pRunOpts->ulAction = CUSTOMACTION_REMOVEORPHANEDDATAFILES;
 							i++;
 						}
 						else
@@ -302,47 +256,6 @@ BOOL RunScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 						}
 					}
 				}
-				else return false;
-				break;
-			case 'n':
-				if (tolower(argv[i][2]) == 'h')
-				{
-					pRunOpts->bNoHeader = true;
-					i++;
-				}
-				else if (tolower(argv[i][2]) == 'p')
-				{
-					pRunOpts->szPstNewPath = argv[i + 1];
-					i++;
-				}
-				else return false;
-				break;
-			case 'm':
-				if (tolower(argv[i][2]) == 'f')
-				{
-					pRunOpts->bPstMoveFiles = true;
-					i++;
-				}
-				else return false;
-				break;
-			case 'e':
-				if (tolower(argv[i][2]) == 'p')
-				{
-					std::wstring exportPath = argv[i + 1];
-					std::transform(exportPath.begin(), exportPath.end(), exportPath.begin(), ::tolower);
-					pRunOpts->szExportPath = exportPath;
-					pRunOpts->bExportMode = EXPORTMODE_EXPORT;
-					i++;
-				}
-				else return false;
-				break;
-			case 'o':
-				if (tolower(argv[i][2]) == 'p')
-				{
-					pRunOpts->szPstOldPath = argv[i + 1];
-					i++;
-				}
-				else return false;
 				break;
 			case 'l':
 				if (tolower(argv[i][2]) == 'm')
@@ -352,8 +265,19 @@ BOOL RunScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 				}
 				else if (tolower(argv[i][2]) == 'p')
 				{
-					pRunOpts->szLogFilePath = argv[i + 1];
-					Logger::Initialise(pRunOpts->szLogFilePath);
+					pRunOpts->wszLogFilePath = argv[i + 1];
+					Logger::Initialise(pRunOpts->wszLogFilePath);
+					i++;
+				}
+				else return false;
+				break;
+			case 'e':
+				if (tolower(argv[i][2]) == 'p')
+				{
+					std::wstring wszExportPath = argv[i + 1];
+					std::transform(wszExportPath.begin(), wszExportPath.end(), wszExportPath.begin(), ::tolower);
+					pRunOpts->wszExportPath = wszExportPath;
+					pRunOpts->bExportMode = EXPORTMODE_EXPORT;
 					i++;
 				}
 				else return false;
@@ -363,55 +287,45 @@ BOOL RunScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 				// display help
 				pRunOpts->ulLoggingMode = LOGGINGMODE_CONSOLE;
 				return false;
-				break;
 			}
 		}
 	}
-
-	if (pRunOpts->ulLoggingMode == loggingModeConsoleandFile && pRunOpts->szLogFilePath.empty())
+	switch (pRunOpts->ulScenario)
 	{
-		pRunOpts->ulLoggingMode = loggingModeConsole;
+	case SCENARIO_PROFILE:
+		pRunOpts->profileOptions = new ProfileOptions();
+		return ParseArgsProfile(argc, argv, pRunOpts->profileOptions);
+		break;
+	case SCENARIO_SERVICE:
+		pRunOpts->serviceOptions = new ServiceOptions();
+		return ParseArgsService(argc, argv, pRunOpts->serviceOptions);
+		break;
+	case SCENARIO_MAILBOX:
+		pRunOpts->mailboxOptions = new MailboxOptions();
+		return ParseArgsMailbox(argc, argv, pRunOpts->mailboxOptions);
+		break;
+	case SCENARIO_DATAFILE:
+		pRunOpts->dataFileOptions = new DataFileOptions();
+		return FALSE;
+		break;
+	case SCENARIO_LDAP:
+		pRunOpts->ldapOptions = new LdapOptions();
+		return FALSE;
+		break;
+	case SCENARIO_CUSTOM:
+		return FALSE;
+		break;
+	default:
+		return FALSE;
 	}
-
-	if (pRunOpts->ulLoggingMode == loggingModeFile && pRunOpts->szLogFilePath.empty())
-	{
-		pRunOpts->ulLoggingMode = loggingModeNone;
-	}
-
-	// If no profile mode or index or name specified then use default
-	if (!pRunOpts->szProfileName.empty())
-	{
-		if (pRunOpts->ulProfileMode == 0)
-		{
-			pRunOpts->ulProfileMode = PROFILEMODE_DEFAULT;
-		}
-
-	}
-
-	// If running mode is RUNNINGMODE_WRITE then expect a profile section name or a service index or a service type
-	if (pRunOpts->ulReadWriteMode == READWRITEMODE_WRITE)
-	{
-		if (pRunOpts->ulServiceIndex >= 1)
-		{
-			return true;
-		}
-		else return false;
-	}
-	return true;
 }
 
-BOOL ParseArgs(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
+BOOL ParseArgsProfile(int argc, _TCHAR* argv[], ProfileOptions * profileOptions)
 {
-	if (!pRunOpts) return FALSE;
+	if (!profileOptions) return FALSE;
+	profileOptions->bSetDefaultProfile = false;
+	profileOptions->ulProfileMode = PROFILEMODE_DEFAULT;
 
-	
-
-	// Setting running mode to Read as a default
-	pRunOpts->ulReadWriteMode = READWRITEMODE_READ;
-	pRunOpts->ulRunningMode = RUNNINGMODE_PROFILE;
-	pRunOpts->bExportMode = EXPORTMODE_NOEXPORT;
-	pRunOpts->bPstMoveFiles = false;
-	pRunOpts->ulLoggingMode = loggingModeNone;
 	for (int i = 1; i < argc; i++)
 	{
 		switch (argv[i][0])
@@ -421,7 +335,6 @@ BOOL ParseArgs(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 		case '\\':
 			if (0 == argv[i][1])
 			{
-				// Bad argument - get out of here
 				return false;
 			}
 			switch (tolower(argv[i][1]))
@@ -431,271 +344,687 @@ BOOL ParseArgs(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 				{
 					if (i + 1 < argc)
 					{
-						std::wstring runningMode = argv[i + 1];
-						std::transform(runningMode.begin(), runningMode.end(), runningMode.begin(), ::tolower);
-						if (runningMode == L"all")
+						std::wstring profileMode = argv[i + 1];
+						std::transform(profileMode.begin(), profileMode.end(), profileMode.begin(), ::tolower);
+						if (profileMode == L"all")
 						{
-							pRunOpts->ulProfileMode = (ULONG)PROFILEMODE_ALL;
+							profileOptions->ulProfileMode = (ULONG)PROFILEMODE_ALL;
 							i++;
 						}
-						else if (runningMode == L"one")
+						else if (profileMode == L"one")
 						{
-							pRunOpts->ulProfileMode = (ULONG)PROFILEMODE_SPECIFIC;
+							profileOptions->ulProfileMode = (ULONG)PROFILEMODE_ONE;
 							i++;
 						}
-						else if (runningMode == L"default")
+						else if (profileMode == L"default")
 						{
-							pRunOpts->ulProfileMode = (ULONG)PROFILEMODE_DEFAULT;
+							profileOptions->ulProfileMode = (ULONG)PROFILEMODE_DEFAULT;
 							i++;
 						}
-						else
-						{
-							return false;
-						}
+						else return false;
 					}
 				}
 				else if (tolower(argv[i][2]) == 'n')
 				{
 					if (i + 1 < argc)
 					{
-						pRunOpts->szProfileName = argv[i + 1];
+						profileOptions->wszProfileName = argv[i + 1];
 						i++;
 					}
 					else return false;
 				}
-				else return false;
-				break;
-			case 'c':
-				if (tolower(argv[i][2]) == 'm')
+				else if (tolower(argv[i][2]) == 'd')
 				{
-					if ((tolower(argv[i][3]) == 'o'))
-					{
-						if (i + 1 < argc)
-						{
-							std::wstring runningMode = argv[i + 1];
-							std::transform(runningMode.begin(), runningMode.end(), runningMode.begin(), ::tolower);
-							if (runningMode == L"enable")
-							{
-								pRunOpts->ulCachedModeOwner = CACHEDMODE_ENABLED;
-								pRunOpts->ulReadWriteMode = READWRITEMODE_WRITE;
-								i++;
-							}
-							else if (runningMode == L"disable")
-							{
-								pRunOpts->ulCachedModeOwner = CACHEDMODE_DISABLED;
-								pRunOpts->ulReadWriteMode = READWRITEMODE_WRITE;
-								i++;
-							}
-							else
-							{
-								return false;
-							}
-						}
-						else return false;
-					}
-					else if ((tolower(argv[i][3]) == 'm'))
-					{
-						if (i + 1 < argc)
-						{
-							pRunOpts->iCachedModeMonths = _wtoi(argv[i + 1]);
-							i++;
-						}
-						else return false;
-					}
-					else if ((tolower(argv[i][3]) == 's'))
-					{
-						if (i + 1 < argc)
-						{
-
-							std::wstring runningMode = argv[i + 1];
-							std::transform(runningMode.begin(), runningMode.end(), runningMode.begin(), ::tolower);
-							if (runningMode == L"enable")
-							{
-								pRunOpts->ulCachedModeShared = CACHEDMODE_ENABLED;
-								pRunOpts->ulReadWriteMode = READWRITEMODE_WRITE;
-								i++;
-							}
-							else if (runningMode == L"disable")
-							{
-								pRunOpts->ulCachedModeShared = CACHEDMODE_DISABLED;
-								pRunOpts->ulReadWriteMode = READWRITEMODE_WRITE;
-								i++;
-							}
-							else
-							{
-								return false;
-							}
-						}
-						else return false;
-					}
-					else if ((tolower(argv[i][3]) == 'p'))
-					{
-						if (i + 1 < argc)
-						{
-
-							std::wstring runningMode = argv[i + 1];
-							std::transform(runningMode.begin(), runningMode.end(), runningMode.begin(), ::tolower);
-							if (runningMode == L"enable")
-							{
-								pRunOpts->ulCachedModePublicFolder = CACHEDMODE_ENABLED;
-								pRunOpts->ulReadWriteMode = READWRITEMODE_WRITE;
-								i++;
-							}
-							else if (runningMode == L"disable")
-							{
-								pRunOpts->ulCachedModePublicFolder = CACHEDMODE_DISABLED;
-								pRunOpts->ulReadWriteMode = READWRITEMODE_WRITE;
-								i++;
-							}
-							else
-							{
-								return false;
-							}
-						}
-						else return false;
-					}
-					else return false;
-					break;
+					profileOptions->bSetDefaultProfile = true;
 				}
 				else return false;
-				break;
-			case 's':
-				if (tolower(argv[i][2]) == 'i')
-				{
-					if (i + 1 < argc)
-					{
-						pRunOpts->ulServiceIndex = _wtoi(argv[i + 1]);
-						i++;
-					}
-					else return false;
-				}
-				else return false;
-				break;
-			case 'r':
-				if (tolower(argv[i][2]) == 'm')
-				{
-					if (i + 1 < argc)
-					{
-						std::wstring runningMode = argv[i + 1];
-						std::transform(runningMode.begin(), runningMode.end(), runningMode.begin(), ::tolower);
-						if (runningMode == L"profile")
-						{
-							pRunOpts->ulRunningMode = (ULONG)RUNNINGMODE_PROFILE;
-							i++;
-						}
-						else if (runningMode == L"pst")
-						{
-							pRunOpts->ulRunningMode = (ULONG)RUNNINGMODE_PST;
-							i++;
-						}
-						else if (runningMode == L"addressbook")
-						{
-							pRunOpts->ulProfileMode = (ULONG)PROFILEMODE_DEFAULT;
-							i++;
-						}
-						else
-						{
-							return false;
-						}
-					}
-				}
-				else return false;
-				break;
-			case 'n':
-				if (tolower(argv[i][2]) == 'h')
-				{
-					pRunOpts->bNoHeader = true;
-					i++;
-				}
-				else if (tolower(argv[i][2]) == 'p')
-				{
-					pRunOpts->szPstNewPath = argv[i + 1];
-					i++;
-				}
-				else return false;
-				break;
-			case 'm':
-				if (tolower(argv[i][2]) == 'f')
-				{
-					pRunOpts->bPstMoveFiles = true;
-					i++;
-				}
-				else return false;
-				break;
-			case 'e':
-				if (tolower(argv[i][2]) == 'p')
-				{
-					std::wstring exportPath = argv[i + 1];
-					std::transform(exportPath.begin(), exportPath.end(), exportPath.begin(), ::tolower);
-					pRunOpts->szExportPath = exportPath;
-					pRunOpts->bExportMode = EXPORTMODE_EXPORT;
-					i++;
-				}
-				else return false;
-				break;
-			case 'o':
-				if (tolower(argv[i][2]) == 'p')
-				{
-					pRunOpts->szPstOldPath = argv[i + 1];
-					i++;
-				}
-				else return false;
-				break;
-			case 'l':
-				if (tolower(argv[i][2]) == 'm')
-				{
-					pRunOpts->ulLoggingMode = _wtoi(argv[i + 1]);
-					i++;
-				}
-				else if (tolower(argv[i][2]) == 'p')
-				{
-					pRunOpts->szLogFilePath = argv[i + 1];
-					Logger::Initialise(pRunOpts->szLogFilePath);
-					i++;
-				}
-				else return false;
-				break;
-			case '?':
-			default:
-				// display help
-				pRunOpts->ulLoggingMode = LOGGINGMODE_CONSOLE;
-				return false;
 				break;
 			}
+			break;
 		}
-	}
-
-	if (pRunOpts->ulLoggingMode == loggingModeConsoleandFile && pRunOpts->szLogFilePath.empty())
-	{
-		pRunOpts->ulLoggingMode = loggingModeConsole;
-	}
-
-	if (pRunOpts->ulLoggingMode == loggingModeFile && pRunOpts->szLogFilePath.empty())
-	{
-		pRunOpts->ulLoggingMode = loggingModeNone;
-	}
-
-	// If no profile mode or index or name specified then use default
-	if (!pRunOpts->szProfileName.empty())
-	{
-		if (pRunOpts->ulProfileMode == 0)
-		{
-			pRunOpts->ulProfileMode = PROFILEMODE_DEFAULT;
-		}
-
-	}
-
-	// If running mode is RUNNINGMODE_WRITE then expect a profile section name or a service index or a service type
-	if (pRunOpts->ulReadWriteMode == READWRITEMODE_WRITE)
-	{
-		if (pRunOpts->ulServiceIndex >= 1)
-		{
-			return true;
-		}
-		else return false;
 	}
 	return true;
 }
+
+BOOL ParseArgsService(int argc, _TCHAR* argv[], ServiceOptions * serviceOptions)
+{
+	if (!serviceOptions) return FALSE;
+	serviceOptions->bDefaultservice = false;
+	serviceOptions->bSetDefaultservice = false;
+	serviceOptions->ulProfileMode = PROFILEMODE_DEFAULT;
+
+	for (int i = 1; i < argc; i++)
+	{
+		switch (argv[i][0])
+		{
+		case '-':
+		case '/':
+		case '\\':
+			if (0 == argv[i][1])
+			{
+				return false;
+			}
+			switch (tolower(argv[i][1]))
+			{
+			case 's':
+				if (tolower(argv[i][2]) == 'a')
+				{
+					if (tolower(argv[i][3]) == 'b')
+					{
+						if (tolower(argv[i][4]) == 'e')
+						{
+							if (i + 1 < argc)
+							{
+								// sabe		| wszAddressBookExternalUrl
+								std::wstring wszAddressBookExternalUrl = argv[i + 1];
+								std::transform(wszAddressBookExternalUrl.begin(), wszAddressBookExternalUrl.end(), wszAddressBookExternalUrl.begin(), ::tolower);
+								serviceOptions->wszAddressBookExternalUrl = wszAddressBookExternalUrl;
+								i++;
+							}
+							else return false;
+						}
+						else if (tolower(argv[i][4]) == 'i')
+						{
+							if (i + 1 < argc)
+							{
+								// sabi		| wszAddressBookExternalUrl
+								std::wstring wszAddressBookInternalUrl = argv[i + 1];
+								std::transform(wszAddressBookInternalUrl.begin(), wszAddressBookInternalUrl.end(), wszAddressBookInternalUrl.begin(), ::tolower);
+								serviceOptions->wszAddressBookInternalUrl = wszAddressBookInternalUrl;
+								i++;
+							}
+							else return false;
+						}
+						else return false;
+					}
+					else if (tolower(argv[i][3]) == 'u')
+					{
+						if (i + 1 < argc)
+						{
+							// sau		| wszAutodiscoverUrl
+							std::wstring wszAutodiscoverUrl = argv[i + 1];
+							std::transform(wszAutodiscoverUrl.begin(), wszAutodiscoverUrl.end(), wszAutodiscoverUrl.begin(), ::tolower);
+							serviceOptions->wszAutodiscoverUrl = wszAutodiscoverUrl;
+							i++;
+						}
+						else return false;
+					}
+					else return false;
+				}
+				else if (tolower(argv[i][2]) == 'c')
+				{
+					if (tolower(argv[i][3]) == 'f')
+					{
+						if (tolower(argv[i][4]) == 'g')
+						{
+							if (tolower(argv[i][5]) == 'f')
+							{
+								if (i + 1 < argc)
+								{
+									// scfgf	| ulConfigFlags
+									serviceOptions->ulConfigFlags = _wtoi(argv[i + 1]);
+									i++;
+								}
+								else return false;
+							}
+							else return false;
+						}
+						else return false;
+					}
+					else if (tolower(argv[i][3]) == 'm')
+					{
+						if (tolower(argv[i][4]) == 'm')
+						{
+							if (i + 1 < argc)
+							{
+								// scmm	| iCachedModeMonths
+								serviceOptions->iCachedModeMonths = _wtoi(argv[i + 1]);
+								i++;
+							}
+							else return false;
+						}
+						else if (tolower(argv[i][4]) == 'o')
+						{
+							if (i + 1 < argc)
+							{
+								// scmo	| ulCachedModeOwner
+								serviceOptions->ulCachedModeOwner = _wtoi(argv[i + 1]);
+								i++;
+							}
+							else return false;
+						}
+						else if (tolower(argv[i][4]) == 'p')
+						{
+							if (tolower(argv[i][5]) == 'f')
+							{
+								if (i + 1 < argc)
+								{
+									// scmpf	| ulCachedModePublicFolder
+									serviceOptions->ulCachedModePublicFolder = _wtoi(argv[i + 1]);
+									i++;
+								}
+								else return false;
+							}
+							else return false;
+						}
+						else if (tolower(argv[i][4]) == 's')
+						{
+							if (i + 1 < argc)
+							{
+								// scms	| ulCachedModeShared
+								serviceOptions->ulCachedModeShared = _wtoi(argv[i + 1]);
+								i++;
+							}
+							else return false;
+						}
+						else return false;
+					}
+					else if (tolower(argv[i][3]) == 'n')
+					{
+						if (tolower(argv[i][4]) == 'c')
+						{
+							if (tolower(argv[i][5]) == 't')
+							{
+								if (tolower(argv[i][6]) == 'm')
+								{
+									if (i + 1 < argc)
+									{
+										// scnctm	| ulConnectMode
+										serviceOptions->ulConnectMode = _wtoi(argv[i + 1]);
+										i++;
+									}
+									else return false;
+								}
+								else return false;
+							}
+							else return false;
+						}
+						else return false;
+					}
+					else return false;
+				}
+				else if (tolower(argv[i][2]) == 'd')
+				{
+					if (tolower(argv[i][3]) == 's')
+					{
+						// sds	| bDefaultservice;
+						serviceOptions->bDefaultservice = true;
+					}
+				}
+				else if (tolower(argv[i][2]) == 'i')
+				{
+					if (i + 1 < argc)
+					{
+						// si	| iServiceIndex
+						serviceOptions->iServiceIndex = _wtoi(argv[i + 1]);
+						i++;
+					}
+					else return false;
+				}
+				else if (tolower(argv[i][2]) == 'm')
+				{
+					if (tolower(argv[i][3]) == 'd')
+					{
+						if (tolower(argv[i][4]) == 'n')
+						{
+							if (i + 1 < argc)
+							{
+								// smdn		| wszMailboxDisplayName
+								std::wstring wszMailboxDisplayName = argv[i + 1];
+								std::transform(wszMailboxDisplayName.begin(), wszMailboxDisplayName.end(), wszMailboxDisplayName.begin(), ::tolower);
+								serviceOptions->wszMailboxDisplayName = wszMailboxDisplayName;
+								i++;
+							}
+							else return false;
+						}
+					}
+					else if (tolower(argv[i][3]) == 'l')
+					{
+						if (tolower(argv[i][4]) == 'd')
+						{
+							if (tolower(argv[i][5]) == 'n')
+							{
+								if (i + 1 < argc)
+								{
+									// smldn		| wszMailboxLegacyDN
+									std::wstring wszMailboxLegacyDN = argv[i + 1];
+									std::transform(wszMailboxLegacyDN.begin(), wszMailboxLegacyDN.end(), wszMailboxLegacyDN.begin(), ::tolower);
+									serviceOptions->wszMailboxLegacyDN = wszMailboxLegacyDN;
+									i++;
+								}
+								else return false;
+							}
+						}
+					}
+					else if (tolower(argv[i][3]) == 's')
+					{
+						if (tolower(argv[i][4]) == 'e')
+						{
+							if (i + 1 < argc)
+							{
+								// smse	| wszMailStoreExternalUrl
+								std::wstring wszMailStoreExternalUrl = argv[i + 1];
+								std::transform(wszMailStoreExternalUrl.begin(), wszMailStoreExternalUrl.end(), wszMailStoreExternalUrl.begin(), ::tolower);
+								serviceOptions->wszMailStoreExternalUrl = wszMailStoreExternalUrl;
+								i++;
+							}
+							else return false;
+						}
+						else if (tolower(argv[i][4]) == 'i')
+						{
+							if (i + 1 < argc)
+							{
+								// smsi	| wszMailStoreExternalUrl
+								std::wstring wszMailStoreInternalUrl = argv[i + 1];
+								std::transform(wszMailStoreInternalUrl.begin(), wszMailStoreInternalUrl.end(), wszMailStoreInternalUrl.begin(), ::tolower);
+								serviceOptions->wszMailStoreInternalUrl = wszMailStoreInternalUrl;
+								i++;
+							}
+							else return false;
+						}
+					}
+				}
+				else if (tolower(argv[i][2]) == 'o')
+				{
+					if (tolower(argv[i][2]) == 'v')
+					{
+						if (i + 1 < argc)
+						{
+							// mov		| iOutlookVersion
+							std::wstring wszOutlookVersion = argv[i + 1];
+							std::transform(wszOutlookVersion.begin(), wszOutlookVersion.end(), wszOutlookVersion.begin(), ::tolower);
+							if (wszOutlookVersion == L"2007")
+							{
+								serviceOptions->iOutlookVersion = 2007;
+								i++;
+							}
+							else if (wszOutlookVersion == L"2010")
+							{
+								serviceOptions->iOutlookVersion = 2010;
+								i++;
+							}
+							else if (wszOutlookVersion == L"2013")
+							{
+								serviceOptions->iOutlookVersion = 2013;
+								i++;
+							}
+							else if (wszOutlookVersion == L"2016")
+							{
+								serviceOptions->iOutlookVersion = 2016;
+								i++;
+							}
+							else return false;
+						}
+						else return false;
+					}
+					else return false;
+				}
+				else if (tolower(argv[i][2]) == 'p')
+				{
+					if (tolower(argv[i][3]) == 'm')
+					{
+						// spm		| ulProfileMode
+						if (i + 1 < argc)
+						{
+							std::wstring profileMode = argv[i + 1];
+							std::transform(profileMode.begin(), profileMode.end(), profileMode.begin(), ::tolower);
+							if (profileMode == L"all")
+							{
+								serviceOptions->ulProfileMode = (ULONG)PROFILEMODE_ALL;
+								i++;
+							}
+							else if (profileMode == L"one")
+							{
+								serviceOptions->ulProfileMode = (ULONG)PROFILEMODE_ONE;
+								i++;
+							}
+							else if (profileMode == L"default")
+							{
+								serviceOptions->ulProfileMode = (ULONG)PROFILEMODE_DEFAULT;
+								i++;
+							}
+							else return false;
+						}
+						else return false;
+					}
+					else if (tolower(argv[i][3]) == 'n')
+					{
+						if (i + 1 < argc)
+						{
+							// spn		| wszProfileName
+							std::wstring wszProfileName = argv[i + 1];
+							std::transform(wszProfileName.begin(), wszProfileName.end(), wszProfileName.begin(), ::tolower);
+							serviceOptions->wszProfileName = wszProfileName;
+							i++;
+						}
+						else return false;
+					}
+				}
+				else if (tolower(argv[i][2]) == 'r')
+				{
+					if (tolower(argv[i][3]) == 'f')
+					{
+						// srf		| ulResourceFlags
+						if (i + 1 < argc)
+						{
+							// si	| iServiceIndex
+							serviceOptions->iServiceIndex = _wtoi(argv[i + 1]);
+							i++;
+						}
+						else return false;
+					}
+					else if (tolower(argv[i][3]) == 'p')
+					{
+						if (tolower(argv[i][4]) == 's')
+						{
+
+							if (i + 1 < argc)
+							{
+								// srps		| wszRohProxyServer
+								std::wstring wszRohProxyServer = argv[i + 1];
+								std::transform(wszRohProxyServer.begin(), wszRohProxyServer.end(), wszRohProxyServer.begin(), ::tolower);
+								serviceOptions->wszRohProxyServer = wszRohProxyServer;
+								i++;
+							}
+							else return false;
+						}
+						else return false;
+					}
+					else return false;
+				}
+				else if (tolower(argv[i][2]) == 's')
+				{
+					if (tolower(argv[i][3]) == 'a')
+					{
+						if (i + 1 < argc)
+						{
+							// ssa	| wszSmtpAddress
+							std::wstring wszSmtpAddress = argv[i + 1];
+							std::transform(wszSmtpAddress.begin(), wszSmtpAddress.end(), wszSmtpAddress.begin(), ::tolower);
+							serviceOptions->wszSmtpAddress = wszSmtpAddress;
+							i++;
+						}
+						else return false;
+					}
+					else if (tolower(argv[i][3]) == 'd')
+					{
+						if (tolower(argv[i][4]) == 'n')
+						{
+							if (i + 1 < argc)
+							{
+								// ssdn	| wszServerDisplayName
+								std::wstring wszServerDisplayName = argv[i + 1];
+								std::transform(wszServerDisplayName.begin(), wszServerDisplayName.end(), wszServerDisplayName.begin(), ::tolower);
+								serviceOptions->wszServerDisplayName = wszServerDisplayName;
+								i++;
+							}
+							else return false;
+						}
+						else if (tolower(argv[i][4]) == 's')
+						{
+							// ssds	| bSetDefaultservice
+							serviceOptions->bSetDefaultservice = true;
+						}
+						else return false;
+					}
+					else if (tolower(argv[i][3]) == 'l')
+					{
+						if (tolower(argv[i][4]) == 'd')
+						{
+							if (tolower(argv[i][5]) == 'n')
+							{
+								if (i + 1 < argc)
+								{
+									// ssldn	| wszServerLegacyDN
+									std::wstring wszServerLegacyDN = argv[i + 1];
+									std::transform(wszServerLegacyDN.begin(), wszServerLegacyDN.end(), wszServerLegacyDN.begin(), ::tolower);
+									serviceOptions->wszServerLegacyDN = wszServerLegacyDN;
+									i++;
+								}
+								else return false;
+							}
+							else return false;
+						}
+						else return false;
+					}
+				}
+				else if (tolower(argv[i][2]) == 'u')
+				{
+					if (tolower(argv[i][3]) == 's')
+					{
+
+						if (i + 1 < argc)
+						{
+							// sus	| wszUnresolvedServer
+							std::wstring wszUnresolvedServer = argv[i + 1];
+							std::transform(wszUnresolvedServer.begin(), wszUnresolvedServer.end(), wszUnresolvedServer.begin(), ::tolower);
+							serviceOptions->wszUnresolvedServer = wszUnresolvedServer;
+							i++;
+						}
+						else return false;
+					}
+					if (tolower(argv[i][3]) == 'u')
+					{
+						if (i + 1 < argc)
+						{
+							// suu	| wszUnresolvedUser
+							std::wstring wszUnresolvedUser = argv[i + 1];
+							std::transform(wszUnresolvedUser.begin(), wszUnresolvedUser.end(), wszUnresolvedUser.begin(), ::tolower);
+							serviceOptions->wszUnresolvedUser = wszUnresolvedUser;
+							i++;
+						}
+						else return false;
+					}
+					else return false;
+				}
+				else return false;
+				break;
+			}
+			break;
+		}
+	}
+	return true;
+}
+
+BOOL ParseArgsMailbox(int argc, _TCHAR* argv[], MailboxOptions * mailboxOptions)
+{
+	if (!mailboxOptions) return FALSE;
+
+	mailboxOptions->bDefaultService = false;
+
+	for (int i = 1; i < argc; i++)
+	{
+		switch (argv[i][0])
+		{
+		case '-':
+		case '/':
+		case '\\':
+			if (0 == argv[i][1])
+			{
+				return false;
+			}
+			switch (tolower(argv[i][1]))
+			{
+			case 'm':
+				if (tolower(argv[i][2]) == 'd')
+				{
+					if (tolower(argv[i][3]) == 's')
+					{
+						// mds		| bDefaultService
+						mailboxOptions->bDefaultService = true;
+					}
+				}
+				else if (tolower(argv[i][2]) == 'm')
+				{
+					if (tolower(argv[i][3]) == 'd')
+					{
+						if (tolower(argv[i][4]) == 'n')
+						{
+							if (i + 1 < argc)
+							{
+								// mmdn		| wszMailboxDisplayName
+								std::wstring wszMailboxDisplayName = argv[i + 1];
+								std::transform(wszMailboxDisplayName.begin(), wszMailboxDisplayName.end(), wszMailboxDisplayName.begin(), ::tolower);
+								mailboxOptions->wszMailboxDisplayName = wszMailboxDisplayName;
+								i++;
+							}
+						}
+					}
+					if (tolower(argv[i][3]) == 'l')
+					{
+						if (tolower(argv[i][4]) == 'd')
+						{
+							if (tolower(argv[i][5]) == 'n')
+							{
+								if (i + 1 < argc)
+								{
+									// mmldn		| wszMailboxLegacyDN
+									std::wstring wszMailboxLegacyDN = argv[i + 1];
+									std::transform(wszMailboxLegacyDN.begin(), wszMailboxLegacyDN.end(), wszMailboxLegacyDN.begin(), ::tolower);
+									mailboxOptions->wszMailboxLegacyDN = wszMailboxLegacyDN;
+									i++;
+								}
+							}
+						}
+					}
+				}
+				else if (tolower(argv[i][2]) == 'o')
+				{
+					if (tolower(argv[i][3]) == 'v')
+					{
+						if (i + 1 < argc)
+						{
+							// mov		| iOutlookVersion
+							std::wstring wszOutlookVersion = argv[i + 1];
+							std::transform(wszOutlookVersion.begin(), wszOutlookVersion.end(), wszOutlookVersion.begin(), ::tolower);
+							if (wszOutlookVersion == L"2007")
+							{
+								mailboxOptions->iOutlookVersion = 2007;
+								i++;
+							}
+							else if (wszOutlookVersion == L"2010")
+							{
+								mailboxOptions->iOutlookVersion = 2010;
+								i++;
+							}
+							else if (wszOutlookVersion == L"2013")
+							{
+								mailboxOptions->iOutlookVersion = 2013;
+								i++;
+							}
+							else if (wszOutlookVersion == L"2016")
+							{
+								mailboxOptions->iOutlookVersion = 2016;
+								i++;
+							}
+							else return false;
+						}
+					}
+				}
+				else if (tolower(argv[i][2]) == 'p')
+				{
+					if (tolower(argv[i][3]) == 'n')
+					{
+						if (i + 1 < argc)
+						{
+							// mpn		| wszProfileName
+							std::wstring wszProfileName = argv[i + 1];
+							std::transform(wszProfileName.begin(), wszProfileName.end(), wszProfileName.begin(), ::tolower);
+							mailboxOptions->wszProfileName = wszProfileName;
+							i++;
+						}
+					}
+					else if (tolower(argv[i][3]) == 'm')
+					{
+						if (i + 1 < argc)
+						{
+							// mpm		| ulProfileMode
+							std::wstring profileMode = argv[i + 1];
+							std::transform(profileMode.begin(), profileMode.end(), profileMode.begin(), ::tolower);
+							if (profileMode == L"all")
+							{
+								mailboxOptions->ulProfileMode = (ULONG)PROFILEMODE_ALL;
+								i++;
+							}
+							else if (profileMode == L"one")
+							{
+								mailboxOptions->ulProfileMode = (ULONG)PROFILEMODE_ONE;
+								i++;
+							}
+							else if (profileMode == L"default")
+							{
+								mailboxOptions->ulProfileMode = (ULONG)PROFILEMODE_DEFAULT;
+								i++;
+							}
+							else return false;
+						}
+					}
+					else return false;
+				}
+				else if (tolower(argv[i][2]) == 's')
+				{
+					if (tolower(argv[i][3]) == 'a')
+					{
+						if (i + 1 < argc)
+						{
+							// msa		| wszSmtpAddress
+							std::wstring wszSmtpAddress = argv[i + 1];
+							std::transform(wszSmtpAddress.begin(), wszSmtpAddress.end(), wszSmtpAddress.begin(), ::tolower);
+							mailboxOptions->wszSmtpAddress = wszSmtpAddress;
+							i++;
+						}
+					}
+					else if (tolower(argv[i][3]) == 'd')
+					{
+						if (tolower(argv[i][4]) == 'n')
+						{
+							if (i + 1 < argc)
+							{
+								// msdn		| wszServerDisplayName
+								std::wstring wszServerDisplayName = argv[i + 1];
+								std::transform(wszServerDisplayName.begin(), wszServerDisplayName.end(), wszServerDisplayName.begin(), ::tolower);
+								mailboxOptions->wszServerDisplayName = wszServerDisplayName;
+								i++;
+							}
+						}
+					}
+					if (tolower(argv[i][3]) == 'i')
+					{
+						if (i + 1 < argc)
+						{
+							// msi	| ulServiceIndex
+							mailboxOptions->ulServiceIndex = _wtoi(argv[i + 1]);;
+							i++;
+						}
+					}
+					if (tolower(argv[i][3]) == 'l')
+					{
+						if (tolower(argv[i][4]) == 'd')
+						{
+							if (tolower(argv[i][5]) == 'n')
+							{
+								if (i + 1 < argc)
+								{
+									// msldn	| wszServerLegacyDN
+									std::wstring wszServerLegacyDN = argv[i + 1];
+									std::transform(wszServerLegacyDN.begin(), wszServerLegacyDN.end(), wszServerLegacyDN.begin(), ::tolower);
+									mailboxOptions->wszServerLegacyDN = wszServerLegacyDN;
+									i++;
+								}
+							}
+						}
+					}
+				}
+				else return false;
+				break;
+			}
+			break;
+		}
+		
+	}
+	return true;
+}
+
 
 void DisplayUsage()
 {
@@ -737,13 +1066,11 @@ void DisplayUsage()
 	printf("       -?      Displays this usage information.\n");
 }
 
-
 LoggingMode loggingMode;
 
 static std::wofstream ofsLogFile;
 static std::wstring szLogFilePath;
 static bool bIsLogFileOpen;
-
 
 void _tmain(int argc, _TCHAR* argv[])
 {
@@ -753,7 +1080,7 @@ void _tmain(int argc, _TCHAR* argv[])
 	RuntimeOptions tkOptions = { 0 };
 	loggingMode = loggingModeNone;
 	// Parse the command line arguments
-	if (!ParseArgs(argc, argv, &tkOptions))
+	if (!ValidateScenario(argc, argv, &tkOptions))
 	{
 		if (tkOptions.ulLoggingMode != loggingModeNone)
 		{
@@ -762,14 +1089,14 @@ void _tmain(int argc, _TCHAR* argv[])
 		return;
 	}
 
-	loggingMode = LoggingMode(tkOptions.ulLoggingMode);
-	// Check the curren't process' bitness vs Outlook's bitness and only run it if matched to avoid MAPI dialog boxes.
-	if (!IsCorrectBitness())
-	{
-		Logger::Write(logLevelFailed, L"Unable to resolve bitness or bitness not matched.", loggingMode);
-		return;
-	}
-	Logger::Write(logLevelSuccess, L"Bitness matched.", loggingMode);
+	//loggingMode = LoggingMode(tkOptions.ulLoggingMode);
+	//// Check the curren't process' bitness vs Outlook's bitness and only run it if matched to avoid MAPI dialog boxes.
+	//if (!IsCorrectBitness())
+	//{
+	//	Logger::Write(logLevelFailed, L"Unable to resolve bitness or bitness not matched.", loggingMode);
+	//	return;
+	//}
+	//Logger::Write(logLevelSuccess, L"Bitness matched.", loggingMode);
 
 	try
 	{
@@ -777,97 +1104,87 @@ void _tmain(int argc, _TCHAR* argv[])
 		if (SUCCEEDED(MAPIInitialize(&MAPIINIT)))
 		{
 			Logger::Write(logLevelSuccess, L"MAPI Initialised", loggingMode);
-			switch (tkOptions.ulRunningMode)
-			{
-			case RUNNINGMODE_PROFILE:
-				switch (tkOptions.ulProfileMode)
-				{
-				case PROFILEMODE_ALL:
-					if (tkOptions.ulReadWriteMode == READWRITEMODE_READ)
-					{
-						ULONG ulProfileCount = GetProfileCount(loggingMode);
-						ProfileInfo * profileInfo = new ProfileInfo[ulProfileCount];
-						ZeroMemory(profileInfo, sizeof(ProfileInfo) * ulProfileCount);
-						Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for all profiles", loggingMode);
-						EC_HRES_LOG(GetProfiles(ulProfileCount, profileInfo, loggingMode), loggingMode);
-						if (tkOptions.szExportPath != L"")
-						{
-							Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for all profiles", loggingMode);
-							ExportXML(ulProfileCount, profileInfo, tkOptions.szExportPath, loggingMode);
-						}
-						else
-						{
-							Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for all profiles", loggingMode);
-							ExportXML(ulProfileCount, profileInfo, L"", loggingMode);
-						}
-					}
-					break;
-				case PROFILEMODE_SPECIFIC:
-					if (tkOptions.ulReadWriteMode == READWRITEMODE_READ)
-					{
-						ProfileInfo profileInfo;
-						Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for profile: " + tkOptions.szProfileName, loggingMode);
-						EC_HRES_LOG(GetProfile((LPWSTR)tkOptions.szProfileName.c_str(), &profileInfo, loggingMode), loggingMode);
-						if (tkOptions.szExportPath != L"")
-						{
-							Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for profile", loggingMode);
-							ExportXML(1, &profileInfo, tkOptions.szExportPath, loggingMode);
-						}
-						else
-						{
-							Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for profile", loggingMode);
-							ExportXML(1, &profileInfo, L"", loggingMode);
-						}
-					}
-					else if (tkOptions.ulReadWriteMode == READWRITEMODE_WRITE)
-					{
-						Logger::Write(logLevelInfo, L"Updating cached mode configuration on profile: " + tkOptions.szProfileName, loggingMode);
-						EC_HRES_LOG(UpdateCachedModeConfig((LPSTR)tkOptions.szProfileName.c_str(), tkOptions.ulServiceIndex, tkOptions.ulCachedModeOwner, tkOptions.ulCachedModeShared, tkOptions.ulCachedModePublicFolder, tkOptions.iCachedModeMonths, loggingMode), loggingMode);
-					}
-
-					break;
-				case PROFILEMODE_DEFAULT:
-					std::wstring szDefaultProfileName = GetDefaultProfileName(loggingMode);
-					if (!szDefaultProfileName.empty())
-					{
-						tkOptions.szProfileName = szDefaultProfileName;
-					}
-					if (tkOptions.ulReadWriteMode == READWRITEMODE_READ)
-					{
-						ProfileInfo profileInfo;
-						Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for default profile: " + tkOptions.szProfileName, loggingMode);
-						EC_HRES_LOG(GetProfile((LPWSTR)tkOptions.szProfileName.c_str(), &profileInfo, loggingMode), loggingMode);
-						if (tkOptions.szExportPath != L"")
-						{
-							Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for default profile", loggingMode);
-							ExportXML(1, &profileInfo, tkOptions.szExportPath, loggingMode);
-						}
-						else
-						{
-							Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for default profile", loggingMode);
-							ExportXML(1, &profileInfo, L"", loggingMode);
-						}
-					}
-					else if (tkOptions.ulReadWriteMode == READWRITEMODE_WRITE)
-					{
-						Logger::Write(logLevelInfo, L"Updating cached mode configuration on default profile: " + tkOptions.szProfileName, loggingMode);
-						EC_HRES_LOG(UpdateCachedModeConfig((LPSTR)tkOptions.szProfileName.c_str(), tkOptions.ulServiceIndex, tkOptions.ulCachedModeOwner, tkOptions.ulCachedModeShared, tkOptions.ulCachedModePublicFolder, tkOptions.iCachedModeMonths, loggingMode), loggingMode);
-					}
-					break;
-				}
-				break;
-			case RUNNINGMODE_PST:
-				if (tkOptions.szPstOldPath.empty())
-				{
-					EC_HRES_LOG(UpdatePstPath((LPWSTR)tkOptions.szProfileName.c_str(), (LPWSTR)tkOptions.szPstNewPath.c_str(), tkOptions.bPstMoveFiles, loggingMode), loggingMode);
-				}
-				else
-				{
-					EC_HRES_LOG(UpdatePstPath((LPWSTR)tkOptions.szProfileName.c_str(), (LPWSTR)tkOptions.szPstOldPath.c_str(), (LPWSTR)tkOptions.szPstNewPath.c_str(), tkOptions.bPstMoveFiles, loggingMode), loggingMode);
-				}
-				break;
-			};
-			MAPIUninitialize();
+			//switch (tkOptions.ulScenario)
+			//{
+			//case SCENARIO_PROFILE:
+			//	switch (tkOptions.profileOptions->ulProfileMode)
+			//	{
+			//	case PROFILEMODE_ALL:
+			//			ULONG ulProfileCount = GetProfileCount(loggingMode);
+			//			ProfileInfo * profileInfo = new ProfileInfo[ulProfileCount];
+			//			ZeroMemory(profileInfo, sizeof(ProfileInfo) * ulProfileCount);
+			//			Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for all profiles", loggingMode);
+			//			EC_HRES_LOG(GetProfiles(ulProfileCount, profileInfo, loggingMode), loggingMode);
+			//			if (tkOptions.wszExportPath != L"")
+			//			{
+			//				Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for all profiles", loggingMode);
+			//				ExportXML(ulProfileCount, profileInfo, tkOptions.wszExportPath, loggingMode);
+			//			}
+			//			else
+			//			{
+			//				Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for all profiles", loggingMode);
+			//				ExportXML(ulProfileCount, profileInfo, L"", loggingMode);
+			//			}
+			//		
+			//		break;
+			//	case PROFILEMODE_ONE:
+			//		
+			//			ProfileInfo profileInfo;
+			//			Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for profile: " + tkOptions.profileOptions->wszProfileName, loggingMode);
+			//			EC_HRES_LOG(GetProfile((LPWSTR)tkOptions.profileOptions->wszProfileName.c_str(), &profileInfo, loggingMode), loggingMode);
+			//			if (tkOptions.wszExportPath != L"")
+			//			{
+			//				Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for profile", loggingMode);
+			//				ExportXML(1, &profileInfo, tkOptions.szExportPath, loggingMode);
+			//			}
+			//			else
+			//			{
+			//				Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for profile", loggingMode);
+			//				ExportXML(1, &profileInfo, L"", loggingMode);
+			//			}
+			//		break;
+			//	case PROFILEMODE_DEFAULT:
+			//		std::wstring szDefaultProfileName = GetDefaultProfileName(loggingMode);
+			//		if (!szDefaultProfileName.empty())
+			//		{
+			//			tkOptions.szProfileName = szDefaultProfileName;
+			//		}
+			//		if (tkOptions.ulReadWriteMode == READWRITEMODE_READ)
+			//		{
+			//			ProfileInfo profileInfo;
+			//			Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for default profile: " + tkOptions.szProfileName, loggingMode);
+			//			EC_HRES_LOG(GetProfile((LPWSTR)tkOptions.szProfileName.c_str(), &profileInfo, loggingMode), loggingMode);
+			//			if (tkOptions.szExportPath != L"")
+			//			{
+			//				Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for default profile", loggingMode);
+			//				ExportXML(1, &profileInfo, tkOptions.szExportPath, loggingMode);
+			//			}
+			//			else
+			//			{
+			//				Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for default profile", loggingMode);
+			//				ExportXML(1, &profileInfo, L"", loggingMode);
+			//			}
+			//		}
+			//		else if (tkOptions.ulReadWriteMode == READWRITEMODE_WRITE)
+			//		{
+			//			Logger::Write(logLevelInfo, L"Updating cached mode configuration on default profile: " + tkOptions.szProfileName, loggingMode);
+			//			EC_HRES_LOG(UpdateCachedModeConfig((LPSTR)tkOptions.szProfileName.c_str(), tkOptions.ulServiceIndex, tkOptions.ulCachedModeOwner, tkOptions.ulCachedModeShared, tkOptions.ulCachedModePublicFolder, tkOptions.iCachedModeMonths, loggingMode), loggingMode);
+			//		}
+			//		break;
+			//	}
+			//	break;
+			//case RUNNINGMODE_PST:
+			//	if (tkOptions.szPstOldPath.empty())
+			//	{
+			//		EC_HRES_LOG(UpdatePstPath((LPWSTR)tkOptions.szProfileName.c_str(), (LPWSTR)tkOptions.szPstNewPath.c_str(), tkOptions.bPstMoveFiles, loggingMode), loggingMode);
+			//	}
+			//	else
+			//	{
+			//		EC_HRES_LOG(UpdatePstPath((LPWSTR)tkOptions.szProfileName.c_str(), (LPWSTR)tkOptions.szPstOldPath.c_str(), (LPWSTR)tkOptions.szPstNewPath.c_str(), tkOptions.bPstMoveFiles, loggingMode), loggingMode);
+			//	}
+			//	break;
+			//};
+			//MAPIUninitialize();
 		}
 	}
 	catch (int exception)
@@ -884,4 +1201,3 @@ Cleanup:
 
 	return;
 }
-

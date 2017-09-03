@@ -21,7 +21,7 @@
 #include <MAPIUtil.h>
 #include <MAPIAux.h>
 #include "MAPIObjects.h"
-#include <EdkMdb.h>
+#include "EdkMdb.h"
 #include <MAPIGuid.h>
 #include <MAPIAux.h>	
 #include <MSPST.h>
