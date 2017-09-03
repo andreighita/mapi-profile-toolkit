@@ -126,169 +126,193 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 {
 	if (!pRunOpts) return FALSE;
 	ZeroMemory(pRunOpts, sizeof(RuntimeOptions));
+	int iThreeParam = 0;
 
 	for (int i = 1; i < argc; i++)
 	{
-		switch (argv[i][0])
+		if (iThreeParam < 3)
 		{
-		case '#':
-			if (0 == argv[i][1])
+			switch (argv[i][0])
 			{
-				// Bad argument - get out of here
-				return false;
-			}
-			switch (tolower(argv[i][1]))
-			{
-			case 'p':
-				pRunOpts->ulScenario = SCENARIO_PROFILE;
-				break;
-			case 's':
-				pRunOpts->ulScenario = SCENARIO_SERVICE;
-				break;
-			case 'm':
-				pRunOpts->ulScenario = SCENARIO_MAILBOX;
-				break;
-			case 'd':
-				pRunOpts->ulScenario = SCENARIO_DATAFILE;
-				break;
-			case 'l':
-				pRunOpts->ulScenario = SCENARIO_LDAP;
-				break;
-			case 'c':
-				pRunOpts->ulScenario = SCENARIO_CUSTOM;
-				break;
-			default:
-				return false;
-			}
-			break;
-		case '-':
-		case '/':
-		case '\\':
-			if (0 == argv[i][1])
-			{
-				return false;
-			}
-			switch (tolower(argv[i][1]))
-			{
-			case 't':
-				if (i + 1 < argc)
+			case '#':
+				if (0 == argv[i][1])
 				{
-					std::wstring wszActionType = argv[i + 1];
-					std::transform(wszActionType.begin(), wszActionType.end(), wszActionType.begin(), ::tolower);
-					if (wszActionType == L"standard")
-					{
-						pRunOpts->ulActionType = ACTIONTYPE_STANDARD;
-						i++;
-					}
-					else if (wszActionType == L"custom")
-					{
-						pRunOpts->ulActionType = ACTIONTYPE_CUSTOM;
-						i++;
-					}
-					else
-					{
-						return false;
-					}
+					// Bad argument - get out of here
+					return false;
+				}
+				switch (tolower(argv[i][1]))
+				{
+				case 'p':
+					pRunOpts->ulScenario = SCENARIO_PROFILE;
+					iThreeParam++;
+					break;
+				case 's':
+					pRunOpts->ulScenario = SCENARIO_SERVICE;
+					iThreeParam++;
+					break;
+				case 'm':
+					pRunOpts->ulScenario = SCENARIO_MAILBOX;
+					iThreeParam++;
+					break;
+				case 'd':
+					pRunOpts->ulScenario = SCENARIO_DATAFILE;
+					iThreeParam++;
+					break;
+				case 'l':
+					pRunOpts->ulScenario = SCENARIO_LDAP;
+					iThreeParam++;
+					break;
+				case 'c':
+					pRunOpts->ulScenario = SCENARIO_CUSTOM;
+					iThreeParam++;
+					break;
+				default:
+					return false;
 				}
 				break;
-			case 'a':
-				if (i + 1 < argc)
+			case '-':
+			case '/':
+			case '\\':
+				if (0 == argv[i][1])
 				{
-					std::wstring wszAction = argv[i + 1];
-					std::transform(wszAction.begin(), wszAction.end(), wszAction.begin(), ::tolower);
-					if (pRunOpts->ulActionType == ACTIONTYPE_STANDARD)
+					return false;
+				}
+				switch (tolower(argv[i][1]))
+				{
+				case 't':
+					if (i + 1 < argc)
 					{
-						if (wszAction == L"add")
+						std::wstring wszActionType = argv[i + 1];
+						std::transform(wszActionType.begin(), wszActionType.end(), wszActionType.begin(), ::tolower);
+						if (wszActionType == L"standard")
 						{
-							pRunOpts->ulAction = STANDARDACTION_ADD;
+							pRunOpts->ulActionType = ACTIONTYPE_STANDARD;
+							iThreeParam++;
 							i++;
+							break;
 						}
-						else if (wszAction == L"remove")
+						else if (wszActionType == L"custom")
 						{
-							pRunOpts->ulAction = STANDARDACTION_REMOVE;
+							pRunOpts->ulActionType = ACTIONTYPE_CUSTOM;
+							iThreeParam++;
 							i++;
-						}
-						else if (wszAction == L"edit")
-						{
-							pRunOpts->ulAction = STANDARDACTION_EDIT;
-							i++;
-						}
-						else if (wszAction == L"list")
-						{
-							pRunOpts->ulAction = STANDARDACTION_LIST;
-							i++;
+							break;
 						}
 						else
 						{
 							return false;
 						}
 					}
-					else if (pRunOpts->ulActionType == ACTIONTYPE_CUSTOM)
+					break;
+				case 'a':
+					if (i + 1 < argc)
 					{
-						if (wszAction == L"promotemailboxtoservice")
+						std::wstring wszAction = argv[i + 1];
+						std::transform(wszAction.begin(), wszAction.end(), wszAction.begin(), ::tolower);
+						if (pRunOpts->ulActionType == ACTIONTYPE_STANDARD)
 						{
-							pRunOpts->ulAction = CUSTOMACTION_PROMOTEMAILBOXTOSERVICE;
-							i++;
+							if (wszAction == L"add")
+							{
+								pRunOpts->ulAction = STANDARDACTION_ADD;
+								iThreeParam++;
+								i++;
+							}
+							else if (wszAction == L"remove")
+							{
+								pRunOpts->ulAction = STANDARDACTION_REMOVE;
+								iThreeParam++;
+								i++;
+							}
+							else if (wszAction == L"edit")
+							{
+								pRunOpts->ulAction = STANDARDACTION_EDIT;
+								iThreeParam++;
+								i++;
+							}
+							else if (wszAction == L"list")
+							{
+								pRunOpts->ulAction = STANDARDACTION_LIST;
+								iThreeParam++;
+								i++;
+							}
+							else
+							{
+								return false;
+							}
 						}
-						else if (wszAction == L"editcachedmodeconfiguration")
+						else if (pRunOpts->ulActionType == ACTIONTYPE_CUSTOM)
 						{
-							pRunOpts->ulAction = CUSTOMACTION_EDITCACHEDMODECONFIGURATION;
-							i++;
-						}
-						else if (wszAction == L"updatesmtpaddress")
-						{
-							pRunOpts->ulAction = CUSTOMACTION_UPDATESMTPADDRESS;
-							i++;
-						}
-						else if (wszAction == L"changepstlocation")
-						{
-							pRunOpts->ulAction = CUSTOMACTION_CHANGEPSTLOCATION;
-							i++;
-						}
-						else if (wszAction == L"removeorphaneddatafiles")
-						{
-							pRunOpts->ulAction = CUSTOMACTION_REMOVEORPHANEDDATAFILES;
-							i++;
-						}
-						else
-						{
-							return false;
+							if (wszAction == L"promotemailboxtoservice")
+							{
+								pRunOpts->ulAction = CUSTOMACTION_PROMOTEMAILBOXTOSERVICE;
+								iThreeParam++;
+								i++;
+							}
+							else if (wszAction == L"editcachedmodeconfiguration")
+							{
+								pRunOpts->ulAction = CUSTOMACTION_EDITCACHEDMODECONFIGURATION;
+								iThreeParam++;
+								i++;
+							}
+							else if (wszAction == L"updatesmtpaddress")
+							{
+								pRunOpts->ulAction = CUSTOMACTION_UPDATESMTPADDRESS;
+								iThreeParam++;
+								i++;
+							}
+							else if (wszAction == L"changepstlocation")
+							{
+								pRunOpts->ulAction = CUSTOMACTION_CHANGEPSTLOCATION;
+								iThreeParam++;
+								i++;
+							}
+							else if (wszAction == L"removeorphaneddatafiles")
+							{
+								pRunOpts->ulAction = CUSTOMACTION_REMOVEORPHANEDDATAFILES;
+								iThreeParam++;
+								i++;
+							}
+							else
+							{
+								return false;
+							}
 						}
 					}
+					break;
+				case 'l':
+					if (tolower(argv[i][2]) == 'm')
+					{
+						pRunOpts->ulLoggingMode = _wtoi(argv[i + 1]);
+						i++;
+					}
+					else if (tolower(argv[i][2]) == 'p')
+					{
+						pRunOpts->wszLogFilePath = argv[i + 1];
+						Logger::Initialise(pRunOpts->wszLogFilePath);
+						i++;
+					}
+					else return false;
+					break;
+				case 'e':
+					if (tolower(argv[i][2]) == 'p')
+					{
+						std::wstring wszExportPath = argv[i + 1];
+						std::transform(wszExportPath.begin(), wszExportPath.end(), wszExportPath.begin(), ::tolower);
+						pRunOpts->wszExportPath = wszExportPath;
+						pRunOpts->bExportMode = EXPORTMODE_EXPORT;
+						i++;
+					}
+					else return false;
+					break;
+				case '?':
+					return false;
+				default:
+					// display help
+					pRunOpts->ulLoggingMode = LOGGINGMODE_CONSOLE;
 				}
-				break;
-			case 'l':
-				if (tolower(argv[i][2]) == 'm')
-				{
-					pRunOpts->ulLoggingMode = _wtoi(argv[i + 1]);
-					i++;
-				}
-				else if (tolower(argv[i][2]) == 'p')
-				{
-					pRunOpts->wszLogFilePath = argv[i + 1];
-					Logger::Initialise(pRunOpts->wszLogFilePath);
-					i++;
-				}
-				else return false;
-				break;
-			case 'e':
-				if (tolower(argv[i][2]) == 'p')
-				{
-					std::wstring wszExportPath = argv[i + 1];
-					std::transform(wszExportPath.begin(), wszExportPath.end(), wszExportPath.begin(), ::tolower);
-					pRunOpts->wszExportPath = wszExportPath;
-					pRunOpts->bExportMode = EXPORTMODE_EXPORT;
-					i++;
-				}
-				else return false;
-				break;
-			case '?':
-			default:
-				// display help
-				pRunOpts->ulLoggingMode = LOGGINGMODE_CONSOLE;
-				return false;
 			}
 		}
+		else break;
 	}
 	switch (pRunOpts->ulScenario)
 	{
