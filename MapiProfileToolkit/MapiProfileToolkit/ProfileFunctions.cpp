@@ -19,7 +19,10 @@
 #define PR_EMSMDB_SECTION_UID					PROP_TAG(PT_BINARY, 0x3D15)
 #define PR_PROFILE_USER_SMTP_EMAIL_ADDRESS		PROP_TAG(PT_STRING8, pidProfileMin+0x41)
 #define PR_PROFILE_USER_SMTP_EMAIL_ADDRESS_W	PROP_TAG(PT_UNICODE, pidProfileMin+0x41)
-#define PR_ROH_PROXY_SERVER						PROP_TAG(PT_UNICODE, 0x6622)
+#define PR_ROH_PROXY_SERVER						PROP_TAG(PT_UNICODE, pidProfileMin+0x22)
+#define PR_PROFILE_RPC_PROXY_SERVER_FLAGS		PROP_TAG(PT_LONG,	pidProfileMin+0x23)
+#define PR_ROH_PROXY_PRINCIPAL_NAME				PROP_TAG( PT_UNICODE, pidProfileMin+0x25)
+#define PR_PROFILE_RPC_PROXY_SERVER_AUTH_PACKAGE	PROP_TAG(PT_LONG,	pidProfileMin+0x27)
 #define PR_PROFILE_RPC_PROXY_SERVER_W			PROP_TAG( PT_UNICODE, pidProfileMin+0x22)
 #define PR_PROFILE_HOME_SERVER_FQDN				PROP_TAG(PT_UNICODE, pidProfileMin+0x2A)
 #define	PR_PROFILE_SERVER_FQDN_W				PROP_TAG( PT_UNICODE, pidProfileMin+0x2b)
@@ -47,6 +50,11 @@
 #endif
 
 #pragma region // Profile Methods //
+
+LPWSTR GetDefaultProfileNameLP(LoggingMode loggingMode)
+{
+	return (LPWSTR)GetDefaultProfileName(loggingMode).c_str();
+}
 
 std::wstring GetDefaultProfileName(LoggingMode loggingMode)
 {
@@ -1791,6 +1799,7 @@ HRESULT HrCloneProfile(ProfileInfo * profileInfo, LoggingMode loggingMode)
 					Logger::Write(logLevelInfo, L"Adding additional mailbox: " + profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszEmailAddress, loggingMode);
 					EC_HRES_MSG(HrAddDelegateMailboxModern(uidService,
 						lpServiceAdmin,
+						NULL,
 						(LPWSTR)profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszDisplayName.c_str(),
 						(LPWSTR)profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszEmailAddress.c_str()), L"HrCloneProfile", L"0052");
 				}
@@ -2440,28 +2449,35 @@ Cleanup:
 // - the Display Name for the mailbox
 HRESULT HrAddDelegateMailboxModern(MAPIUID uidService,
 	LPSERVICEADMIN2 lpSvcAdmin,
+	LPPROVIDERADMIN lpProvAdmin,
 	LPWSTR lpszwDisplayName,
 	LPWSTR lpszwSMTPAddress)
 {
+	std::wstring wszSmtpAddress = ConvertWideCharToStdWstring(lpszwSMTPAddress);
+	wszSmtpAddress = L"SMTP:" + wszSmtpAddress;
+
 	HRESULT			hRes = S_OK; // Result code returned from MAPI calls.
 	SPropValue		rgval[2]; // Property value structure to hold configuration info.
-	LPPROVIDERADMIN lpProvAdmin = NULL;
+	LPPROVIDERADMIN lpTempProvAdmin = NULL;
 	LPMAPIUID lpServiceUid = &uidService;
-
-	EC_HRES(lpSvcAdmin->AdminProviders(lpServiceUid,
-		NULL,
-		&lpProvAdmin));
+	if (lpSvcAdmin)
+	{
+		EC_HRES(lpSvcAdmin->AdminProviders(lpServiceUid,
+			NULL,
+			&lpTempProvAdmin));
+	}
+	else lpTempProvAdmin = lpProvAdmin;
 
 	ZeroMemory(&rgval[0], sizeof(SPropValue));
 	rgval[0].ulPropTag = PR_PROFILE_USER_SMTP_EMAIL_ADDRESS_W;
-	rgval[0].Value.lpszW = lpszwSMTPAddress;
+	rgval[0].Value.lpszA = ConvertWideCharToMultiByte((LPWSTR)wszSmtpAddress.c_str());;
 
 	ZeroMemory(&rgval[1], sizeof(SPropValue));
 	rgval[1].ulPropTag = PR_DISPLAY_NAME_W;
 	rgval[1].Value.lpszW = lpszwDisplayName;
 
 	// Create the message service with the above properties.
-	EC_HRES(lpProvAdmin->CreateProvider(LPWSTR("EMSDelegate"),
+	EC_HRES(lpTempProvAdmin->CreateProvider(LPWSTR("EMSDelegate"),
 		2,
 		rgval,
 		0,
@@ -2475,7 +2491,7 @@ Error:
 
 Cleanup:
 	// Clean up.
-	if (lpProvAdmin) lpProvAdmin->Release();
+	if (lpTempProvAdmin) lpTempProvAdmin->Release();
 	return hRes;
 }
 
@@ -2488,15 +2504,20 @@ Cleanup:
 // - the SMTP address of the mailbox
 HRESULT HrAddDelegateMailbox(MAPIUID uidService,
 	LPSERVICEADMIN2 lpSvcAdmin,
+	LPPROVIDERADMIN lpProvAdmin,
 	LPWSTR lpszwMailboxDisplay,
 	LPWSTR lpszwMailboxDN,
 	LPWSTR lpszwServer,
 	LPWSTR lpszwServerDN,
-	LPWSTR lpszwSMTPAddress)
+	LPWSTR lpszwSMTPAddress,
+	LPWSTR lpRohProxyserver, 
+	ULONG ulRohProxyServerFlags,
+	ULONG ulRohProxyServerAuthPackage,
+	LPWSTR lpwszMapiHttpMailStoreInternalUrl)
 {
 	HRESULT hRes = S_OK; // Result code returned from MAPI calls.
 	SPropValue rgval[5]; // Property value structure to hold configuration info.
-	LPPROVIDERADMIN lpProvAdmin = NULL;
+	LPPROVIDERADMIN lpTempProvAdmin = NULL;
 	LPMAPIUID lpServiceUid = &uidService;;
 
 	// Enumeration for convenience.
@@ -2506,10 +2527,14 @@ HRESULT HrAddDelegateMailbox(MAPIUID uidService,
 	std::wstring wszSmtpAddress = ConvertWideCharToStdWstring(lpszwSMTPAddress);
 	wszSmtpAddress = L"SMTP:" + wszSmtpAddress;
 
-	EC_HRES(lpSvcAdmin->AdminProviders(lpServiceUid,
-		NULL,
-		&lpProvAdmin));
-
+	if (lpSvcAdmin)
+	{
+		EC_HRES(lpSvcAdmin->AdminProviders(lpServiceUid,
+			NULL,
+			&lpTempProvAdmin));
+	}
+	else
+		lpTempProvAdmin = lpProvAdmin;
 	// Set up a SPropValue array for the properties you need to configure.
 	ZeroMemory(&rgval[0], sizeof(SPropValue));
 	rgval[0].ulPropTag = PR_DISPLAY_NAME_W;
@@ -2533,7 +2558,7 @@ HRESULT HrAddDelegateMailbox(MAPIUID uidService,
 
 	printf("Creating EMSDelegate provider.\n");
 	// Create the message service with the above properties.
-	hRes = lpProvAdmin->CreateProvider(LPWSTR("EMSDelegate"),
+	hRes = lpTempProvAdmin->CreateProvider(LPWSTR("EMSDelegate"),
 		5,
 		rgval,
 		0,
@@ -2548,19 +2573,20 @@ Error:
 
 cleanup:
 	// Clean up.
-	if (lpProvAdmin) lpProvAdmin->Release();
+	if (lpTempProvAdmin) lpTempProvAdmin->Release();
 	printf("Done cleaning up.\n");
 	return hRes;
 }
 
 // HrAddDelegateMailbox
-// Adds a delegate mailbox to a given service. The property set is one for Outlook 2010 and 2013 where all is needed is:
+// Adds a delegate mailbox to a given service. The property set is one for Outlook 2007 where all is needed is:
 // - the Display Name for the mailbox
 // - the mailbox distinguished name
 // - the server NETBIOS or FQDN
 // - the server DN
 HRESULT HrAddDelegateMailboxLegacy(MAPIUID uidService,
 	LPSERVICEADMIN2 lpSvcAdmin,
+	LPPROVIDERADMIN lpProvAdmin,
 	LPWSTR lpszwMailboxDisplay,
 	LPWSTR lpszwMailboxDN,
 	LPWSTR lpszwServer,
@@ -2568,16 +2594,20 @@ HRESULT HrAddDelegateMailboxLegacy(MAPIUID uidService,
 {
 	HRESULT hRes = S_OK; // Result code returned from MAPI calls.
 	SPropValue rgval[4]; // Property value structure to hold configuration info.
-	LPPROVIDERADMIN lpProvAdmin = NULL;
+	LPPROVIDERADMIN lpTempProvAdmin = NULL;
 	LPMAPIUID lpServiceUid = &uidService;;
 
 	// Enumeration for convenience.
 	enum { iDispName, iSvcName, iSvcUID, iResourceFlags, iEmsMdbSectionUid, cptaSvc };
 	SizedSPropTagArray(cptaSvc, sptCols) = { cptaSvc, PR_DISPLAY_NAME, PR_SERVICE_NAME, PR_SERVICE_UID, PR_RESOURCE_FLAGS, PR_EMSMDB_SECTION_UID };
-
-	EC_HRES(lpSvcAdmin->AdminProviders(lpServiceUid,
-		NULL,
-		&lpProvAdmin));
+	if (lpSvcAdmin)
+	{
+		EC_HRES(lpSvcAdmin->AdminProviders(lpServiceUid,
+			NULL,
+			&lpTempProvAdmin));
+	}
+	else
+		lpTempProvAdmin = lpProvAdmin;
 
 	// Set up a SPropValue array for the properties you need to configure.
 	ZeroMemory(&rgval[0], sizeof(SPropValue));
@@ -2598,7 +2628,7 @@ HRESULT HrAddDelegateMailboxLegacy(MAPIUID uidService,
 
 	printf("Creating EMSDelegate provider.\n");
 	// Create the message service with the above properties.
-	hRes = lpProvAdmin->CreateProvider(LPWSTR("EMSDelegate"),
+	hRes = lpTempProvAdmin->CreateProvider(LPWSTR("EMSDelegate"),
 		4,
 		rgval,
 		0,
@@ -2613,7 +2643,7 @@ Error:
 
 cleanup:
 	// Clean up.
-	if (lpProvAdmin) lpProvAdmin->Release();
+	if (lpTempProvAdmin) lpTempProvAdmin->Release();
 	printf("Done cleaning up.\n");
 	return hRes;
 }
@@ -2621,6 +2651,117 @@ cleanup:
 #pragma endregion
 
 #pragma region // Service Methods //
+
+// HrGetDefaultMsemsServiceAdminProviderPtr
+// Returns the provider admin interface pointer for the default service in a given profile
+HRESULT HrGetDefaultMsemsServiceAdminProviderPtr(LPWSTR lpwszProfileName, LPPROVIDERADMIN * lppProvAdmin, LoggingMode loggingMode)
+{
+	HRESULT hRes = S_OK;
+	LPPROFADMIN lpProfAdmin = NULL;     // Profile Admin pointer
+
+	EC_HRES_LOG(MAPIAdminProfiles(0, // Flags
+		&lpProfAdmin), loggingMode); // Pointer to new IProfAdmin
+									 // Get an IProfAdmin interface.
+
+									 // Begin process services
+	LPSERVICEADMIN lpServiceAdmin = NULL;
+	LPMAPITABLE lpServiceTable = NULL;
+	EC_HRES_LOG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
+		LPTSTR(""),            // Password for that profile.
+		NULL,                // Handle to parent window.
+		0,                    // Flags.
+		&lpServiceAdmin), loggingMode);        // Pointer to new IMsgServiceAdmin.
+
+	if (lpServiceAdmin)
+	{
+		lpServiceAdmin->GetMsgServiceTable(0,
+			&lpServiceTable);
+		LPSRestriction lpSvcRes = NULL;
+		LPSRestriction lpsvcResLvl1 = NULL;
+		LPSPropValue lpSvcPropVal = NULL;
+		LPSRowSet lpSvcRows = NULL;
+
+		// Setting up an enum and a prop tag array with the props we'll use
+		enum { iServiceUid, iServiceName, iEmsMdbSectUid, iServiceResFlags, cptaSvcProps };
+		SizedSPropTagArray(cptaSvcProps, sptaSvcProps) = { cptaSvcProps, PR_SERVICE_UID, PR_RESOURCE_FLAGS };
+
+		// Allocate memory for the restriction
+		EC_HRES_LOG(MAPIAllocateBuffer(
+			sizeof(SRestriction),
+			(LPVOID*)&lpSvcRes), loggingMode);
+
+		EC_HRES_LOG(MAPIAllocateBuffer(
+			sizeof(SRestriction) * 2,
+			(LPVOID*)&lpsvcResLvl1), loggingMode);
+
+		EC_HRES_LOG(MAPIAllocateBuffer(
+			sizeof(SPropValue),
+			(LPVOID*)&lpSvcPropVal), loggingMode);
+
+		// Set up restriction to query the profile table
+		lpSvcRes->rt = RES_AND;
+		lpSvcRes->res.resAnd.cRes = 0x00000002;
+		lpSvcRes->res.resAnd.lpRes = lpsvcResLvl1;
+
+		lpsvcResLvl1[0].rt = RES_EXIST;
+		lpsvcResLvl1[0].res.resExist.ulPropTag = PR_SERVICE_NAME_A;
+		lpsvcResLvl1[0].res.resExist.ulReserved1 = 0x00000000;
+		lpsvcResLvl1[0].res.resExist.ulReserved2 = 0x00000000;
+		lpsvcResLvl1[1].rt = RES_PROPERTY;
+		lpsvcResLvl1[1].res.resProperty.relop = RELOP_EQ;
+		lpsvcResLvl1[1].res.resProperty.ulPropTag = PR_SERVICE_NAME_A;
+		lpsvcResLvl1[1].res.resProperty.lpProp = lpSvcPropVal;
+
+		lpSvcPropVal->ulPropTag = PR_SERVICE_NAME_A;
+		lpSvcPropVal->Value.lpszA = "MSEMS";
+
+		// Query the table to get the the default profile only
+		EC_HRES_LOG(HrQueryAllRows(lpServiceTable,
+			(LPSPropTagArray)&sptaSvcProps,
+			lpSvcRes,
+			NULL,
+			0,
+			&lpSvcRows), loggingMode);
+
+		if (lpSvcRows->cRows > 0)
+		{
+			for (unsigned int i = 0; i < lpSvcRows->cRows; i++)
+			{
+				if (lpSvcRows->aRow[i].lpProps[iServiceResFlags].Value.l & SERVICE_DEFAULT_STORE)
+				{
+					LPPROVIDERADMIN lpProvAdmin = NULL;
+					if (SUCCEEDED(lpServiceAdmin->AdminProviders((LPMAPIUID)lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb,
+						0,
+						&lpProvAdmin)))
+					{
+						lppProvAdmin = &lpProvAdmin;
+						if (lpProvAdmin) lpProvAdmin->Release();
+						break;
+					}
+				}
+			}
+			if (lpSvcRows) FreeProws(lpSvcRows);
+		}
+		else
+		{	
+			wprintf(L"No service found.\n");
+		}
+
+		if (lpServiceTable) lpServiceTable->Release();
+		if (lpServiceAdmin) lpServiceAdmin->Release();
+
+	}
+	// End process services
+
+Error:
+	goto Cleanup;
+Cleanup:
+	// Free up memory
+	if (lpProfAdmin) lpProfAdmin->Release();
+
+	return hRes;
+}
+
 
 // HrGetSections
 // Returns the EMSMDB and StoreProvider sections of a service

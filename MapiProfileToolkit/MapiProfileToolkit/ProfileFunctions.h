@@ -28,7 +28,7 @@
 #include <WinBase.h>
 #include <Shlwapi.h>
 
-
+LPWSTR GetDefaultProfileNameLP(LoggingMode loggingMode);
 std::wstring GetDefaultProfileName(LoggingMode loggingMode);
 ULONG GetProfileCount(LoggingMode loggingMode);
 HRESULT GetProfiles(ULONG ulProfileCount, ProfileInfo * profileInfo, LoggingMode loggingMode);
@@ -43,7 +43,7 @@ VOID PrintProfile(ProfileInfo * profileInfo);
 HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo, LoggingMode loggingMode);
 
 HRESULT HrCreatePstService(LPSERVICEADMIN2 lpServiceAdmin2, LPMAPIUID * lppServiceUid, LPWSTR lpszServiceName, ULONG ulResourceFlags, ULONG ulPstConfigFlag, LPWSTR lpszPstPathW, LPWSTR lpszDisplayName);
-
+HRESULT HrGetDefaultMsemsServiceAdminProviderPtr(LPWSTR lpwszProfileName, LPPROVIDERADMIN * lppProvAdmin, LoggingMode loggingMode);
 HRESULT HrGetSections(LPSERVICEADMIN2 lpSvcAdmin, LPMAPIUID lpServiceUid, LPPROFSECT * lppEmsMdbSection, LPPROFSECT * lppStoreProviderSection);
 HRESULT HrCreateMsemsServiceModernExt(LPSERVICEADMIN2 lpServiceAdmin2,
 	LPMAPIUID * lppServiceUid,
@@ -80,17 +80,24 @@ HRESULT HrCreateMsemsServiceMOH(LPSERVICEADMIN2 lpServiceAdmin2,
 
 HRESULT HrAddDelegateMailboxModern(MAPIUID uidService,
 	LPSERVICEADMIN2 lpSvcAdmin,
+	LPPROVIDERADMIN lpProvAdmin,
 	LPWSTR lpszwDisplayName,
 	LPWSTR lpszwSMTPAddress);
 HRESULT HrAddDelegateMailbox(MAPIUID uidService,
 	LPSERVICEADMIN2 lpSvcAdmin,
+	LPPROVIDERADMIN lpProvAdmin,
 	LPWSTR lpszwMailboxDisplay,
 	LPWSTR lpszwMailboxDN,
 	LPWSTR lpszwServer,
 	LPWSTR lpszwServerDN,
-	LPWSTR lpszwSMTPAddress);
+	LPWSTR lpszwSMTPAddress,
+	LPWSTR lpRohProxyserver,
+	ULONG ulRohProxyServerFlags,
+	ULONG ulRohProxyServerAuthPackage,
+	LPWSTR lpwszMapiHttpMailStoreInternalUrl);
 HRESULT HrAddDelegateMailboxLegacy(MAPIUID uidService,
 	LPSERVICEADMIN2 lpSvcAdmin,
+	LPPROVIDERADMIN lpProvAdmin,
 	LPWSTR lpszwMailboxDisplay,
 	LPWSTR lpszwMailboxDN,
 	LPWSTR lpszwServer,

@@ -1101,16 +1101,83 @@ void _tmain(int argc, _TCHAR* argv[])
 	HRESULT hRes = S_OK;
 
 	// Using the toolkip options to manage the runtime options
-	RuntimeOptions tkOptions = { 0 };
+	RuntimeOptions * tkOptions = new RuntimeOptions();
 	loggingMode = loggingModeNone;
 	// Parse the command line arguments
-	if (!ValidateScenario(argc, argv, &tkOptions))
+	if (!ValidateScenario(argc, argv, tkOptions))
 	{
-		if (tkOptions.ulLoggingMode != loggingModeNone)
+		if (tkOptions->ulLoggingMode != loggingModeNone)
 		{
 			DisplayUsage();
 		}
 		return;
+	}
+
+	switch (tkOptions->ulScenario)
+	{
+	case SCENARIO_PROFILE:
+		break;
+	case SCENARIO_SERVICE:
+		break;
+	case SCENARIO_MAILBOX:
+		if (tkOptions->ulActionType == ACTIONTYPE_STANDARD)
+		{
+			if (tkOptions->ulAction == STANDARDACTION_ADD)
+			{
+				if (tkOptions->mailboxOptions->iOutlookVersion == 2007)
+				{
+					// this only works with the default profile for now
+					LPPROVIDERADMIN lpProvAdmin = NULL;
+					
+					HrGetDefaultMsemsServiceAdminProviderPtr(GetDefaultProfileNameLP(loggingMode), &lpProvAdmin, loggingMode);
+					if (lpProvAdmin)
+					HrAddDelegateMailboxLegacy({ 0 }, 
+						NULL, 
+						lpProvAdmin, 
+						(LPWSTR)tkOptions->mailboxOptions->wszMailboxDisplayName.c_str(), 
+						(LPWSTR)tkOptions->mailboxOptions->wszMailboxLegacyDN.c_str(),
+						(LPWSTR)tkOptions->mailboxOptions->wszServerDisplayName.c_str(),
+						(LPWSTR)tkOptions->mailboxOptions->wszServerLegacyDN.c_str());
+					if (lpProvAdmin) lpProvAdmin->Release();
+				}
+				else if ((tkOptions->mailboxOptions->iOutlookVersion == 2010) || (tkOptions->mailboxOptions->iOutlookVersion == 2013))
+				{
+					// this only works with the default profile for now
+					LPPROVIDERADMIN lpProvAdmin = NULL;
+
+					HrGetDefaultMsemsServiceAdminProviderPtr(GetDefaultProfileNameLP(loggingMode), &lpProvAdmin, loggingMode);
+					if (lpProvAdmin)
+						HrAddDelegateMailbox({ 0 },
+							NULL,
+							lpProvAdmin,
+							(LPWSTR)tkOptions->mailboxOptions->wszMailboxDisplayName.c_str(),
+							(LPWSTR)tkOptions->mailboxOptions->wszMailboxLegacyDN.c_str(),
+							(LPWSTR)tkOptions->mailboxOptions->wszServerDisplayName.c_str(),
+							(LPWSTR)tkOptions->mailboxOptions->wszServerLegacyDN.c_str(),
+							(LPWSTR)tkOptions->mailboxOptions->wszSmtpAddress.c_str(),
+							NULL, 
+							0, 
+							0,
+							NULL);
+					if (lpProvAdmin) lpProvAdmin->Release();
+				}
+				else // default to the 2016 logic
+				{
+					// this only works with the default profile for now
+					LPPROVIDERADMIN lpProvAdmin = NULL;
+
+					HrGetDefaultMsemsServiceAdminProviderPtr(GetDefaultProfileNameLP(loggingMode), &lpProvAdmin, loggingMode);
+					if (lpProvAdmin)
+						HrAddDelegateMailboxModern({ 0 },
+							NULL,
+							lpProvAdmin,
+							(LPWSTR)tkOptions->mailboxOptions->wszMailboxDisplayName.c_str(),
+							(LPWSTR)tkOptions->mailboxOptions->wszSmtpAddress.c_str());
+					if (lpProvAdmin) lpProvAdmin->Release();
+				}
+			}
+		}
+		break;
 	}
 
 	//loggingMode = LoggingMode(tkOptions.ulLoggingMode);
