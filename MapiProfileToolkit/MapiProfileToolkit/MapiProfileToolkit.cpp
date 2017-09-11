@@ -1113,73 +1113,75 @@ void _tmain(int argc, _TCHAR* argv[])
 		return;
 	}
 
-	switch (tkOptions->ulScenario)
+	MAPIINIT_0  MAPIINIT = { 0, MAPI_MULTITHREAD_NOTIFICATIONS };
+	if (SUCCEEDED(MAPIInitialize(&MAPIINIT)))
 	{
-	case SCENARIO_PROFILE:
-		break;
-	case SCENARIO_SERVICE:
-		break;
-	case SCENARIO_MAILBOX:
-		if (tkOptions->ulActionType == ACTIONTYPE_STANDARD)
+
+		switch (tkOptions->ulScenario)
 		{
-			if (tkOptions->ulAction == STANDARDACTION_ADD)
+		case SCENARIO_PROFILE:
+			break;
+		case SCENARIO_SERVICE:
+			break;
+		case SCENARIO_MAILBOX:
+			if (tkOptions->ulActionType == ACTIONTYPE_STANDARD)
 			{
-				if (tkOptions->mailboxOptions->iOutlookVersion == 2007)
+				if (tkOptions->ulAction == STANDARDACTION_ADD)
 				{
-					// this only works with the default profile for now
-					LPPROVIDERADMIN lpProvAdmin = NULL;
-					
-					HrGetDefaultMsemsServiceAdminProviderPtr(GetDefaultProfileNameLP(loggingMode), &lpProvAdmin, loggingMode);
-					if (lpProvAdmin)
-					HrAddDelegateMailboxLegacy({ 0 }, 
-						NULL, 
-						lpProvAdmin, 
-						(LPWSTR)tkOptions->mailboxOptions->wszMailboxDisplayName.c_str(), 
-						(LPWSTR)tkOptions->mailboxOptions->wszMailboxLegacyDN.c_str(),
-						(LPWSTR)tkOptions->mailboxOptions->wszServerDisplayName.c_str(),
-						(LPWSTR)tkOptions->mailboxOptions->wszServerLegacyDN.c_str());
-					if (lpProvAdmin) lpProvAdmin->Release();
-				}
-				else if ((tkOptions->mailboxOptions->iOutlookVersion == 2010) || (tkOptions->mailboxOptions->iOutlookVersion == 2013))
-				{
-					// this only works with the default profile for now
-					LPPROVIDERADMIN lpProvAdmin = NULL;
-
-					HrGetDefaultMsemsServiceAdminProviderPtr(GetDefaultProfileNameLP(loggingMode), &lpProvAdmin, loggingMode);
-					if (lpProvAdmin)
-						HrAddDelegateMailbox({ 0 },
-							NULL,
-							lpProvAdmin,
-							(LPWSTR)tkOptions->mailboxOptions->wszMailboxDisplayName.c_str(),
-							(LPWSTR)tkOptions->mailboxOptions->wszMailboxLegacyDN.c_str(),
-							(LPWSTR)tkOptions->mailboxOptions->wszServerDisplayName.c_str(),
-							(LPWSTR)tkOptions->mailboxOptions->wszServerLegacyDN.c_str(),
-							(LPWSTR)tkOptions->mailboxOptions->wszSmtpAddress.c_str(),
-							NULL, 
-							0, 
-							0,
-							NULL);
-					if (lpProvAdmin) lpProvAdmin->Release();
-				}
-				else // default to the 2016 logic
-				{
-					// this only works with the default profile for now
-					LPPROVIDERADMIN lpProvAdmin = NULL;
-
-					HrGetDefaultMsemsServiceAdminProviderPtr(GetDefaultProfileNameLP(loggingMode), &lpProvAdmin, loggingMode);
-					if (lpProvAdmin)
-						HrAddDelegateMailboxModern({ 0 },
-							NULL,
-							lpProvAdmin,
-							(LPWSTR)tkOptions->mailboxOptions->wszMailboxDisplayName.c_str(),
-							(LPWSTR)tkOptions->mailboxOptions->wszSmtpAddress.c_str());
-					if (lpProvAdmin) lpProvAdmin->Release();
+					if (tkOptions->mailboxOptions->iOutlookVersion == 2007)
+					{
+						// this only works with the default profile for now
+						LPPROVIDERADMIN lpProvAdmin = NULL;
+						MAPIUID mapiUid = { 0 };
+						LPMAPIUID lpMapiUid = &mapiUid;
+						HrGetDefaultMsemsServiceAdminProviderPtr((LPWSTR)GetDefaultProfileName(loggingMode).c_str(), &lpProvAdmin, &lpMapiUid, loggingMode);
+						if (lpProvAdmin)
+							HrAddDelegateMailboxLegacy(lpMapiUid,
+								NULL,
+								lpProvAdmin,
+								(LPWSTR)tkOptions->mailboxOptions->wszMailboxDisplayName.c_str(),
+								(LPWSTR)tkOptions->mailboxOptions->wszMailboxLegacyDN.c_str(),
+								(LPWSTR)tkOptions->mailboxOptions->wszServerDisplayName.c_str(),
+								(LPWSTR)tkOptions->mailboxOptions->wszServerLegacyDN.c_str());
+						if (lpProvAdmin) lpProvAdmin->Release();
+					}
+					else if ((tkOptions->mailboxOptions->iOutlookVersion == 2010) || (tkOptions->mailboxOptions->iOutlookVersion == 2013))
+					{
+						// this only works with the default profile for now
+						LPPROVIDERADMIN lpProvAdmin = NULL;
+						MAPIUID mapiUid = { 0 };
+						LPMAPIUID lpMapiUid = &mapiUid;
+						HrGetDefaultMsemsServiceAdminProviderPtr((LPWSTR)GetDefaultProfileName(loggingMode).c_str(), &lpProvAdmin, &lpMapiUid, loggingMode);
+						if (lpProvAdmin)
+							HrAddDelegateMailbox(lpMapiUid,
+								NULL,
+								lpProvAdmin,
+								(LPWSTR)tkOptions->mailboxOptions->wszMailboxDisplayName.c_str(),
+								(LPWSTR)tkOptions->mailboxOptions->wszMailboxLegacyDN.c_str(),
+								(LPWSTR)tkOptions->mailboxOptions->wszServerDisplayName.c_str(),
+								(LPWSTR)tkOptions->mailboxOptions->wszServerLegacyDN.c_str(),
+								(LPWSTR)tkOptions->mailboxOptions->wszSmtpAddress.c_str(),
+								NULL,
+								0,
+								0,
+								NULL);
+						if (lpProvAdmin) lpProvAdmin->Release();
+					}
+					else // default to the 2016 logic
+					{
+						// this only works with the default profile for now
+						
+							HrAddDelegateMailboxModern2((LPWSTR)GetDefaultProfileName(loggingMode).c_str(),
+								(LPWSTR)tkOptions->mailboxOptions->wszMailboxDisplayName.c_str(),
+								(LPWSTR)tkOptions->mailboxOptions->wszSmtpAddress.c_str(),
+								loggingMode);
+					}
 				}
 			}
+			break;
 		}
-		break;
+		MAPIUninitialize();
 	}
-
 	//loggingMode = LoggingMode(tkOptions.ulLoggingMode);
 	//// Check the curren't process' bitness vs Outlook's bitness and only run it if matched to avoid MAPI dialog boxes.
 	//if (!IsCorrectBitness())
@@ -1191,92 +1193,92 @@ void _tmain(int argc, _TCHAR* argv[])
 
 	try
 	{
-		MAPIINIT_0  MAPIINIT = { 0, MAPI_MULTITHREAD_NOTIFICATIONS };
-		if (SUCCEEDED(MAPIInitialize(&MAPIINIT)))
-		{
-			Logger::Write(logLevelSuccess, L"MAPI Initialised", loggingMode);
-			//switch (tkOptions.ulScenario)
-			//{
-			//case SCENARIO_PROFILE:
-			//	switch (tkOptions.profileOptions->ulProfileMode)
-			//	{
-			//	case PROFILEMODE_ALL:
-			//			ULONG ulProfileCount = GetProfileCount(loggingMode);
-			//			ProfileInfo * profileInfo = new ProfileInfo[ulProfileCount];
-			//			ZeroMemory(profileInfo, sizeof(ProfileInfo) * ulProfileCount);
-			//			Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for all profiles", loggingMode);
-			//			EC_HRES_LOG(GetProfiles(ulProfileCount, profileInfo, loggingMode), loggingMode);
-			//			if (tkOptions.wszExportPath != L"")
-			//			{
-			//				Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for all profiles", loggingMode);
-			//				ExportXML(ulProfileCount, profileInfo, tkOptions.wszExportPath, loggingMode);
-			//			}
-			//			else
-			//			{
-			//				Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for all profiles", loggingMode);
-			//				ExportXML(ulProfileCount, profileInfo, L"", loggingMode);
-			//			}
-			//		
-			//		break;
-			//	case PROFILEMODE_ONE:
-			//		
-			//			ProfileInfo profileInfo;
-			//			Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for profile: " + tkOptions.profileOptions->wszProfileName, loggingMode);
-			//			EC_HRES_LOG(GetProfile((LPWSTR)tkOptions.profileOptions->wszProfileName.c_str(), &profileInfo, loggingMode), loggingMode);
-			//			if (tkOptions.wszExportPath != L"")
-			//			{
-			//				Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for profile", loggingMode);
-			//				ExportXML(1, &profileInfo, tkOptions.szExportPath, loggingMode);
-			//			}
-			//			else
-			//			{
-			//				Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for profile", loggingMode);
-			//				ExportXML(1, &profileInfo, L"", loggingMode);
-			//			}
-			//		break;
-			//	case PROFILEMODE_DEFAULT:
-			//		std::wstring szDefaultProfileName = GetDefaultProfileName(loggingMode);
-			//		if (!szDefaultProfileName.empty())
-			//		{
-			//			tkOptions.szProfileName = szDefaultProfileName;
-			//		}
-			//		if (tkOptions.ulReadWriteMode == READWRITEMODE_READ)
-			//		{
-			//			ProfileInfo profileInfo;
-			//			Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for default profile: " + tkOptions.szProfileName, loggingMode);
-			//			EC_HRES_LOG(GetProfile((LPWSTR)tkOptions.szProfileName.c_str(), &profileInfo, loggingMode), loggingMode);
-			//			if (tkOptions.szExportPath != L"")
-			//			{
-			//				Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for default profile", loggingMode);
-			//				ExportXML(1, &profileInfo, tkOptions.szExportPath, loggingMode);
-			//			}
-			//			else
-			//			{
-			//				Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for default profile", loggingMode);
-			//				ExportXML(1, &profileInfo, L"", loggingMode);
-			//			}
-			//		}
-			//		else if (tkOptions.ulReadWriteMode == READWRITEMODE_WRITE)
-			//		{
-			//			Logger::Write(logLevelInfo, L"Updating cached mode configuration on default profile: " + tkOptions.szProfileName, loggingMode);
-			//			EC_HRES_LOG(UpdateCachedModeConfig((LPSTR)tkOptions.szProfileName.c_str(), tkOptions.ulServiceIndex, tkOptions.ulCachedModeOwner, tkOptions.ulCachedModeShared, tkOptions.ulCachedModePublicFolder, tkOptions.iCachedModeMonths, loggingMode), loggingMode);
-			//		}
-			//		break;
-			//	}
-			//	break;
-			//case RUNNINGMODE_PST:
-			//	if (tkOptions.szPstOldPath.empty())
-			//	{
-			//		EC_HRES_LOG(UpdatePstPath((LPWSTR)tkOptions.szProfileName.c_str(), (LPWSTR)tkOptions.szPstNewPath.c_str(), tkOptions.bPstMoveFiles, loggingMode), loggingMode);
-			//	}
-			//	else
-			//	{
-			//		EC_HRES_LOG(UpdatePstPath((LPWSTR)tkOptions.szProfileName.c_str(), (LPWSTR)tkOptions.szPstOldPath.c_str(), (LPWSTR)tkOptions.szPstNewPath.c_str(), tkOptions.bPstMoveFiles, loggingMode), loggingMode);
-			//	}
-			//	break;
-			//};
-			//MAPIUninitialize();
-		}
+		//MAPIINIT_0  MAPIINIT = { 0, MAPI_MULTITHREAD_NOTIFICATIONS };
+		//if (SUCCEEDED(MAPIInitialize(&MAPIINIT)))
+		//{
+		//	Logger::Write(logLevelSuccess, L"MAPI Initialised", loggingMode);
+		//	//switch (tkOptions.ulScenario)
+		//	//{
+		//	//case SCENARIO_PROFILE:
+		//	//	switch (tkOptions.profileOptions->ulProfileMode)
+		//	//	{
+		//	//	case PROFILEMODE_ALL:
+		//	//			ULONG ulProfileCount = GetProfileCount(loggingMode);
+		//	//			ProfileInfo * profileInfo = new ProfileInfo[ulProfileCount];
+		//	//			ZeroMemory(profileInfo, sizeof(ProfileInfo) * ulProfileCount);
+		//	//			Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for all profiles", loggingMode);
+		//	//			EC_HRES_LOG(GetProfiles(ulProfileCount, profileInfo, loggingMode), loggingMode);
+		//	//			if (tkOptions.wszExportPath != L"")
+		//	//			{
+		//	//				Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for all profiles", loggingMode);
+		//	//				ExportXML(ulProfileCount, profileInfo, tkOptions.wszExportPath, loggingMode);
+		//	//			}
+		//	//			else
+		//	//			{
+		//	//				Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for all profiles", loggingMode);
+		//	//				ExportXML(ulProfileCount, profileInfo, L"", loggingMode);
+		//	//			}
+		//	//		
+		//	//		break;
+		//	//	case PROFILEMODE_ONE:
+		//	//		
+		//	//			ProfileInfo profileInfo;
+		//	//			Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for profile: " + tkOptions.profileOptions->wszProfileName, loggingMode);
+		//	//			EC_HRES_LOG(GetProfile((LPWSTR)tkOptions.profileOptions->wszProfileName.c_str(), &profileInfo, loggingMode), loggingMode);
+		//	//			if (tkOptions.wszExportPath != L"")
+		//	//			{
+		//	//				Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for profile", loggingMode);
+		//	//				ExportXML(1, &profileInfo, tkOptions.szExportPath, loggingMode);
+		//	//			}
+		//	//			else
+		//	//			{
+		//	//				Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for profile", loggingMode);
+		//	//				ExportXML(1, &profileInfo, L"", loggingMode);
+		//	//			}
+		//	//		break;
+		//	//	case PROFILEMODE_DEFAULT:
+		//	//		std::wstring szDefaultProfileName = GetDefaultProfileName(loggingMode);
+		//	//		if (!szDefaultProfileName.empty())
+		//	//		{
+		//	//			tkOptions.szProfileName = szDefaultProfileName;
+		//	//		}
+		//	//		if (tkOptions.ulReadWriteMode == READWRITEMODE_READ)
+		//	//		{
+		//	//			ProfileInfo profileInfo;
+		//	//			Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for default profile: " + tkOptions.szProfileName, loggingMode);
+		//	//			EC_HRES_LOG(GetProfile((LPWSTR)tkOptions.szProfileName.c_str(), &profileInfo, loggingMode), loggingMode);
+		//	//			if (tkOptions.szExportPath != L"")
+		//	//			{
+		//	//				Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for default profile", loggingMode);
+		//	//				ExportXML(1, &profileInfo, tkOptions.szExportPath, loggingMode);
+		//	//			}
+		//	//			else
+		//	//			{
+		//	//				Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for default profile", loggingMode);
+		//	//				ExportXML(1, &profileInfo, L"", loggingMode);
+		//	//			}
+		//	//		}
+		//	//		else if (tkOptions.ulReadWriteMode == READWRITEMODE_WRITE)
+		//	//		{
+		//	//			Logger::Write(logLevelInfo, L"Updating cached mode configuration on default profile: " + tkOptions.szProfileName, loggingMode);
+		//	//			EC_HRES_LOG(UpdateCachedModeConfig((LPSTR)tkOptions.szProfileName.c_str(), tkOptions.ulServiceIndex, tkOptions.ulCachedModeOwner, tkOptions.ulCachedModeShared, tkOptions.ulCachedModePublicFolder, tkOptions.iCachedModeMonths, loggingMode), loggingMode);
+		//	//		}
+		//	//		break;
+		//	//	}
+		//	//	break;
+		//	//case RUNNINGMODE_PST:
+		//	//	if (tkOptions.szPstOldPath.empty())
+		//	//	{
+		//	//		EC_HRES_LOG(UpdatePstPath((LPWSTR)tkOptions.szProfileName.c_str(), (LPWSTR)tkOptions.szPstNewPath.c_str(), tkOptions.bPstMoveFiles, loggingMode), loggingMode);
+		//	//	}
+		//	//	else
+		//	//	{
+		//	//		EC_HRES_LOG(UpdatePstPath((LPWSTR)tkOptions.szProfileName.c_str(), (LPWSTR)tkOptions.szPstOldPath.c_str(), (LPWSTR)tkOptions.szPstNewPath.c_str(), tkOptions.bPstMoveFiles, loggingMode), loggingMode);
+		//	//	}
+		//	//	break;
+		//	//};
+		//	//MAPIUninitialize();
+		//}
 	}
 	catch (int exception)
 	{

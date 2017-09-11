@@ -43,7 +43,7 @@ VOID PrintProfile(ProfileInfo * profileInfo);
 HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo, LoggingMode loggingMode);
 
 HRESULT HrCreatePstService(LPSERVICEADMIN2 lpServiceAdmin2, LPMAPIUID * lppServiceUid, LPWSTR lpszServiceName, ULONG ulResourceFlags, ULONG ulPstConfigFlag, LPWSTR lpszPstPathW, LPWSTR lpszDisplayName);
-HRESULT HrGetDefaultMsemsServiceAdminProviderPtr(LPWSTR lpwszProfileName, LPPROVIDERADMIN * lppProvAdmin, LoggingMode loggingMode);
+HRESULT HrGetDefaultMsemsServiceAdminProviderPtr(LPWSTR lpwszProfileName, LPPROVIDERADMIN * lppProvAdmin, LPMAPIUID * lppServiceUid, LoggingMode loggingMode);
 HRESULT HrGetSections(LPSERVICEADMIN2 lpSvcAdmin, LPMAPIUID lpServiceUid, LPPROFSECT * lppEmsMdbSection, LPPROFSECT * lppStoreProviderSection);
 HRESULT HrCreateMsemsServiceModernExt(LPSERVICEADMIN2 lpServiceAdmin2,
 	LPMAPIUID * lppServiceUid,
@@ -78,12 +78,12 @@ HRESULT HrCreateMsemsServiceMOH(LPSERVICEADMIN2 lpServiceAdmin2,
 	LPWSTR lpszAddressBookExternalUrl);
 
 
-HRESULT HrAddDelegateMailboxModern(MAPIUID uidService,
+HRESULT HrAddDelegateMailboxModern(LPMAPIUID lpServiceUid,
 	LPSERVICEADMIN2 lpSvcAdmin,
 	LPPROVIDERADMIN lpProvAdmin,
 	LPWSTR lpszwDisplayName,
 	LPWSTR lpszwSMTPAddress);
-HRESULT HrAddDelegateMailbox(MAPIUID uidService,
+HRESULT HrAddDelegateMailbox(LPMAPIUID lpServiceUid,
 	LPSERVICEADMIN2 lpSvcAdmin,
 	LPPROVIDERADMIN lpProvAdmin,
 	LPWSTR lpszwMailboxDisplay,
@@ -95,10 +95,15 @@ HRESULT HrAddDelegateMailbox(MAPIUID uidService,
 	ULONG ulRohProxyServerFlags,
 	ULONG ulRohProxyServerAuthPackage,
 	LPWSTR lpwszMapiHttpMailStoreInternalUrl);
-HRESULT HrAddDelegateMailboxLegacy(MAPIUID uidService,
+HRESULT HrAddDelegateMailboxLegacy(LPMAPIUID lpServiceUid,
 	LPSERVICEADMIN2 lpSvcAdmin,
 	LPPROVIDERADMIN lpProvAdmin,
 	LPWSTR lpszwMailboxDisplay,
 	LPWSTR lpszwMailboxDN,
 	LPWSTR lpszwServer,
 	LPWSTR lpszwServerDN);
+
+HRESULT HrAddDelegateMailboxModern2(LPWSTR lpwszProfileName,
+	LPWSTR lpszwDisplayName,
+	LPWSTR lpszwSMTPAddress,
+	LoggingMode loggingMode);
