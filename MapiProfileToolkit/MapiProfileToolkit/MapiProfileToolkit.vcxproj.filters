@@ -84,6 +84,7 @@
     <ClInclude Include="abhelp.h" />
     <ClInclude Include="CBaseScenario.h" />
     <ClInclude Include="CProfileScenario.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MapiProfileToolkit.cpp" />
@@ -117,5 +118,10 @@
     </ClCompile>
     <ClCompile Include="CBaseScenario.cpp" />
     <ClCompile Include="CProfileScenario.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="MapiProfileToolkit.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>
