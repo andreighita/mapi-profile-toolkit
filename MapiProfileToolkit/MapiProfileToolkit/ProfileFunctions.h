@@ -36,6 +36,7 @@ HRESULT GetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo, LoggingMod
 HRESULT UpdateCachedModeConfig(LPSTR lpszProfileName, ULONG ulSectionIndex, ULONG ulCachedModeOwner, ULONG ulCachedModeShared, ULONG ulCachedModePublicFolders, int iCachedModeMonths, LoggingMode loggingMode);
 HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszOldPath, LPWSTR lpszNewPath, bool bMoveFiles, LoggingMode loggingMode);
 HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszNewPath, bool bMoveFiles, LoggingMode loggingMode);
+HRESULT HrCreateProfile(LPWSTR lpszProfileName);
 HRESULT HrCreateProfile(LPWSTR lpszProfileName, LPSERVICEADMIN2 *lppSvcAdmin2);
 HRESULT HrSetDefaultProfile(LPWSTR lpszProfileName);
 HRESULT HrCloneProfile(ProfileInfo * profileInfo, LoggingMode loggingMode);
@@ -45,47 +46,57 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo, LoggingM
 HRESULT HrCreatePstService(LPSERVICEADMIN2 lpServiceAdmin2, LPMAPIUID * lppServiceUid, LPWSTR lpszServiceName, ULONG ulResourceFlags, ULONG ulPstConfigFlag, LPWSTR lpszPstPathW, LPWSTR lpszDisplayName);
 HRESULT HrGetDefaultMsemsServiceAdminProviderPtr(LPWSTR lpwszProfileName, LPPROVIDERADMIN * lppProvAdmin, LPMAPIUID * lppServiceUid, LoggingMode loggingMode);
 HRESULT HrGetSections(LPSERVICEADMIN2 lpSvcAdmin, LPMAPIUID lpServiceUid, LPPROFSECT * lppEmsMdbSection, LPPROFSECT * lppStoreProviderSection);
-HRESULT HrCreateMsemsServiceModernExt(LPSERVICEADMIN2 lpServiceAdmin2,
-	LPMAPIUID * lppServiceUid,
+HRESULT HrCreateMsemsServiceModernExt(BOOL bDefaultProfile,
+	LPWSTR lpwszProfileName,
 	ULONG ulResourceFlags,
 	ULONG ulProfileConfigFlags,
 	ULONG ulCachedModeMonths,
 	LPWSTR lpszSmtpAddress,
-	LPWSTR lpszDisplayName);
-HRESULT HrCreateMsemsServiceModern(LPSERVICEADMIN2 lpServiceAdmin2,
-	LPMAPIUID * lppServiceUid,
+	LPWSTR lpszDisplayName,
+	LoggingMode loggingMode);
+HRESULT HrCreateMsemsServiceModern(BOOL bDefaultProfile,
+	LPWSTR lpwszProfileName,
 	LPWSTR lpszSmtpAddress,
-	LPWSTR lpszDisplayName);
-HRESULT HrCreateMsemsServiceLegacyUnresolved(LPSERVICEADMIN2 lpServiceAdmin2,
-	LPMAPIUID * lppServiceUid,
+	LPWSTR lpszDisplayName,
+	LoggingMode loggingMode);
+HRESULT HrCreateMsemsServiceLegacyUnresolved(BOOL bDefaultProfile,
+	LPWSTR lpwszProfileName,
 	LPWSTR lpszwMailboxDN,
-	LPWSTR lpszwServer);
-HRESULT HrCreateMsemsServiceROH(LPSERVICEADMIN2 lpServiceAdmin2,
-	LPMAPIUID * lppServiceUid,
+	LPWSTR lpszwServer,
+	LoggingMode loggingMode);
+HRESULT HrCreateMsemsServiceROH(BOOL bDefaultProfile,
+	LPWSTR lpwszProfileName,
 	LPWSTR lpszSmtpAddress,
 	LPWSTR lpszMailboxLegacyDn,
 	LPWSTR lpszUnresolvedServer,
 	LPWSTR lpszRohProxyServer,
 	LPWSTR lpszProfileServerDn,
-	LPWSTR lpszAutodiscoverUrl);
-HRESULT HrCreateMsemsServiceMOH(LPSERVICEADMIN2 lpServiceAdmin2,
-	LPMAPIUID * lppServiceUid,
+	LPWSTR lpszAutodiscoverUrl,
+	LoggingMode loggingMode);
+HRESULT HrCreateMsemsServiceMOH(BOOL bDefaultProfile,
+	LPWSTR lpwszProfileName,
 	LPWSTR lpszSmtpAddress,
 	LPWSTR lpszMailboxDn,
 	LPWSTR lpszMailStoreInternalUrl,
 	LPWSTR lpszMailStoreExternalUrl,
 	LPWSTR lpszAddressBookInternalUrl,
-	LPWSTR lpszAddressBookExternalUrl);
+	LPWSTR lpszAddressBookExternalUrl,
+	LoggingMode loggingMode);
 
 
-HRESULT HrAddDelegateMailboxModern(LPMAPIUID lpServiceUid,
-	LPSERVICEADMIN2 lpSvcAdmin,
-	LPPROVIDERADMIN lpProvAdmin,
+HRESULT HrAddDelegateMailboxModern(
+	BOOL bDefaultProfile,
+	LPWSTR lpwszProfileName,
+	BOOL bDefaultService,
+	int iServiceIndex,
 	LPWSTR lpszwDisplayName,
-	LPWSTR lpszwSMTPAddress);
-HRESULT HrAddDelegateMailbox(LPMAPIUID lpServiceUid,
-	LPSERVICEADMIN2 lpSvcAdmin,
-	LPPROVIDERADMIN lpProvAdmin,
+	LPWSTR lpszwSMTPAddress,
+	LoggingMode loggingMode);
+
+HRESULT HrAddDelegateMailbox(BOOL bDefaultProfile,
+	LPWSTR lpwszProfileName,
+	BOOL bDefaultService,
+	int iServiceIndex,
 	LPWSTR lpszwMailboxDisplay,
 	LPWSTR lpszwMailboxDN,
 	LPWSTR lpszwServer,
@@ -94,16 +105,14 @@ HRESULT HrAddDelegateMailbox(LPMAPIUID lpServiceUid,
 	LPWSTR lpRohProxyserver,
 	ULONG ulRohProxyServerFlags,
 	ULONG ulRohProxyServerAuthPackage,
-	LPWSTR lpwszMapiHttpMailStoreInternalUrl);
-HRESULT HrAddDelegateMailboxLegacy(LPMAPIUID lpServiceUid,
-	LPSERVICEADMIN2 lpSvcAdmin,
-	LPPROVIDERADMIN lpProvAdmin,
+	LPWSTR lpwszMapiHttpMailStoreInternalUrl,
+	LoggingMode loggingMode);
+HRESULT HrAddDelegateMailboxLegacy(BOOL bDefaultProfile,
+	LPWSTR lpwszProfileName,
+	BOOL bDefaultService,
+	int iServiceIndex,
 	LPWSTR lpszwMailboxDisplay,
 	LPWSTR lpszwMailboxDN,
 	LPWSTR lpszwServer,
-	LPWSTR lpszwServerDN);
-
-HRESULT HrAddDelegateMailboxModern2(LPWSTR lpwszProfileName,
-	LPWSTR lpszwDisplayName,
-	LPWSTR lpszwSMTPAddress,
+	LPWSTR lpszwServerDN,
 	LoggingMode loggingMode);

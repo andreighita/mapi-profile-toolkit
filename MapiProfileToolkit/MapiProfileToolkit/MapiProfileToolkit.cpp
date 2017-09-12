@@ -1120,8 +1120,71 @@ void _tmain(int argc, _TCHAR* argv[])
 		switch (tkOptions->ulScenario)
 		{
 		case SCENARIO_PROFILE:
-			break;
+			if (tkOptions->ulActionType == ACTIONTYPE_STANDARD)
+			{
+				if (tkOptions->ulAction == STANDARDACTION_ADD)
+				{
+					// this only works with the default profile for now
+					HrCreateProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str());
+					break;
+				}
+			}
 		case SCENARIO_SERVICE:
+			if (tkOptions->ulActionType == ACTIONTYPE_STANDARD)
+			{
+				if (tkOptions->ulAction == STANDARDACTION_ADD)
+				{
+					if (tkOptions->mailboxOptions->iOutlookVersion == 2007)
+					{
+						HrCreateMsemsServiceLegacyUnresolved((tkOptions->serviceOptions->ulProfileMode == PROFILEMODE_DEFAULT),
+							(LPWSTR)tkOptions->serviceOptions->wszProfileName.c_str(),
+							(LPWSTR)tkOptions->serviceOptions->wszMailboxLegacyDN.c_str(),
+							(LPWSTR)tkOptions->serviceOptions->wszServerDisplayName.c_str(),
+							loggingMode);
+					}
+					else if ((tkOptions->mailboxOptions->iOutlookVersion == 2010) || (tkOptions->mailboxOptions->iOutlookVersion == 2013))
+					{
+						// this only works with the default profile for now
+						if (tkOptions->serviceOptions->ulConnectMode == CONNECT_ROH)
+						{
+							HrCreateMsemsServiceROH((tkOptions->serviceOptions->ulProfileMode == PROFILEMODE_DEFAULT),
+								(LPWSTR)tkOptions->serviceOptions->wszProfileName.c_str(),
+								(LPWSTR)tkOptions->serviceOptions->wszSmtpAddress.c_str(),
+								(LPWSTR)tkOptions->serviceOptions->wszMailboxLegacyDN.c_str(),
+								(LPWSTR)tkOptions->serviceOptions->wszUnresolvedServer.c_str(),
+								(LPWSTR)tkOptions->serviceOptions->wszRohProxyServer.c_str(),
+								(LPWSTR)tkOptions->serviceOptions->wszServerLegacyDN.c_str(),
+								(LPWSTR)tkOptions->serviceOptions->wszAutodiscoverUrl.c_str(),
+								loggingMode);
+						}
+						else if (tkOptions->serviceOptions->ulConnectMode == CONNECT_MOH)
+						{
+							HrCreateMsemsServiceMOH((tkOptions->serviceOptions->ulProfileMode == PROFILEMODE_DEFAULT),
+								(LPWSTR)tkOptions->serviceOptions->wszProfileName.c_str(),
+								(LPWSTR)tkOptions->serviceOptions->wszSmtpAddress.c_str(),
+								(LPWSTR)tkOptions->serviceOptions->wszMailboxLegacyDN.c_str(),
+								(LPWSTR)tkOptions->serviceOptions->wszMailStoreInternalUrl.c_str(),
+								(LPWSTR)tkOptions->serviceOptions->wszMailStoreExternalUrl.c_str(),
+								(LPWSTR)tkOptions->serviceOptions->wszAddressBookInternalUrl.c_str(),
+								(LPWSTR)tkOptions->serviceOptions->wszAddressBookExternalUrl.c_str(),
+								loggingMode);
+						}
+						else
+						{
+
+						}
+					}
+					else // default to the 2016 logic
+					{
+						// this only works with the default profile for now
+						HrCreateMsemsServiceModern((tkOptions->serviceOptions->ulProfileMode == PROFILEMODE_DEFAULT),
+							(LPWSTR)tkOptions->serviceOptions->wszProfileName.c_str(),
+							(LPWSTR)tkOptions->serviceOptions->wszSmtpAddress.c_str(),
+							(LPWSTR)tkOptions->serviceOptions->wszMailboxDisplayName.c_str(),
+							loggingMode);
+					}
+				}
+			}
 			break;
 		case SCENARIO_MAILBOX:
 			if (tkOptions->ulActionType == ACTIONTYPE_STANDARD)
@@ -1131,50 +1194,44 @@ void _tmain(int argc, _TCHAR* argv[])
 					if (tkOptions->mailboxOptions->iOutlookVersion == 2007)
 					{
 						// this only works with the default profile for now
-						LPPROVIDERADMIN lpProvAdmin = NULL;
-						MAPIUID mapiUid = { 0 };
-						LPMAPIUID lpMapiUid = &mapiUid;
-						HrGetDefaultMsemsServiceAdminProviderPtr((LPWSTR)GetDefaultProfileName(loggingMode).c_str(), &lpProvAdmin, &lpMapiUid, loggingMode);
-						if (lpProvAdmin)
-							HrAddDelegateMailboxLegacy(lpMapiUid,
-								NULL,
-								lpProvAdmin,
-								(LPWSTR)tkOptions->mailboxOptions->wszMailboxDisplayName.c_str(),
-								(LPWSTR)tkOptions->mailboxOptions->wszMailboxLegacyDN.c_str(),
-								(LPWSTR)tkOptions->mailboxOptions->wszServerDisplayName.c_str(),
-								(LPWSTR)tkOptions->mailboxOptions->wszServerLegacyDN.c_str());
-						if (lpProvAdmin) lpProvAdmin->Release();
+						HrAddDelegateMailboxLegacy((tkOptions->mailboxOptions->ulProfileMode == PROFILEMODE_DEFAULT),
+							(LPWSTR)tkOptions->mailboxOptions->wszProfileName.c_str(),
+							tkOptions->mailboxOptions->bDefaultService,
+							tkOptions->mailboxOptions->ulServiceIndex,
+							(LPWSTR)tkOptions->mailboxOptions->wszMailboxDisplayName.c_str(),
+							(LPWSTR)tkOptions->mailboxOptions->wszMailboxLegacyDN.c_str(),
+							(LPWSTR)tkOptions->mailboxOptions->wszServerDisplayName.c_str(),
+							(LPWSTR)tkOptions->mailboxOptions->wszServerLegacyDN.c_str(),
+							loggingMode);
 					}
 					else if ((tkOptions->mailboxOptions->iOutlookVersion == 2010) || (tkOptions->mailboxOptions->iOutlookVersion == 2013))
 					{
 						// this only works with the default profile for now
-						LPPROVIDERADMIN lpProvAdmin = NULL;
-						MAPIUID mapiUid = { 0 };
-						LPMAPIUID lpMapiUid = &mapiUid;
-						HrGetDefaultMsemsServiceAdminProviderPtr((LPWSTR)GetDefaultProfileName(loggingMode).c_str(), &lpProvAdmin, &lpMapiUid, loggingMode);
-						if (lpProvAdmin)
-							HrAddDelegateMailbox(lpMapiUid,
-								NULL,
-								lpProvAdmin,
-								(LPWSTR)tkOptions->mailboxOptions->wszMailboxDisplayName.c_str(),
-								(LPWSTR)tkOptions->mailboxOptions->wszMailboxLegacyDN.c_str(),
-								(LPWSTR)tkOptions->mailboxOptions->wszServerDisplayName.c_str(),
-								(LPWSTR)tkOptions->mailboxOptions->wszServerLegacyDN.c_str(),
-								(LPWSTR)tkOptions->mailboxOptions->wszSmtpAddress.c_str(),
-								NULL,
-								0,
-								0,
-								NULL);
-						if (lpProvAdmin) lpProvAdmin->Release();
+						HrAddDelegateMailbox((tkOptions->mailboxOptions->ulProfileMode == PROFILEMODE_DEFAULT),
+							(LPWSTR)tkOptions->mailboxOptions->wszProfileName.c_str(),
+							tkOptions->mailboxOptions->bDefaultService,
+							tkOptions->mailboxOptions->ulServiceIndex,
+							(LPWSTR)tkOptions->mailboxOptions->wszMailboxDisplayName.c_str(),
+							(LPWSTR)tkOptions->mailboxOptions->wszMailboxLegacyDN.c_str(),
+							(LPWSTR)tkOptions->mailboxOptions->wszServerDisplayName.c_str(),
+							(LPWSTR)tkOptions->mailboxOptions->wszServerLegacyDN.c_str(),
+							(LPWSTR)tkOptions->mailboxOptions->wszSmtpAddress.c_str(),
+							NULL,
+							0,
+							0,
+							NULL,
+							loggingMode);
 					}
 					else // default to the 2016 logic
 					{
 						// this only works with the default profile for now
-						
-							HrAddDelegateMailboxModern2((LPWSTR)GetDefaultProfileName(loggingMode).c_str(),
-								(LPWSTR)tkOptions->mailboxOptions->wszMailboxDisplayName.c_str(),
-								(LPWSTR)tkOptions->mailboxOptions->wszSmtpAddress.c_str(),
-								loggingMode);
+						HrAddDelegateMailboxModern((tkOptions->mailboxOptions->ulProfileMode == PROFILEMODE_DEFAULT),
+							(LPWSTR)tkOptions->mailboxOptions->wszProfileName.c_str(),
+							tkOptions->mailboxOptions->bDefaultService,
+							tkOptions->mailboxOptions->ulServiceIndex,
+							(LPWSTR)tkOptions->mailboxOptions->wszMailboxDisplayName.c_str(),
+							(LPWSTR)tkOptions->mailboxOptions->wszSmtpAddress.c_str(),
+							loggingMode);
 					}
 				}
 			}
