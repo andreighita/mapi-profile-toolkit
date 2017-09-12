@@ -832,7 +832,7 @@ BOOL ParseArgsService(int argc, _TCHAR* argv[], ServiceOptions * serviceOptions)
 						}
 						else return false;
 					}
-					if (tolower(argv[i][3]) == 'u')
+					else if (tolower(argv[i][3]) == 'u')
 					{
 						if (i + 1 < argc)
 						{
@@ -1016,7 +1016,7 @@ BOOL ParseArgsMailbox(int argc, _TCHAR* argv[], MailboxOptions * mailboxOptions)
 			}
 			break;
 		}
-		
+
 	}
 	return true;
 }

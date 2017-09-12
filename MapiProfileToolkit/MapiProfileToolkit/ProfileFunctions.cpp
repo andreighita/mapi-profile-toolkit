@@ -75,7 +75,7 @@ std::wstring GetDefaultProfileName(LoggingMode loggingMode)
 	SizedSPropTagArray(cptaProps, sptaProps) = { cptaProps, PR_DISPLAY_NAME_A, PR_PROVIDER_UID, PR_SERVICE_UID };
 	EC_HRES_LOG(MAPIAdminProfiles(0, // Flags
 		&lpProfAdmin), loggingMode); // Pointer to new IProfAdmin
-						// Get an IProfAdmin interface.
+									 // Get an IProfAdmin interface.
 
 	EC_HRES_LOG(lpProfAdmin->GetProfileTable(0,
 		&lpProfTable), loggingMode);
@@ -154,7 +154,7 @@ ULONG GetProfileCount(LoggingMode loggingMode)
 
 	EC_HRES_LOG(MAPIAdminProfiles(0, // Flags
 		&lpProfAdmin), loggingMode); // Pointer to new IProfAdmin
-						// Get an IProfAdmin interface.
+									 // Get an IProfAdmin interface.
 
 	EC_HRES_LOG(lpProfAdmin->GetProfileTable(0,
 		&lpProfTable), loggingMode);
@@ -185,7 +185,7 @@ HRESULT GetProfiles(ULONG ulProfileCount, ProfileInfo * profileInfo, LoggingMode
 
 	EC_HRES_LOG(MAPIAdminProfiles(0, // Flags
 		&lpProfAdmin), loggingMode); // Pointer to new IProfAdmin
-						// Get an IProfAdmin interface.
+									 // Get an IProfAdmin interface.
 
 	EC_HRES_LOG(lpProfAdmin->GetProfileTable(0,
 		&lpProfTable), loggingMode);
@@ -234,7 +234,7 @@ HRESULT GetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo, LoggingMod
 
 	EC_HRES_LOG(MAPIAdminProfiles(0, // Flags
 		&lpProfAdmin), loggingMode); // Pointer to new IProfAdmin
-						// Get an IProfAdmin interface.
+									 // Get an IProfAdmin interface.
 
 	EC_HRES_LOG(lpProfAdmin->GetProfileTable(0,
 		&lpProfTable), loggingMode);
@@ -800,7 +800,7 @@ HRESULT GetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo, LoggingMod
 			}
 			if (lpSvcRows) FreeProws(lpSvcRows);
 			// End loop services
-			 
+
 
 		}
 
@@ -831,9 +831,9 @@ HRESULT UpdateCachedModeConfig(LPSTR lpszProfileName, ULONG ulSectionIndex, ULON
 
 	EC_HRES_LOG(MAPIAdminProfiles(0, // Flags
 		&lpProfAdmin), loggingMode); // Pointer to new IProfAdmin
-						// Get an IProfAdmin interface.
+									 // Get an IProfAdmin interface.
 
-						// Begin process services
+									 // Begin process services
 	LPSERVICEADMIN lpServiceAdmin = NULL;
 	LPMAPITABLE lpServiceTable = NULL;
 	EC_HRES_LOG(lpProfAdmin->AdminServices((LPTSTR)lpszProfileName,
@@ -1074,7 +1074,7 @@ HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszOldPath, LPWSTR lpszNew
 
 	EC_HRES_LOG(MAPIAdminProfiles(0, // Flags
 		&lpProfAdmin), loggingMode); // Pointer to new IProfAdmin
-						// Get an IProfAdmin interface.
+									 // Get an IProfAdmin interface.
 
 	EC_HRES_LOG(lpProfAdmin->GetProfileTable(0,
 		&lpProfTable), loggingMode);
@@ -1216,125 +1216,125 @@ HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszOldPath, LPWSTR lpszNew
 			for (unsigned int i = 0; i < lpSvcRows->cRows; i++)
 			{
 
-					LPPROVIDERADMIN lpProvAdmin = NULL;
+				LPPROVIDERADMIN lpProvAdmin = NULL;
 
-					if (SUCCEEDED(lpServiceAdmin->AdminProviders((LPMAPIUID)lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb,
+				if (SUCCEEDED(lpServiceAdmin->AdminProviders((LPMAPIUID)lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb,
+					0,
+					&lpProvAdmin)))
+				{
+					// Loop providers
+					LPMAPITABLE lpProvTable = NULL;
+					LPSRestriction lpProvRes = NULL;
+					LPSRestriction lpProvResLvl1 = NULL;
+					LPSPropValue lpProvPropVal = NULL;
+					LPSRowSet lpProvRows = NULL;
+
+					// Setting up an enum and a prop tag array with the props we'll use
+					enum { iProvInstanceKey, cptaProvProps };
+					SizedSPropTagArray(cptaProvProps, sptaProvProps) = { cptaProvProps, PR_INSTANCE_KEY };
+
+					// Allocate memory for the restriction
+					EC_HRES_LOG(MAPIAllocateBuffer(
+						sizeof(SRestriction),
+						(LPVOID*)&lpProvRes), loggingMode);
+
+					EC_HRES_LOG(MAPIAllocateBuffer(
+						sizeof(SRestriction) * 2,
+						(LPVOID*)&lpProvResLvl1), loggingMode);
+
+					EC_HRES_LOG(MAPIAllocateBuffer(
+						sizeof(SPropValue),
+						(LPVOID*)&lpProvPropVal), loggingMode);
+
+					// Set up restriction to query the provider table
+					lpProvRes->rt = RES_AND;
+					lpProvRes->res.resAnd.cRes = 0x00000002;
+					lpProvRes->res.resAnd.lpRes = lpProvResLvl1;
+
+					lpProvResLvl1[0].rt = RES_EXIST;
+					lpProvResLvl1[0].res.resExist.ulPropTag = PR_SERVICE_UID;
+					lpProvResLvl1[0].res.resExist.ulReserved1 = 0x00000000;
+					lpProvResLvl1[0].res.resExist.ulReserved2 = 0x00000000;
+					lpProvResLvl1[1].rt = RES_PROPERTY;
+					lpProvResLvl1[1].res.resProperty.relop = RELOP_EQ;
+					lpProvResLvl1[1].res.resProperty.ulPropTag = PR_SERVICE_UID;
+					lpProvResLvl1[1].res.resProperty.lpProp = lpProvPropVal;
+
+					lpProvPropVal->ulPropTag = PR_SERVICE_UID;
+					lpProvPropVal->Value = lpSvcRows->aRow[i].lpProps[iServiceUid].Value;
+
+					lpProvAdmin->GetProviderTable(0,
+						&lpProvTable);
+
+					// Query the table to get the the default profile only
+					EC_HRES_LOG(HrQueryAllRows(lpProvTable,
+						(LPSPropTagArray)&sptaProvProps,
+						lpProvRes,
+						NULL,
 						0,
-						&lpProvAdmin)))
+						&lpProvRows), loggingMode);
+
+					if (lpProvRows->cRows > 0)
 					{
-						// Loop providers
-						LPMAPITABLE lpProvTable = NULL;
-						LPSRestriction lpProvRes = NULL;
-						LPSRestriction lpProvResLvl1 = NULL;
-						LPSPropValue lpProvPropVal = NULL;
-						LPSRowSet lpProvRows = NULL;
 
-						// Setting up an enum and a prop tag array with the props we'll use
-						enum { iProvInstanceKey, cptaProvProps };
-						SizedSPropTagArray(cptaProvProps, sptaProvProps) = { cptaProvProps, PR_INSTANCE_KEY };
-
-						// Allocate memory for the restriction
-						EC_HRES_LOG(MAPIAllocateBuffer(
-							sizeof(SRestriction),
-							(LPVOID*)&lpProvRes), loggingMode);
-
-						EC_HRES_LOG(MAPIAllocateBuffer(
-							sizeof(SRestriction) * 2,
-							(LPVOID*)&lpProvResLvl1), loggingMode);
-
-						EC_HRES_LOG(MAPIAllocateBuffer(
-							sizeof(SPropValue),
-							(LPVOID*)&lpProvPropVal), loggingMode);
-
-						// Set up restriction to query the provider table
-						lpProvRes->rt = RES_AND;
-						lpProvRes->res.resAnd.cRes = 0x00000002;
-						lpProvRes->res.resAnd.lpRes = lpProvResLvl1;
-
-						lpProvResLvl1[0].rt = RES_EXIST;
-						lpProvResLvl1[0].res.resExist.ulPropTag = PR_SERVICE_UID;
-						lpProvResLvl1[0].res.resExist.ulReserved1 = 0x00000000;
-						lpProvResLvl1[0].res.resExist.ulReserved2 = 0x00000000;
-						lpProvResLvl1[1].rt = RES_PROPERTY;
-						lpProvResLvl1[1].res.resProperty.relop = RELOP_EQ;
-						lpProvResLvl1[1].res.resProperty.ulPropTag = PR_SERVICE_UID;
-						lpProvResLvl1[1].res.resProperty.lpProp = lpProvPropVal;
-
-						lpProvPropVal->ulPropTag = PR_SERVICE_UID;
-						lpProvPropVal->Value = lpSvcRows->aRow[i].lpProps[iServiceUid].Value;
-
-						lpProvAdmin->GetProviderTable(0,
-							&lpProvTable);
-
-						// Query the table to get the the default profile only
-						EC_HRES_LOG(HrQueryAllRows(lpProvTable,
-							(LPSPropTagArray)&sptaProvProps,
-							lpProvRes,
-							NULL,
-							0,
-							&lpProvRows), loggingMode);
-
-						if (lpProvRows->cRows > 0)
+						LPPROFSECT lpProfSection = NULL;
+						if (SUCCEEDED(lpServiceAdmin->OpenProfileSection((LPMAPIUID)lpProvRows->aRow->lpProps[iProvInstanceKey].Value.bin.lpb, NULL, MAPI_MODIFY | MAPI_FORCE_ACCESS, &lpProfSection)))
 						{
-
-							LPPROFSECT lpProfSection = NULL;
-							if (SUCCEEDED(lpServiceAdmin->OpenProfileSection((LPMAPIUID)lpProvRows->aRow->lpProps[iProvInstanceKey].Value.bin.lpb, NULL, MAPI_MODIFY | MAPI_FORCE_ACCESS, &lpProfSection)))
+							LPMAPIPROP lpMAPIProp = NULL;
+							if (SUCCEEDED(lpProfSection->QueryInterface(IID_IMAPIProp, (void**)&lpMAPIProp)))
 							{
-								LPMAPIPROP lpMAPIProp = NULL;
-								if (SUCCEEDED(lpProfSection->QueryInterface(IID_IMAPIProp, (void**)&lpMAPIProp)))
+								LPSPropValue prDisplayName = NULL;
+								if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_DISPLAY_NAME_W, &prDisplayName)))
 								{
-									LPSPropValue prDisplayName = NULL;
-									if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_DISPLAY_NAME_W, &prDisplayName)))
+									// bind to the PR_PST_PATH_W property
+									LPSPropValue pstPathW = NULL;
+									if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_PST_PATH_W, &pstPathW)))
 									{
-										// bind to the PR_PST_PATH_W property
-										LPSPropValue pstPathW = NULL;
-										if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_PST_PATH_W, &pstPathW)))
+										if (pstPathW)
 										{
-											if (pstPathW)
+											std::wstring szCurrentPath = ConvertWideCharToStdWstring(pstPathW->Value.lpszW);
+											if (WStringReplace(&szCurrentPath, ConvertWideCharToStdWstring(lpszOldPath), ConvertWideCharToStdWstring(lpszNewPath)))
 											{
-												std::wstring szCurrentPath = ConvertWideCharToStdWstring(pstPathW->Value.lpszW);
-												if (WStringReplace(&szCurrentPath, ConvertWideCharToStdWstring(lpszOldPath), ConvertWideCharToStdWstring(lpszNewPath)))
+												if (bMoveFiles)
 												{
-													if (bMoveFiles)
-													{
-														wprintf(L"Moving file %s to new location %s\n", pstPathW->Value.lpszW, szCurrentPath.c_str());
-														BOOL bFileMoved = false;
-														bFileMoved = MoveFileExW(pstPathW->Value.lpszW, (LPCWSTR)szCurrentPath.c_str(), MOVEFILE_COPY_ALLOWED | MOVEFILE_WRITE_THROUGH);
-														if (bFileMoved)
-														{
-															wprintf(L"Updating path for data file named %s\n", pstPathW->Value.lpszW);
-															pstPathW[0].Value.lpszW = (LPWSTR)szCurrentPath.c_str();
-															EC_HRES_LOG(lpProfSection->SetProps(1, pstPathW, NULL), loggingMode);
-														}
-														else
-														{
-															wprintf(L"Unable to move file\n");
-														}
-													}
-													else
+													wprintf(L"Moving file %s to new location %s\n", pstPathW->Value.lpszW, szCurrentPath.c_str());
+													BOOL bFileMoved = false;
+													bFileMoved = MoveFileExW(pstPathW->Value.lpszW, (LPCWSTR)szCurrentPath.c_str(), MOVEFILE_COPY_ALLOWED | MOVEFILE_WRITE_THROUGH);
+													if (bFileMoved)
 													{
 														wprintf(L"Updating path for data file named %s\n", pstPathW->Value.lpszW);
 														pstPathW[0].Value.lpszW = (LPWSTR)szCurrentPath.c_str();
 														EC_HRES_LOG(lpProfSection->SetProps(1, pstPathW, NULL), loggingMode);
 													}
+													else
+													{
+														wprintf(L"Unable to move file\n");
+													}
 												}
-												if (pstPathW) MAPIFreeBuffer(pstPathW);
+												else
+												{
+													wprintf(L"Updating path for data file named %s\n", pstPathW->Value.lpszW);
+													pstPathW[0].Value.lpszW = (LPWSTR)szCurrentPath.c_str();
+													EC_HRES_LOG(lpProfSection->SetProps(1, pstPathW, NULL), loggingMode);
+												}
 											}
+											if (pstPathW) MAPIFreeBuffer(pstPathW);
 										}
-										if (prDisplayName) MAPIFreeBuffer(prDisplayName);
 									}
+									if (prDisplayName) MAPIFreeBuffer(prDisplayName);
 								}
 							}
-
-							if (lpProvRows) FreeProws(lpProvRows);
 						}
-						if (lpProvPropVal) MAPIFreeBuffer(lpProvPropVal);
-						if (lpProvResLvl1) MAPIFreeBuffer(lpProvResLvl1);
-						if (lpProvRes) MAPIFreeBuffer(lpProvRes);
-						if (lpProvTable) lpProvTable->Release();
-						//End Loop Providers
-						if (lpProvAdmin) lpProvAdmin->Release();
+
+						if (lpProvRows) FreeProws(lpProvRows);
 					}
+					if (lpProvPropVal) MAPIFreeBuffer(lpProvPropVal);
+					if (lpProvResLvl1) MAPIFreeBuffer(lpProvResLvl1);
+					if (lpProvRes) MAPIFreeBuffer(lpProvRes);
+					if (lpProvTable) lpProvTable->Release();
+					//End Loop Providers
+					if (lpProvAdmin) lpProvAdmin->Release();
+				}
 			}
 			if (lpSvcRows) FreeProws(lpSvcRows);
 			// End loop services
@@ -1380,7 +1380,7 @@ HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszNewPath, bool bMoveFile
 
 	EC_HRES_LOG(MAPIAdminProfiles(0, // Flags
 		&lpProfAdmin), loggingMode); // Pointer to new IProfAdmin
-						// Get an IProfAdmin interface.
+									 // Get an IProfAdmin interface.
 
 	EC_HRES_LOG(lpProfAdmin->GetProfileTable(0,
 		&lpProfTable), loggingMode);
@@ -1828,15 +1828,15 @@ HRESULT HrCloneProfile(ProfileInfo * profileInfo, LoggingMode loggingMode)
 		if (profileInfo->profileServices[i].ulServiceType == SERVICETYPE_EXCHANGEACCOUNT)
 		{
 			Logger::Write(logLevelInfo, L"Adding exchange mailbox: " + profileInfo->profileServices[i].exchangeAccountInfo->wszEmailAddress, loggingMode);
-			EC_HRES_MSG(HrCreateMsemsServiceModernExt(TRUE, 
+			EC_HRES_MSG(HrCreateMsemsServiceModernExt(TRUE,
 				(LPWSTR)GetDefaultProfileName(loggingMode).c_str(),
 				profileInfo->profileServices[i].ulResourceFlags,
 				profileInfo->profileServices[i].exchangeAccountInfo->ulProfileConfigFlags,
 				profileInfo->profileServices[i].exchangeAccountInfo->iCachedModeMonths,
 				(LPWSTR)profileInfo->profileServices[i].exchangeAccountInfo->wszEmailAddress.c_str(),
-				(LPWSTR)profileInfo->profileServices[i].exchangeAccountInfo->wszDisplayName.c_str(), 
+				(LPWSTR)profileInfo->profileServices[i].exchangeAccountInfo->wszDisplayName.c_str(),
 				loggingMode), L"HrCloneProfile", L"0051");
-			
+
 			MAPIUID uidService = { 0 };
 			memcpy((LPVOID)&uidService, lpServiceUid, sizeof(MAPIUID));
 			for (unsigned int j = 0; j < profileInfo->profileServices[i].exchangeAccountInfo->ulMailboxCount; j++)
@@ -1844,9 +1844,9 @@ HRESULT HrCloneProfile(ProfileInfo * profileInfo, LoggingMode loggingMode)
 				if (profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulProfileType == PROFILE_DELEGATE)
 				{
 					Logger::Write(logLevelInfo, L"Adding additional mailbox: " + profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszEmailAddress, loggingMode);
-					EC_HRES_MSG(HrAddDelegateMailboxModern(TRUE, 
+					EC_HRES_MSG(HrAddDelegateMailboxModern(TRUE,
 						(LPWSTR)GetDefaultProfileName(loggingMode).c_str(),
-						FALSE, 
+						FALSE,
 						uiServiceIndex,
 						(LPWSTR)profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszDisplayName.c_str(),
 						(LPWSTR)profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszEmailAddress.c_str(),
@@ -1867,7 +1867,7 @@ HRESULT HrCloneProfile(ProfileInfo * profileInfo, LoggingMode loggingMode)
 				(LPWSTR)profileInfo->profileServices[i].pstInfo->wszDisplayName.c_str()), L"HrCloneProfile", L"0053");
 			uiServiceIndex++;
 		}
-		
+
 	}
 
 	Logger::Write(logLevelInfo, L"Setting profile as default.", loggingMode);
@@ -2510,12 +2510,12 @@ HRESULT HrAddDelegateMailboxModern(
 {
 
 	HRESULT hRes = S_OK;
-	LPPROFADMIN lpProfAdmin = NULL;    
+	LPPROFADMIN lpProfAdmin = NULL;
 
 	EC_HRES_LOG(MAPIAdminProfiles(0, // Flags
 		&lpProfAdmin), loggingMode); // Pointer to new IProfAdmin
-									
-	// Begin process services
+
+									 // Begin process services
 	LPSERVICEADMIN lpServiceAdmin = NULL;
 	LPMAPITABLE lpServiceTable = NULL;
 
@@ -2581,7 +2581,7 @@ HRESULT HrAddDelegateMailboxModern(
 			0,
 			&lpSvcRows), loggingMode);
 
-		if (bDefaultService && lpSvcRows->cRows > 0) 
+		if (bDefaultService && lpSvcRows->cRows > 0)
 		{
 			for (unsigned int i = 0; i < lpSvcRows->cRows; i++)
 			{
@@ -2682,13 +2682,13 @@ Cleanup:
 HRESULT HrAddDelegateMailbox(BOOL bDefaultProfile,
 	LPWSTR lpwszProfileName,
 	BOOL bDefaultService,
-	int iServiceIndex, 
+	int iServiceIndex,
 	LPWSTR lpszwMailboxDisplay,
 	LPWSTR lpszwMailboxDN,
 	LPWSTR lpszwServer,
 	LPWSTR lpszwServerDN,
 	LPWSTR lpszwSMTPAddress,
-	LPWSTR lpRohProxyserver, 
+	LPWSTR lpRohProxyserver,
 	ULONG ulRohProxyServerFlags,
 	ULONG ulRohProxyServerAuthPackage,
 	LPWSTR lpwszMapiHttpMailStoreInternalUrl,
@@ -2893,7 +2893,7 @@ cleanup:
 HRESULT HrAddDelegateMailboxLegacy(BOOL bDefaultProfile,
 	LPWSTR lpwszProfileName,
 	BOOL bDefaultService,
-	int iServiceIndex, 
+	int iServiceIndex,
 	LPWSTR lpszwMailboxDisplay,
 	LPWSTR lpszwMailboxDN,
 	LPWSTR lpszwServer,
@@ -2912,7 +2912,7 @@ HRESULT HrAddDelegateMailboxLegacy(BOOL bDefaultProfile,
 
 	EC_HRES_LOG(MAPIAdminProfiles(0, // Flags
 		&lpProfAdmin), loggingMode); // Pointer to new IProfAdmin
-									 
+
 									 // Begin process services
 
 
@@ -2989,32 +2989,32 @@ HRESULT HrAddDelegateMailboxLegacy(BOOL bDefaultProfile,
 						0,
 						&lpProvAdmin)))
 					{
-	// Set up a SPropValue array for the properties you need to configure.
-	ZeroMemory(&rgval[0], sizeof(SPropValue));
-	rgval[0].ulPropTag = PR_DISPLAY_NAME_W;
-	rgval[0].Value.lpszW = lpszwMailboxDisplay;
+						// Set up a SPropValue array for the properties you need to configure.
+						ZeroMemory(&rgval[0], sizeof(SPropValue));
+						rgval[0].ulPropTag = PR_DISPLAY_NAME_W;
+						rgval[0].Value.lpszW = lpszwMailboxDisplay;
 
-	ZeroMemory(&rgval[1], sizeof(SPropValue));
-	rgval[1].ulPropTag = PR_PROFILE_MAILBOX;
-	rgval[1].Value.lpszA = ConvertWideCharToMultiByte(lpszwMailboxDN);
+						ZeroMemory(&rgval[1], sizeof(SPropValue));
+						rgval[1].ulPropTag = PR_PROFILE_MAILBOX;
+						rgval[1].Value.lpszA = ConvertWideCharToMultiByte(lpszwMailboxDN);
 
-	ZeroMemory(&rgval[2], sizeof(SPropValue));
-	rgval[2].ulPropTag = PR_PROFILE_SERVER;
-	rgval[2].Value.lpszA = ConvertWideCharToMultiByte(lpszwServer);
+						ZeroMemory(&rgval[2], sizeof(SPropValue));
+						rgval[2].ulPropTag = PR_PROFILE_SERVER;
+						rgval[2].Value.lpszA = ConvertWideCharToMultiByte(lpszwServer);
 
-	ZeroMemory(&rgval[3], sizeof(SPropValue));
-	rgval[3].ulPropTag = PR_PROFILE_SERVER_DN;
-	rgval[3].Value.lpszA = ConvertWideCharToMultiByte(lpszwServerDN);
+						ZeroMemory(&rgval[3], sizeof(SPropValue));
+						rgval[3].ulPropTag = PR_PROFILE_SERVER_DN;
+						rgval[3].Value.lpszA = ConvertWideCharToMultiByte(lpszwServerDN);
 
-	printf("Creating EMSDelegate provider.\n");
-	// Create the message service with the above properties.
-	hRes = lpProvAdmin->CreateProvider(LPWSTR("EMSDelegate"),
-		4,
-		rgval,
-		0,
-		0,
-		(LPMAPIUID)lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb);
-	if (FAILED(hRes)) goto Error;
+						printf("Creating EMSDelegate provider.\n");
+						// Create the message service with the above properties.
+						hRes = lpProvAdmin->CreateProvider(LPWSTR("EMSDelegate"),
+							4,
+							rgval,
+							0,
+							0,
+							(LPMAPIUID)lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb);
+						if (FAILED(hRes)) goto Error;
 					}
 				}
 			}
@@ -3173,7 +3173,7 @@ HRESULT HrGetDefaultMsemsServiceAdminProviderPtr(LPWSTR lpwszProfileName, LPPROV
 			if (lpSvcRows) FreeProws(lpSvcRows);
 		}
 		else
-		{	
+		{
 			wprintf(L"No service found.\n");
 		}
 
@@ -3280,23 +3280,23 @@ Cleanup:
 // This implementation is Outlook 2016 specific
 HRESULT HrCreateMsemsServiceModernExt(BOOL bDefaultProfile,
 	LPWSTR lpwszProfileName,
-	ULONG ulResourceFlags, 
-	ULONG ulProfileConfigFlags, 
-	ULONG ulCachedModeMonths, 
-	LPWSTR lpszSmtpAddress, 
+	ULONG ulResourceFlags,
+	ULONG ulProfileConfigFlags,
+	ULONG ulCachedModeMonths,
+	LPWSTR lpszSmtpAddress,
 	LPWSTR lpszDisplayName,
 	LoggingMode loggingMode)
 {
 	HRESULT			hRes = S_OK; // Result code returned from MAPI calls.
 	SPropValue		rgvalEmsMdbSect[7]; // Property value structure to hold configuration info.
 	SPropValue		rgvalStoreProvider[2];
-//	SPropValue		rgvalService[1];
+	//	SPropValue		rgvalService[1];
 	MAPIUID			uidService = { 0 };
 	LPMAPIUID		lpServiceUid = &uidService;
 	LPPROFSECT		lpProfSect = NULL;
 	LPPROFSECT		lpEmsMdbProfSect = nullptr;
 	LPPROFSECT		lpStoreProviderSect = nullptr;
-	
+
 	LPPROFADMIN lpProfAdmin = NULL;
 	LPSERVICEADMIN lpServiceAdmin = NULL;
 	LPSERVICEADMIN2 lpServiceAdmin2 = NULL;
@@ -3425,7 +3425,7 @@ HRESULT HrCreateMsemsServiceModernExt(BOOL bDefaultProfile,
 
 		EC_HRES_MSG(lpStoreProviderSect->SaveChanges(KEEP_OPEN_READWRITE), L"HrCreateService", L"0013");
 	}
-	
+
 	goto Cleanup;
 Error:
 	return hRes;
@@ -3462,7 +3462,7 @@ HRESULT HrCreateMsemsServiceModern(BOOL bDefaultProfile,
 	HRESULT			hRes = S_OK; // Result code returned from MAPI calls.
 	SPropValue		rgvalEmsMdbSect[5]; // Property value structure to hold configuration info.
 	SPropValue		rgvalStoreProvider[2];
-//	SPropValue		rgvalService[1];
+	//	SPropValue		rgvalService[1];
 	MAPIUID			uidService = { 0 };
 	LPMAPIUID		lpServiceUid = &uidService;
 	LPPROFSECT		lpProfSect = NULL;
@@ -3523,7 +3523,7 @@ HRESULT HrCreateMsemsServiceModern(BOOL bDefaultProfile,
 		{
 			wszSmtpAddress = L"SMTP:" + wszSmtpAddress;
 		}
-		
+
 		ZeroMemory(&rgvalEmsMdbSect[0], sizeof(SPropValue));
 		rgvalEmsMdbSect[0].ulPropTag = PR_PROFILE_USER_SMTP_EMAIL_ADDRESS_W;
 		rgvalEmsMdbSect[0].Value.lpszW = (LPWSTR)wszSmtpAddress.c_str();
@@ -3693,11 +3693,11 @@ cleanup:
 // - PR_DIPLAY_NAME_W
 HRESULT HrCreateMsemsServiceROH(BOOL bDefaultProfile,
 	LPWSTR lpwszProfileName,
-	LPWSTR lpszSmtpAddress, 
-	LPWSTR lpszMailboxLegacyDn, 
-	LPWSTR lpszUnresolvedServer, 
-	LPWSTR lpszRohProxyServer, 
-	LPWSTR lpszProfileServerDn, 
+	LPWSTR lpszSmtpAddress,
+	LPWSTR lpszMailboxLegacyDn,
+	LPWSTR lpszUnresolvedServer,
+	LPWSTR lpszRohProxyServer,
+	LPWSTR lpszProfileServerDn,
 	LPWSTR lpszAutodiscoverUrl,
 	LoggingMode loggingMode)
 {
@@ -3780,7 +3780,7 @@ HRESULT HrCreateMsemsServiceROH(BOOL bDefaultProfile,
 
 		ZeroMemory(&rgvalSvc[5], sizeof(SPropValue));
 		rgvalSvc[5].ulPropTag = PR_ROH_PROXY_SERVER;
-		rgvalSvc[5].Value.lpszA = ConvertWideCharToMultiByte(lpszRohProxyServer);
+		rgvalSvc[5].Value.lpszW = lpszRohProxyServer;
 
 		ZeroMemory(&rgvalSvc[6], sizeof(SPropValue));
 		rgvalSvc[6].ulPropTag = PR_ROH_FLAGS;
@@ -3813,7 +3813,7 @@ HRESULT HrCreateMsemsServiceROH(BOOL bDefaultProfile,
 		ZeroMemory(lpEmsMdbProfSect, sizeof(LPPROFSECT));
 		ZeroMemory(lpStoreProviderSect, sizeof(LPPROFSECT));
 
-		EC_HRES_MSG(HrGetSections(lpServiceAdmin2, lpServiceUid, &lpEmsMdbProfSect, &lpStoreProviderSect), L"HrCreateService", L"0009");
+		EC_HRES_MSG(HrGetSections(lpServiceAdmin2, &uidService, &lpEmsMdbProfSect, &lpStoreProviderSect), L"HrCreateService", L"0009");
 
 		// Set up a SPropValue array for the properties you need to configure.
 		ZeroMemory(&rgvalEmsMdbSect[0], sizeof(SPropValue));
@@ -3964,7 +3964,7 @@ HRESULT HrCreateMsemsServiceMOH(BOOL bDefaultProfile,
 {
 	HRESULT hRes = S_OK; // Result code returned from MAPI calls.
 	SPropValue rgvalSvc[4];
-//	SPropValue rgvalEmsMdbSect[14]; // Property value structure to hold configuration info.
+	//	SPropValue rgvalEmsMdbSect[14]; // Property value structure to hold configuration info.
 	SPropValue rgvalStoreProvider[5];
 	LPPROVIDERADMIN lpProvAdmin = NULL;
 	LPMAPIUID lpServiceUid = NULL;
