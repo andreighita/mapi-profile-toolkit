@@ -40,6 +40,34 @@ BOOL Is64BitProcess(void)
 #endif
 }
 
+// GetOutlookVersion
+int GetOutlookVersion()
+{
+	std::wstring szOLVer = L"";
+	szOLVer = GetStringValue(HKEY_CLASSES_ROOT, TEXT("Outlook.Application\\CurVer"), NULL);
+	if (szOLVer != L"")
+	{
+		if (szOLVer == L"Outlook.Application.16")
+		{
+			return 2016;
+		}
+		else if (szOLVer == L"Outlook.Application.15")
+		{
+			return 2013;
+		}
+		else if (szOLVer == L"Outlook.Application.14")
+		{
+			return 2010;
+		}
+		else if (szOLVer == L"Outlook.Application.12")
+		{
+			return 2007;
+		}
+		return 0;
+	}
+	else return 0;
+}
+
 // IsCorrectBitness
 // Matches the App bitness against Outlook's bitness to avoid MAPI version errors at startup
 // The execution will only continue if the bitness is matched.
@@ -127,6 +155,8 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 	if (!pRunOpts) return FALSE;
 	ZeroMemory(pRunOpts, sizeof(RuntimeOptions));
 	int iThreeParam = 0;
+	pRunOpts->iOutlookVersion = GetOutlookVersion();
+	pRunOpts->ulActionType = ACTIONTYPE_STANDARD;
 
 	for (int i = 1; i < argc; i++)
 	{
@@ -300,6 +330,15 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 						std::transform(wszExportPath.begin(), wszExportPath.end(), wszExportPath.begin(), ::tolower);
 						pRunOpts->wszExportPath = wszExportPath;
 						pRunOpts->bExportMode = EXPORTMODE_EXPORT;
+						i++;
+					}
+					else return false;
+					break;
+				case 'v':
+					if (i + 1 < argc)
+					{
+						// scfgf	| ulConfigFlags
+						pRunOpts->iOutlookVersion = _wtoi(argv[i + 1]);
 						i++;
 					}
 					else return false;
@@ -648,41 +687,6 @@ BOOL ParseArgsService(int argc, _TCHAR* argv[], ServiceOptions * serviceOptions)
 						}
 					}
 				}
-				else if (tolower(argv[i][2]) == 'o')
-				{
-					if (tolower(argv[i][2]) == 'v')
-					{
-						if (i + 1 < argc)
-						{
-							// mov		| iOutlookVersion
-							std::wstring wszOutlookVersion = argv[i + 1];
-							std::transform(wszOutlookVersion.begin(), wszOutlookVersion.end(), wszOutlookVersion.begin(), ::tolower);
-							if (wszOutlookVersion == L"2007")
-							{
-								serviceOptions->iOutlookVersion = 2007;
-								i++;
-							}
-							else if (wszOutlookVersion == L"2010")
-							{
-								serviceOptions->iOutlookVersion = 2010;
-								i++;
-							}
-							else if (wszOutlookVersion == L"2013")
-							{
-								serviceOptions->iOutlookVersion = 2013;
-								i++;
-							}
-							else if (wszOutlookVersion == L"2016")
-							{
-								serviceOptions->iOutlookVersion = 2016;
-								i++;
-							}
-							else return false;
-						}
-						else return false;
-					}
-					else return false;
-				}
 				else if (tolower(argv[i][2]) == 'p')
 				{
 					if (tolower(argv[i][3]) == 'm')
@@ -719,6 +723,7 @@ BOOL ParseArgsService(int argc, _TCHAR* argv[], ServiceOptions * serviceOptions)
 							std::wstring wszProfileName = argv[i + 1];
 							std::transform(wszProfileName.begin(), wszProfileName.end(), wszProfileName.begin(), ::tolower);
 							serviceOptions->wszProfileName = wszProfileName;
+							serviceOptions->ulProfileMode = PROFILEMODE_ONE;
 							i++;
 						}
 						else return false;
@@ -912,39 +917,6 @@ BOOL ParseArgsMailbox(int argc, _TCHAR* argv[], MailboxOptions * mailboxOptions)
 						}
 					}
 				}
-				else if (tolower(argv[i][2]) == 'o')
-				{
-					if (tolower(argv[i][3]) == 'v')
-					{
-						if (i + 1 < argc)
-						{
-							// mov		| iOutlookVersion
-							std::wstring wszOutlookVersion = argv[i + 1];
-							std::transform(wszOutlookVersion.begin(), wszOutlookVersion.end(), wszOutlookVersion.begin(), ::tolower);
-							if (wszOutlookVersion == L"2007")
-							{
-								mailboxOptions->iOutlookVersion = 2007;
-								i++;
-							}
-							else if (wszOutlookVersion == L"2010")
-							{
-								mailboxOptions->iOutlookVersion = 2010;
-								i++;
-							}
-							else if (wszOutlookVersion == L"2013")
-							{
-								mailboxOptions->iOutlookVersion = 2013;
-								i++;
-							}
-							else if (wszOutlookVersion == L"2016")
-							{
-								mailboxOptions->iOutlookVersion = 2016;
-								i++;
-							}
-							else return false;
-						}
-					}
-				}
 				else if (tolower(argv[i][2]) == 'p')
 				{
 					if (tolower(argv[i][3]) == 'n')
@@ -1134,7 +1106,7 @@ void _tmain(int argc, _TCHAR* argv[])
 			{
 				if (tkOptions->ulAction == STANDARDACTION_ADD)
 				{
-					if (tkOptions->mailboxOptions->iOutlookVersion == 2007)
+					if (tkOptions->iOutlookVersion == 2007)
 					{
 						HrCreateMsemsServiceLegacyUnresolved((tkOptions->serviceOptions->ulProfileMode == PROFILEMODE_DEFAULT),
 							(LPWSTR)tkOptions->serviceOptions->wszProfileName.c_str(),
@@ -1142,7 +1114,7 @@ void _tmain(int argc, _TCHAR* argv[])
 							(LPWSTR)tkOptions->serviceOptions->wszServerDisplayName.c_str(),
 							loggingMode);
 					}
-					else if ((tkOptions->mailboxOptions->iOutlookVersion == 2010) || (tkOptions->mailboxOptions->iOutlookVersion == 2013))
+					else if ((tkOptions->iOutlookVersion == 2010) || (tkOptions->iOutlookVersion == 2013))
 					{
 						// this only works with the default profile for now
 						if (tkOptions->serviceOptions->ulConnectMode == CONNECT_ROH)
@@ -1191,7 +1163,7 @@ void _tmain(int argc, _TCHAR* argv[])
 			{
 				if (tkOptions->ulAction == STANDARDACTION_ADD)
 				{
-					if (tkOptions->mailboxOptions->iOutlookVersion == 2007)
+					if (tkOptions->iOutlookVersion == 2007)
 					{
 						// this only works with the default profile for now
 						HrAddDelegateMailboxLegacy((tkOptions->mailboxOptions->ulProfileMode == PROFILEMODE_DEFAULT),
@@ -1204,7 +1176,7 @@ void _tmain(int argc, _TCHAR* argv[])
 							(LPWSTR)tkOptions->mailboxOptions->wszServerLegacyDN.c_str(),
 							loggingMode);
 					}
-					else if ((tkOptions->mailboxOptions->iOutlookVersion == 2010) || (tkOptions->mailboxOptions->iOutlookVersion == 2013))
+					else if ((tkOptions->iOutlookVersion == 2010) || (tkOptions->iOutlookVersion == 2013))
 					{
 						// this only works with the default profile for now
 						HrAddDelegateMailbox((tkOptions->mailboxOptions->ulProfileMode == PROFILEMODE_DEFAULT),

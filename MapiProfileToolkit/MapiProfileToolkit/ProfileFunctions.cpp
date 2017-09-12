@@ -3364,6 +3364,11 @@ HRESULT HrCreateMsemsServiceModernExt(BOOL bDefaultProfile,
 		PR_PROFILE_UNRESOLVED_NAME_W
 		PR_PROFILE_USER_EMAIL_W
 		*/
+		std::wstring wszSmtpAddress = ConvertWideCharToStdWstring(lpszSmtpAddress);
+		if ((wszSmtpAddress.find(L"SMTP:") == std::string::npos) || (wszSmtpAddress.find(L"smtp:") == std::string::npos))
+		{
+			wszSmtpAddress = L"SMTP:" + wszSmtpAddress;
+		}
 
 		ZeroMemory(&rgvalEmsMdbSect[0], sizeof(SPropValue));
 		rgvalEmsMdbSect[0].ulPropTag = PR_PROFILE_CONFIG_FLAGS;
@@ -3371,7 +3376,7 @@ HRESULT HrCreateMsemsServiceModernExt(BOOL bDefaultProfile,
 
 		ZeroMemory(&rgvalEmsMdbSect[1], sizeof(SPropValue));
 		rgvalEmsMdbSect[1].ulPropTag = PR_PROFILE_USER_SMTP_EMAIL_ADDRESS_W;
-		rgvalEmsMdbSect[1].Value.lpszW = lpszSmtpAddress;
+		rgvalEmsMdbSect[1].Value.lpszW = (LPWSTR)wszSmtpAddress.c_str();
 
 		ZeroMemory(&rgvalEmsMdbSect[2], sizeof(SPropValue));
 		rgvalEmsMdbSect[2].ulPropTag = PR_DISPLAY_NAME_W;
@@ -3407,7 +3412,7 @@ HRESULT HrCreateMsemsServiceModernExt(BOOL bDefaultProfile,
 		*/
 		ZeroMemory(&rgvalStoreProvider[0], sizeof(SPropValue));
 		rgvalStoreProvider[0].ulPropTag = PR_PROFILE_USER_SMTP_EMAIL_ADDRESS_W;
-		rgvalStoreProvider[0].Value.lpszW = lpszSmtpAddress;
+		rgvalStoreProvider[0].Value.lpszW = (LPWSTR)wszSmtpAddress.c_str();
 
 		ZeroMemory(&rgvalStoreProvider[1], sizeof(SPropValue));
 		rgvalStoreProvider[1].ulPropTag = PR_DISPLAY_NAME_W;
@@ -3468,11 +3473,11 @@ HRESULT HrCreateMsemsServiceModern(BOOL bDefaultProfile,
 	LPSERVICEADMIN lpServiceAdmin = NULL;
 	LPSERVICEADMIN2 lpServiceAdmin2 = NULL;
 	LPMAPITABLE lpServiceTable = NULL;
+
 	EC_HRES_LOG(MAPIAdminProfiles(0, // Flags
 		&lpProfAdmin), loggingMode); // Pointer to new IProfAdmin
 
 									 // Begin process services
-
 
 	if (bDefaultProfile)
 	{
@@ -3513,9 +3518,15 @@ HRESULT HrCreateMsemsServiceModern(BOOL bDefaultProfile,
 		PR_PROFILE_USER_EMAIL_W
 		*/
 
+		std::wstring wszSmtpAddress = ConvertWideCharToStdWstring(lpszSmtpAddress);
+		if ((wszSmtpAddress.find(L"SMTP:") == std::string::npos) || (wszSmtpAddress.find(L"smtp:") == std::string::npos))
+		{
+			wszSmtpAddress = L"SMTP:" + wszSmtpAddress;
+		}
+		
 		ZeroMemory(&rgvalEmsMdbSect[0], sizeof(SPropValue));
 		rgvalEmsMdbSect[0].ulPropTag = PR_PROFILE_USER_SMTP_EMAIL_ADDRESS_W;
-		rgvalEmsMdbSect[0].Value.lpszW = lpszSmtpAddress;
+		rgvalEmsMdbSect[0].Value.lpszW = (LPWSTR)wszSmtpAddress.c_str();
 
 		ZeroMemory(&rgvalEmsMdbSect[1], sizeof(SPropValue));
 		rgvalEmsMdbSect[1].ulPropTag = PR_DISPLAY_NAME_W;
@@ -3534,7 +3545,7 @@ HRESULT HrCreateMsemsServiceModern(BOOL bDefaultProfile,
 		rgvalEmsMdbSect[4].Value.lpszW = lpszDisplayName;
 
 		EC_HRES_MSG(lpEmsMdbProfSect->SetProps(
-			7,
+			5,
 			rgvalEmsMdbSect,
 			nullptr), L"HrCreateService", L"0010");
 
@@ -3547,7 +3558,7 @@ HRESULT HrCreateMsemsServiceModern(BOOL bDefaultProfile,
 		*/
 		ZeroMemory(&rgvalStoreProvider[0], sizeof(SPropValue));
 		rgvalStoreProvider[0].ulPropTag = PR_PROFILE_USER_SMTP_EMAIL_ADDRESS_W;
-		rgvalStoreProvider[0].Value.lpszW = lpszSmtpAddress;
+		rgvalStoreProvider[0].Value.lpszW = (LPWSTR)wszSmtpAddress.c_str();;
 
 		ZeroMemory(&rgvalStoreProvider[1], sizeof(SPropValue));
 		rgvalStoreProvider[1].ulPropTag = PR_DISPLAY_NAME_W;
@@ -3970,7 +3981,11 @@ HRESULT HrCreateMsemsServiceMOH(BOOL bDefaultProfile,
 	enum { iDispName, iSvcName, iSvcUID, iResourceFlags, iEmsMdbSectionUid, cptaSvc };
 	SizedSPropTagArray(cptaSvc, sptCols) = { cptaSvc, PR_DISPLAY_NAME, PR_SERVICE_NAME, PR_SERVICE_UID, PR_RESOURCE_FLAGS, PR_EMSMDB_SECTION_UID };
 	std::wstring wszSmtpAddress = ConvertWideCharToStdWstring(lpszSmtpAddress);
-	wszSmtpAddress = L"SMTP:" + wszSmtpAddress;
+	if ((wszSmtpAddress.find(L"SMTP:") == std::string::npos) || (wszSmtpAddress.find(L"smtp:") == std::string::npos))
+	{
+		wszSmtpAddress = L"SMTP:" + wszSmtpAddress;
+	}
+
 	//// This structure tells our GetProps call what properties to get from the global profile section.
 	//SizedSPropTagArray(1, sptGlobal) = { 1, PR_STORE_PROVIDERS };
 	LPPROFADMIN lpProfAdmin = NULL;
@@ -3998,7 +4013,6 @@ HRESULT HrCreateMsemsServiceMOH(BOOL bDefaultProfile,
 	{
 
 		EC_HRES_MSG(lpServiceAdmin->QueryInterface(IID_IMsgServiceAdmin2, (LPVOID*)&lpServiceAdmin2), L"HrCreateProfile", L"0048");
-
 
 		printf("Creating MsgService.\n");
 		// Adds a message service to the current profile and returns that newly added service UID.

@@ -100,7 +100,6 @@ struct ServiceOptions
 	ULONG ulCachedModeShared;				// scms		| 1 = disabled; 2 = enabled; 
 	ULONG ulConfigFlags;					// scfgf		| PR_PROFILE_CONFIG_FLAGS
 	ULONG ulConnectMode;					// scnctm		| ROH or MOH
-	ULONG iOutlookVersion;					// sov		| 2007, 2010, 2013 or 2016
 	ULONG ulProfileMode;					// spm		| PROFILEMODE_DEFAULT = 1, PROFILEMODE_ONE = 2, PROFILEMODE_ALL = 3
 	ULONG ulResourceFlags;					// srf		| PR_RESOURCES_FLAGS
 
@@ -112,7 +111,6 @@ struct MailboxOptions
 	ULONG ulProfileMode;					// mpm		| PROFILEMODE_DEFAULT = 1, PROFILEMODE_ONE = 2, PROFILEMODE_ALL = 3
 	ULONG ulServiceIndex;					// msi		| Service Index from 
 	bool bDefaultService;					// mds		| Default service in profile
-	int iOutlookVersion;					// mov		| 2007, 2010, 2013 or 2016
 	std::wstring wszSmtpAddress;			// msa		| 
 	std::wstring wszMailboxLegacyDN;		// mmldn
 	std::wstring wszMailboxDisplayName;		// mmdn
@@ -153,6 +151,7 @@ struct RuntimeOptions
 	std::wstring wszExportPath;
 	BOOL bExportMode; // 0 = no export; 1 = export;
 	std::wstring wszLogFilePath;
+	int iOutlookVersion;
 	ProfileOptions * profileOptions;
 	ServiceOptions * serviceOptions;
 	MailboxOptions * mailboxOptions;
