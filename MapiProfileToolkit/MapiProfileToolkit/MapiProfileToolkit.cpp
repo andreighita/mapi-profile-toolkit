@@ -160,227 +160,228 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 
 	for (int i = 1; i < argc; i++)
 	{
-		if (iThreeParam < 3)
+
+		switch (argv[i][0])
 		{
-			switch (argv[i][0])
+		case '#':
+			if (0 == argv[i][1])
 			{
-			case '#':
-				if (0 == argv[i][1])
+				// Bad argument - get out of here
+				return false;
+			}
+			switch (tolower(argv[i][1]))
+			{
+			case 'p':
+				pRunOpts->ulScenario = SCENARIO_PROFILE;
+				iThreeParam++;
+				break;
+			case 's':
+				pRunOpts->ulScenario = SCENARIO_SERVICE;
+				iThreeParam++;
+				break;
+			case 'm':
+				pRunOpts->ulScenario = SCENARIO_MAILBOX;
+				iThreeParam++;
+				break;
+			case 'd':
+				pRunOpts->ulScenario = SCENARIO_DATAFILE;
+				iThreeParam++;
+				break;
+			case 'l':
+				pRunOpts->ulScenario = SCENARIO_LDAP;
+				iThreeParam++;
+				break;
+			case 'c':
+				pRunOpts->ulScenario = SCENARIO_CUSTOM;
+				iThreeParam++;
+				break;
+			default:
+				return false;
+			}
+			break;
+		case '-':
+		case '/':
+		case '\\':
+			if (0 == argv[i][1])
+			{
+				return false;
+			}
+			switch (tolower(argv[i][1]))
+			{
+			case 't':
+				if (i + 1 < argc)
 				{
-					// Bad argument - get out of here
-					return false;
-				}
-				switch (tolower(argv[i][1]))
-				{
-				case 'p':
-					pRunOpts->ulScenario = SCENARIO_PROFILE;
-					iThreeParam++;
-					break;
-				case 's':
-					pRunOpts->ulScenario = SCENARIO_SERVICE;
-					iThreeParam++;
-					break;
-				case 'm':
-					pRunOpts->ulScenario = SCENARIO_MAILBOX;
-					iThreeParam++;
-					break;
-				case 'd':
-					pRunOpts->ulScenario = SCENARIO_DATAFILE;
-					iThreeParam++;
-					break;
-				case 'l':
-					pRunOpts->ulScenario = SCENARIO_LDAP;
-					iThreeParam++;
-					break;
-				case 'c':
-					pRunOpts->ulScenario = SCENARIO_CUSTOM;
-					iThreeParam++;
-					break;
-				default:
-					return false;
+					std::wstring wszActionType = argv[i + 1];
+					std::transform(wszActionType.begin(), wszActionType.end(), wszActionType.begin(), ::tolower);
+					if (wszActionType == L"standard")
+					{
+						pRunOpts->ulActionType = ACTIONTYPE_STANDARD;
+						iThreeParam++;
+						i++;
+						break;
+					}
+					else if (wszActionType == L"custom")
+					{
+						pRunOpts->ulActionType = ACTIONTYPE_CUSTOM;
+						iThreeParam++;
+						i++;
+						break;
+					}
+					else
+					{
+						return false;
+					}
 				}
 				break;
-			case '-':
-			case '/':
-			case '\\':
-				if (0 == argv[i][1])
+			case 'a':
+				if (i + 1 < argc)
 				{
-					return false;
-				}
-				switch (tolower(argv[i][1]))
-				{
-				case 't':
-					if (i + 1 < argc)
+					std::wstring wszAction = argv[i + 1];
+					std::transform(wszAction.begin(), wszAction.end(), wszAction.begin(), ::tolower);
+					if (pRunOpts->ulActionType == ACTIONTYPE_STANDARD)
 					{
-						std::wstring wszActionType = argv[i + 1];
-						std::transform(wszActionType.begin(), wszActionType.end(), wszActionType.begin(), ::tolower);
-						if (wszActionType == L"standard")
+						if (wszAction == L"add")
 						{
-							pRunOpts->ulActionType = ACTIONTYPE_STANDARD;
+							pRunOpts->ulAction = STANDARDACTION_ADD;
 							iThreeParam++;
 							i++;
-							break;
 						}
-						else if (wszActionType == L"custom")
+						else if (wszAction == L"remove")
 						{
-							pRunOpts->ulActionType = ACTIONTYPE_CUSTOM;
+							pRunOpts->ulAction = STANDARDACTION_REMOVE;
 							iThreeParam++;
 							i++;
-							break;
+						}
+						else if (wszAction == L"edit")
+						{
+							pRunOpts->ulAction = STANDARDACTION_EDIT;
+							iThreeParam++;
+							i++;
+						}
+						else if (wszAction == L"list")
+						{
+							pRunOpts->ulAction = STANDARDACTION_LIST;
+							iThreeParam++;
+							i++;
 						}
 						else
 						{
 							return false;
 						}
 					}
-					break;
-				case 'a':
-					if (i + 1 < argc)
+					else if (pRunOpts->ulActionType == ACTIONTYPE_CUSTOM)
 					{
-						std::wstring wszAction = argv[i + 1];
-						std::transform(wszAction.begin(), wszAction.end(), wszAction.begin(), ::tolower);
-						if (pRunOpts->ulActionType == ACTIONTYPE_STANDARD)
+						if (wszAction == L"promotemailboxtoservice")
 						{
-							if (wszAction == L"add")
-							{
-								pRunOpts->ulAction = STANDARDACTION_ADD;
-								iThreeParam++;
-								i++;
-							}
-							else if (wszAction == L"remove")
-							{
-								pRunOpts->ulAction = STANDARDACTION_REMOVE;
-								iThreeParam++;
-								i++;
-							}
-							else if (wszAction == L"edit")
-							{
-								pRunOpts->ulAction = STANDARDACTION_EDIT;
-								iThreeParam++;
-								i++;
-							}
-							else if (wszAction == L"list")
-							{
-								pRunOpts->ulAction = STANDARDACTION_LIST;
-								iThreeParam++;
-								i++;
-							}
-							else
-							{
-								return false;
-							}
+							pRunOpts->ulAction = CUSTOMACTION_PROMOTEMAILBOXTOSERVICE;
+							iThreeParam++;
+							i++;
 						}
-						else if (pRunOpts->ulActionType == ACTIONTYPE_CUSTOM)
+						else if (wszAction == L"editcachedmodeconfiguration")
 						{
-							if (wszAction == L"promotemailboxtoservice")
-							{
-								pRunOpts->ulAction = CUSTOMACTION_PROMOTEMAILBOXTOSERVICE;
-								iThreeParam++;
-								i++;
-							}
-							else if (wszAction == L"editcachedmodeconfiguration")
-							{
-								pRunOpts->ulAction = CUSTOMACTION_EDITCACHEDMODECONFIGURATION;
-								iThreeParam++;
-								i++;
-							}
-							else if (wszAction == L"updatesmtpaddress")
-							{
-								pRunOpts->ulAction = CUSTOMACTION_UPDATESMTPADDRESS;
-								iThreeParam++;
-								i++;
-							}
-							else if (wszAction == L"changepstlocation")
-							{
-								pRunOpts->ulAction = CUSTOMACTION_CHANGEPSTLOCATION;
-								iThreeParam++;
-								i++;
-							}
-							else if (wszAction == L"removeorphaneddatafiles")
-							{
-								pRunOpts->ulAction = CUSTOMACTION_REMOVEORPHANEDDATAFILES;
-								iThreeParam++;
-								i++;
-							}
-							else
-							{
-								return false;
-							}
+							pRunOpts->ulAction = CUSTOMACTION_EDITCACHEDMODECONFIGURATION;
+							iThreeParam++;
+							i++;
+						}
+						else if (wszAction == L"updatesmtpaddress")
+						{
+							pRunOpts->ulAction = CUSTOMACTION_UPDATESMTPADDRESS;
+							iThreeParam++;
+							i++;
+						}
+						else if (wszAction == L"changepstlocation")
+						{
+							pRunOpts->ulAction = CUSTOMACTION_CHANGEPSTLOCATION;
+							iThreeParam++;
+							i++;
+						}
+						else if (wszAction == L"removeorphaneddatafiles")
+						{
+							pRunOpts->ulAction = CUSTOMACTION_REMOVEORPHANEDDATAFILES;
+							iThreeParam++;
+							i++;
+						}
+						else
+						{
+							return false;
 						}
 					}
-					break;
-				case 'l':
-					if (tolower(argv[i][2]) == 'm')
-					{
-						pRunOpts->ulLoggingMode = _wtoi(argv[i + 1]);
-						i++;
-					}
-					else if (tolower(argv[i][2]) == 'p')
-					{
-						pRunOpts->wszLogFilePath = argv[i + 1];
-						Logger::Initialise(pRunOpts->wszLogFilePath);
-						i++;
-					}
-					else return false;
-					break;
-				case 'e':
-					if (tolower(argv[i][2]) == 'p')
-					{
-						std::wstring wszExportPath = argv[i + 1];
-						std::transform(wszExportPath.begin(), wszExportPath.end(), wszExportPath.begin(), ::tolower);
-						pRunOpts->wszExportPath = wszExportPath;
-						pRunOpts->bExportMode = EXPORTMODE_EXPORT;
-						i++;
-					}
-					else return false;
-					break;
-				case 'v':
-					if (i + 1 < argc)
-					{
-						// scfgf	| ulConfigFlags
-						pRunOpts->iOutlookVersion = _wtoi(argv[i + 1]);
-						i++;
-					}
-					else return false;
-					break;
-				case '?':
-					return false;
-				default:
-					// display help
-					pRunOpts->ulLoggingMode = LOGGINGMODE_CONSOLE;
 				}
+				break;
+			case 'l':
+				if (tolower(argv[i][2]) == 'm')
+				{
+					pRunOpts->ulLoggingMode = _wtoi(argv[i + 1]);
+					i++;
+				}
+				else if (tolower(argv[i][2]) == 'p')
+				{
+					pRunOpts->wszLogFilePath = argv[i + 1];
+					Logger::Initialise(pRunOpts->wszLogFilePath);
+					i++;
+				}
+				else return false;
+				break;
+			case 'e':
+				if (tolower(argv[i][2]) == 'p')
+				{
+					std::wstring wszExportPath = argv[i + 1];
+					std::transform(wszExportPath.begin(), wszExportPath.end(), wszExportPath.begin(), ::tolower);
+					pRunOpts->wszExportPath = wszExportPath;
+					pRunOpts->bExportMode = EXPORTMODE_EXPORT;
+					i++;
+				}
+				else return false;
+				break;
+			case 'v':
+				if (i + 1 < argc)
+				{
+					// scfgf	| ulConfigFlags
+					pRunOpts->iOutlookVersion = _wtoi(argv[i + 1]);
+					i++;
+				}
+				else return false;
+				break;
+			case '?':
+				return false;
+			default:
+				// display help
+				pRunOpts->ulLoggingMode = LOGGINGMODE_CONSOLE;
 			}
 		}
-		else break;
 	}
-	switch (pRunOpts->ulScenario)
+	if (iThreeParam >= 3)
 	{
-	case SCENARIO_PROFILE:
-		pRunOpts->profileOptions = new ProfileOptions();
-		return ParseArgsProfile(argc, argv, pRunOpts->profileOptions);
-		break;
-	case SCENARIO_SERVICE:
-		pRunOpts->serviceOptions = new ServiceOptions();
-		return ParseArgsService(argc, argv, pRunOpts->serviceOptions);
-		break;
-	case SCENARIO_MAILBOX:
-		pRunOpts->mailboxOptions = new MailboxOptions();
-		return ParseArgsMailbox(argc, argv, pRunOpts->mailboxOptions);
-		break;
-	case SCENARIO_DATAFILE:
-		pRunOpts->dataFileOptions = new DataFileOptions();
-		return FALSE;
-		break;
-	case SCENARIO_LDAP:
-		pRunOpts->ldapOptions = new LdapOptions();
-		return FALSE;
-		break;
-	case SCENARIO_CUSTOM:
-		return FALSE;
-		break;
-	default:
-		return FALSE;
+		switch (pRunOpts->ulScenario)
+		{
+		case SCENARIO_PROFILE:
+			pRunOpts->profileOptions = new ProfileOptions();
+			return ParseArgsProfile(argc, argv, pRunOpts->profileOptions);
+			break;
+		case SCENARIO_SERVICE:
+			pRunOpts->serviceOptions = new ServiceOptions();
+			return ParseArgsService(argc, argv, pRunOpts->serviceOptions);
+			break;
+		case SCENARIO_MAILBOX:
+			pRunOpts->mailboxOptions = new MailboxOptions();
+			return ParseArgsMailbox(argc, argv, pRunOpts->mailboxOptions);
+			break;
+		case SCENARIO_DATAFILE:
+			pRunOpts->dataFileOptions = new DataFileOptions();
+			return FALSE;
+			break;
+		case SCENARIO_LDAP:
+			pRunOpts->ldapOptions = new LdapOptions();
+			return FALSE;
+			break;
+		case SCENARIO_CUSTOM:
+			return FALSE;
+			break;
+		default:
+			return FALSE;
+		}
 	}
+	else return false; 
 }
 
 BOOL ParseArgsProfile(int argc, _TCHAR* argv[], ProfileOptions * profileOptions)
@@ -432,6 +433,7 @@ BOOL ParseArgsProfile(int argc, _TCHAR* argv[], ProfileOptions * profileOptions)
 					if (i + 1 < argc)
 					{
 						profileOptions->wszProfileName = argv[i + 1];
+						profileOptions->ulProfileMode = PROFILEMODE_ONE;
 						i++;
 					}
 					else return false;
@@ -1085,6 +1087,8 @@ void _tmain(int argc, _TCHAR* argv[])
 		return;
 	}
 
+	loggingMode = (LoggingMode)tkOptions->ulLoggingMode;
+
 	MAPIINIT_0  MAPIINIT = { 0, MAPI_MULTITHREAD_NOTIFICATIONS };
 	if (SUCCEEDED(MAPIInitialize(&MAPIINIT)))
 	{
@@ -1098,9 +1102,73 @@ void _tmain(int argc, _TCHAR* argv[])
 				{
 					// this only works with the default profile for now
 					HrCreateProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str());
-					break;
+
+				}
+
+				else if (tkOptions->ulAction == STANDARDACTION_LIST)
+				{
+
+					if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_ALL)
+					{
+						ULONG ulProfileCount = GetProfileCount(loggingMode);
+						ProfileInfo * profileInfo = new ProfileInfo[ulProfileCount];
+						ZeroMemory(profileInfo, sizeof(ProfileInfo) * ulProfileCount);
+						Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for all profiles", loggingMode);
+						EC_HRES_LOG(GetProfiles(ulProfileCount, profileInfo, loggingMode), loggingMode);
+						if (tkOptions->wszExportPath != L"")
+						{
+							Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for all profiles", loggingMode);
+							ExportXML(ulProfileCount, profileInfo, tkOptions->wszExportPath, loggingMode);
+						}
+						else
+						{
+							Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for all profiles", loggingMode);
+							ExportXML(ulProfileCount, profileInfo, L"", loggingMode);
+						}
+
+					}
+					if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_ONE)
+					{
+						ProfileInfo * pProfileInfo = new ProfileInfo();
+						Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for profile: " + tkOptions->profileOptions->wszProfileName, loggingMode);
+						EC_HRES_LOG(GetProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(), pProfileInfo, loggingMode), loggingMode);
+						if (tkOptions->wszExportPath != L"")
+						{
+							Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for profile", loggingMode);
+							ExportXML(1, pProfileInfo, tkOptions->wszExportPath, loggingMode);
+						}
+						else
+						{
+							Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for profile", loggingMode);
+							ExportXML(1, pProfileInfo, L"", loggingMode);
+						}
+
+					}
+					if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_DEFAULT)
+					{
+						std::wstring szDefaultProfileName = GetDefaultProfileName(loggingMode);
+						if (!szDefaultProfileName.empty())
+						{
+							tkOptions->profileOptions->wszProfileName = szDefaultProfileName;
+						}
+
+						ProfileInfo * pProfileInfo = new ProfileInfo();
+						Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for default profile: " + tkOptions->profileOptions->wszProfileName, loggingMode);
+						EC_HRES_LOG(GetProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(), pProfileInfo, loggingMode), loggingMode);
+						if (tkOptions->wszExportPath != L"")
+						{
+							Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for default profile", loggingMode);
+							ExportXML(1, pProfileInfo, tkOptions->wszExportPath, loggingMode);
+						}
+						else
+						{
+							Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for default profile", loggingMode);
+							ExportXML(1, pProfileInfo, L"", loggingMode);
+						}
+					}
 				}
 			}
+			break;
 		case SCENARIO_SERVICE:
 			if (tkOptions->ulActionType == ACTIONTYPE_STANDARD)
 			{

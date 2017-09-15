@@ -1,0 +1,36 @@
+<?xml version="1.0"?><Profiles>
+	<Profile>
+	<ProfileName>Outlook</ProfileName>
+	<ProfileIndex>1</ProfileIndex>
+	<DefaultProfile>1</DefaultProfile>
+	<ServicesCount>2</ServicesCount>
+	<Services>
+	<ExchangeAccount>
+	<AccountName>MSEMS</AccountName>
+	<AccountIndex>1</AccountIndex>
+	<AccountDisplayName>catagh@adelaide.lab</AccountDisplayName>
+	<DefaultAccount>1</DefaultAccount>
+	<DatafilePath>C:\Users\catagh\AppData\Local\Microsoft\Outlook\catagh@adelaide.lab(2).ost</DatafilePath>
+	<UnresolvedServer> </UnresolvedServer>
+	<HomeServer> </HomeServer>
+	<HomeServerDN> </HomeServerDN>
+	<RohProxyServer> </RohProxyServer>
+	<CachedModeEnabledOwner>1</CachedModeEnabledOwner>
+	<CachedModeEnabledShared>1</CachedModeEnabledShared>
+	<CachedModeEnabledPublicFolders>0</CachedModeEnabledPublicFolders>
+	<CachedModeMonths>12</CachedModeMonths>
+	<UserName>catagh@adelaide.lab</UserName>
+	<UserEmailSmtpAddress>SMTP:catagh@adelaide.lab</UserEmailSmtpAddress>
+	<MailboxCount>2</MailboxCount>
+	<Mailboxes>
+	<Mailbox>
+	<DisplayName>catagh@adelaide.lab</DisplayName>
+	<MailboxIndex>1</MailboxIndex>
+	<DefaultMailbox>1</DefaultMailbox>
+	<EntryType>Primary</EntryType></Mailbox>
+	<Mailbox>
+	<DisplayName>Natercia Gomes</DisplayName>
+	<MailboxIndex>2</MailboxIndex>
+	<DefaultMailbox>0</DefaultMailbox>
+	<EntryType>Delegate</EntryType></Mailbox></Mailboxes></ExchangeAccount></Services></Profile>
+</Profiles>
