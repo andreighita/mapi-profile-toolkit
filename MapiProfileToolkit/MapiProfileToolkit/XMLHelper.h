@@ -272,7 +272,7 @@ void ExportXML(ULONG cProfileInfo, ProfileInfo * profileInfo, std::wstring szExp
 
 			for (unsigned int j = 0; j < profileInfo[i].ulServiceCount; j++)
 			{
-				if (SERVICETYPE_EXCHANGEACCOUNT == profileInfo[i].profileServices[j].ulServiceType)
+				if (SERVICETYPE_MAILBOX == profileInfo[i].profileServices[j].ulServiceType)
 				{
 					// create child node for each service
 					IXMLDOMElement *pServiceNode = NULL;
@@ -382,23 +382,23 @@ void ExportXML(ULONG cProfileInfo, ProfileInfo * profileInfo, std::wstring szExp
 							// Add DefaultMailbox node and value
 							IXMLDOMElement *pDefaultMailboxNode = NULL;
 							CHK_HR(CreateAndAddElementNode(pXMLDom, L"DefaultMailbox", L"\n\t", pMailboxNode, &pDefaultMailboxNode));
-							CHK_HR(CreateAndAddTextNode(pXMLDom, ConvertStdStringToWideChar(ConvertIntToString(profileInfo[i].profileServices[j].exchangeAccountInfo->accountMailboxes[k].bDefaultMailbox)), pDefaultMailboxNode));
+							CHK_HR(CreateAndAddTextNode(pXMLDom, ConvertStdStringToWideChar(ConvertIntToString(profileInfo[i].profileServices[j].exchangeAccountInfo->accountMailboxes[k].bPrimaryMailbox)), pDefaultMailboxNode));
 							SAFE_RELEASE(pDefaultMailboxNode);
 							// Add EntryType node and value
 							IXMLDOMElement *pEntryTypeNode = NULL;
 							CHK_HR(CreateAndAddElementNode(pXMLDom, L"EntryType", L"\n\t", pMailboxNode, &pEntryTypeNode));
-							switch (profileInfo[i].profileServices[j].exchangeAccountInfo->accountMailboxes[k].ulEntryType)
+							switch (profileInfo[i].profileServices[j].exchangeAccountInfo->accountMailboxes[k].ulProfileType)
 							{
-							case ENTRYTYPE_PRIMARY:
+							case PROFILE_PRIMARY_USER:
 								CHK_HR(CreateAndAddTextNode(pXMLDom, L"Primary", pEntryTypeNode));
 								break;
-							case ENTRYTYPE_DELEGATE:
+							case PROFILE_DELEGATE:
 								CHK_HR(CreateAndAddTextNode(pXMLDom, L"Delegate", pEntryTypeNode));
 								break;
-							case ENTRYTYPE_PUBLIC_FOLDERS:
-								CHK_HR(CreateAndAddTextNode(pXMLDom, L"Public Folders", pEntryTypeNode));
+							case PROFILE_PUBLIC_STORE:
+								CHK_HR(CreateAndAddTextNode(pXMLDom, L"Public Store", pEntryTypeNode));
 								break;
-							case ENTRYTYPE_UNKNOWN:
+							case 0:
 							default:
 								CHK_HR(CreateAndAddTextNode(pXMLDom, L"Unknown", pEntryTypeNode));
 								break;

@@ -18,17 +18,26 @@
 
 enum { CACHEDMODE_DISABLED = 1, CACHEDMODE_ENABLED };
 enum { SERVICE_PRIMARY = 1, SERVICE_SECONDARY };
-enum { ENTRYTYPE_UNKNOWN, ENTRYTYPE_PRIMARY, ENTRYTYPE_DELEGATE, ENTRYTYPE_PUBLIC_FOLDERS };
-enum { SERVICETYPE_OTHER, SERVICETYPE_EXCHANGEACCOUNT, SERVICETYPE_ADDRESSBOOKPROVIDER, SERVICETYPE_PST, SERVICETYPE_EASACCOUNT };
+enum { PROFILETYPE_UNKNOWN, PROFILETYPE_PRIMARY, PROFILETYPE_DELEGATE, PROFILETYPE_PUBLICFOLDERS };
+
 enum { PSTTYPE_ANSI = 0, PSTTYPE_UNICODE = 0x80000000};
 
 struct MailboxInfo
 {
-	std::wstring wszDisplayName;
-	std::wstring wszEmailAddress;
-	BOOL bDefaultMailbox;
-	ULONG ulEntryType;
-	ULONG ulProfileType;
+	std::wstring wszDisplayName; // PR_DISPLAY_NAME
+	std::wstring wszSmtpAddress; // PR_PROFILE_USER_SMTP_EMAIL_ADDRESS
+	std::wstring wszProfileMailbox; // PR_PROFILE_MAILBOX
+	std::wstring wszProfileServerDN; // PR_PROFILE_SERVER_DN
+	std::wstring wszRohProxyServer; // PR_ROH_PROXY_SERVER
+	std::wstring wszProfileServer; // PR_PROFILE_SERVER
+	std::wstring wszProfileServerFqdnW; // PR_PROFILE_SERVER_FQDN_W
+	std::wstring wszAutodiscoverUrl; // PR_PROFILE_LKG_AUTODISCOVER_URL
+	std::wstring wszMailStoreInternalUrl; // PR_PROFILE_MAPIHTTP_MAILSTORE_INTERNAL_URL
+	BOOL bPrimaryMailbox; 
+	ULONG ulResourceFlags; // PR_RESOURCE_FLAGS
+	ULONG ulRohProxyAuthScheme; // PR_PROFILE_RPC_PROXY_SERVER_AUTH_PACKAGE
+	ULONG ulRohFlags; // PR_ROH_FLAGS
+	ULONG ulProfileType; // PR_PROFILE_TYPE
 };
 
 struct PstInfo
@@ -41,9 +50,9 @@ struct PstInfo
 
 struct MapiProperty
 {
-	std::wstring szPropertyName;
-	std::wstring szPropertyTag;
-	std::wstring szPropertyValue;
+	std::wstring wszNamedPropertyName;
+	std::wstring wszPropertyTag;
+	ULONG ulNamedPropertyValue;
 };
 
 struct ProviderInfo
@@ -56,6 +65,26 @@ struct ExchangeAccountInfo
 	std::wstring wszDisplayName;
 	std::wstring wszDatafilePath;
 	std::wstring wszEmailAddress;
+	BOOL bCachedModeEnabledOwner;
+	BOOL bCachedModeEnabledShared;
+	BOOL bCachedModeEnabledPublicFolders;
+	int iCachedModeMonths;
+	std::wstring szUserName;
+	std::wstring szUserEmailSmtpAddress;
+	ULONG ulMailboxCount;
+	std::wstring wszRohProxyServer;
+	std::wstring wszUnresolvedServer;
+	std::wstring wszHomeServerName;
+	std::wstring wszHomeServerDN;
+	MailboxInfo * accountMailboxes;
+	ULONG ulProfileConfigFlags;
+};
+
+struct EMSMdbSection
+{
+	std::wstring wszDisplayName;
+	std::wstring wszDatafilePath;
+	std::wstring wszSmtpAddress;
 	BOOL bCachedModeEnabledOwner;
 	BOOL bCachedModeEnabledShared;
 	BOOL bCachedModeEnabledPublicFolders;

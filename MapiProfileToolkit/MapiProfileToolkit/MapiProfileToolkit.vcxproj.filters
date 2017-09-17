@@ -104,12 +104,6 @@
     <ClCompile Include="RegistryHelper.cpp">
       <Filter>Registry</Filter>
     </ClCompile>
-    <ClCompile Include="MapiStubLibrary.cpp">
-      <Filter>MAPI</Filter>
-    </ClCompile>
-    <ClCompile Include="StubUtils.cpp">
-      <Filter>MAPI</Filter>
-    </ClCompile>
     <ClCompile Include="Logger.cpp">
       <Filter>Logger</Filter>
     </ClCompile>

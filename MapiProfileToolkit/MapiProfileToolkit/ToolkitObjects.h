@@ -16,6 +16,8 @@ enum { ACTIONTYPE_STANDARD = 1, ACTIONTYPE_CUSTOM };
 
 enum { STANDARDACTION_ADD = 1, STANDARDACTION_REMOVE, STANDARDACTION_EDIT, STANDARDACTION_LIST };
 
+enum { ACTION_ADD = 1, ACTION_REMOVE, ACTION_EDIT, ACTION_LIST, ACTION_UPDATE, ACTION_PROMOTEDELEGATE };
+
 enum 
 { 
 	CUSTOMACTION_PROMOTEMAILBOXTOSERVICE = 1, 
@@ -38,6 +40,22 @@ enum
 	SERVICEMODE_ONE, 
 	SERVICEMODE_ALL 
 };
+
+enum
+{
+	SERVICETYPE_OTHER,
+	SERVICETYPE_MAILBOX,
+	SERVICETYPE_PST,
+	SERVICETYPE_ADDRESSBOOK
+};
+
+enum
+{
+	MAILBOXTYPE_PRIMARY = 1,
+	MAILBOXTYPE_DELEGATE,
+	MAILBOXTYPE_PUBLICFOLDER
+};
+
 enum 
 { 
 	MAILBOXMODE_DEFAULT = 1, 
@@ -73,11 +91,11 @@ struct ProfileOptions
 	ULONG ulProfileMode;					// pm
 	std::wstring wszProfileName;			// pn
 	bool bSetDefaultProfile;				// pd
+	ULONG ulProfileAction;
 };
 
 struct ServiceOptions
 {
-	bool bDefaultservice;					// sds
 	bool bSetDefaultservice;				// ssds
 	int iCachedModeMonths;					// scmm		| 0 = all; 1, 3, 6, 12 or 24 for the same number of months;
 	int iServiceIndex;						// si		| service index from the list of services
@@ -102,7 +120,9 @@ struct ServiceOptions
 	ULONG ulConnectMode;					// scnctm		| ROH or MOH
 	ULONG ulProfileMode;					// spm		| PROFILEMODE_DEFAULT = 1, PROFILEMODE_ONE = 2, PROFILEMODE_ALL = 3
 	ULONG ulResourceFlags;					// srf		| PR_RESOURCES_FLAGS
-
+	ULONG ulServiceType;
+	ULONG ulServiceAction;
+	ULONG ulServiceMode;
 };
 
 struct MailboxOptions
@@ -116,6 +136,8 @@ struct MailboxOptions
 	std::wstring wszMailboxDisplayName;		// mmdn
 	std::wstring wszServerLegacyDN;			// msldn
 	std::wstring wszServerDisplayName;		// msdn
+	ULONG ulMailboxType;
+	ULONG ulMailboxAction;
 };
 
 struct LdapOptions

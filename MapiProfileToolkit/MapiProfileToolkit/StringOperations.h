@@ -50,3 +50,4 @@ bool WStringReplace(std::wstring * wstr, const std::wstring original, const std:
 	wstr->replace(start_pos, original.length(), replacement);
 	return true;
 }
+

@@ -14,6 +14,7 @@
 #include "stdafx.h"
 #include "ProfileFunctions.h"
 #include "StringOperations.h"
+#include "ToolkitObjects.h"
 
 #define MAPI_FORCE_ACCESS 0x00080000
 #define PR_EMSMDB_SECTION_UID					PROP_TAG(PT_BINARY, 0x3D15)
@@ -56,6 +57,8 @@ LPWSTR GetDefaultProfileNameLP(LoggingMode loggingMode)
 	return (LPWSTR)GetDefaultProfileName(loggingMode).c_str();
 }
 
+// GetDefaultProfileName
+// returns a std::wstring value with the name of the default Outlook profile
 std::wstring GetDefaultProfileName(LoggingMode loggingMode)
 {
 	std::wstring szDefaultProfileName;
@@ -67,31 +70,22 @@ std::wstring GetDefaultProfileName(LoggingMode loggingMode)
 	LPSRowSet lpProfRows = NULL;
 
 	HRESULT hRes = S_OK;
-	std::wstring errormessage = std::wstring(L" ");
 	Logger::Write(logLevelInfo, L"Attempting to retrieve the default MAPI profile name", loggingMode);
 
 	// Setting up an enum and a prop tag array with the props we'll use
-	enum { iDisplayName, iProviderUid, iServiceUid, cptaProps };
-	SizedSPropTagArray(cptaProps, sptaProps) = { cptaProps, PR_DISPLAY_NAME_A, PR_PROVIDER_UID, PR_SERVICE_UID };
-	EC_HRES_LOG(MAPIAdminProfiles(0, // Flags
-		&lpProfAdmin), loggingMode); // Pointer to new IProfAdmin
-									 // Get an IProfAdmin interface.
+	enum { iDisplayName, cptaProps };
+	SizedSPropTagArray(cptaProps, sptaProps) = { cptaProps, PR_DISPLAY_NAME_A };
 
-	EC_HRES_LOG(lpProfAdmin->GetProfileTable(0,
-		&lpProfTable), loggingMode);
+	EC_HRES_LOG(MAPIAdminProfiles(0, &lpProfAdmin), loggingMode); 
+
+	EC_HRES_LOG(lpProfAdmin->GetProfileTable(0,	&lpProfTable), loggingMode);
 
 	// Allocate memory for the restriction
-	EC_HRES_LOG(MAPIAllocateBuffer(
-		sizeof(SRestriction),
-		(LPVOID*)&lpProfRes), loggingMode);
+	EC_HRES_LOG(MAPIAllocateBuffer(sizeof(SRestriction), (LPVOID*)&lpProfRes), loggingMode);
 
-	EC_HRES_LOG(MAPIAllocateBuffer(
-		sizeof(SRestriction) * 2,
-		(LPVOID*)&lpProfResLvl1), loggingMode);
+	EC_HRES_LOG(MAPIAllocateBuffer(sizeof(SRestriction) * 2, (LPVOID*)&lpProfResLvl1), loggingMode);
 
-	EC_HRES_LOG(MAPIAllocateBuffer(
-		sizeof(SPropValue),
-		(LPVOID*)&lpProfPropVal), loggingMode);
+	EC_HRES_LOG(MAPIAllocateBuffer(sizeof(SPropValue), (LPVOID*)&lpProfPropVal), loggingMode);
 
 	// Set up restriction to query the profile table
 	lpProfRes->rt = RES_AND;
@@ -144,6 +138,8 @@ Cleanup:
 	return szDefaultProfileName;
 }
 
+// GetProfileCount
+// returns the number of mapi profiles for the current user
 ULONG GetProfileCount(LoggingMode loggingMode)
 {
 	std::string szDefaultProfileName;
@@ -156,11 +152,9 @@ ULONG GetProfileCount(LoggingMode loggingMode)
 		&lpProfAdmin), loggingMode); // Pointer to new IProfAdmin
 									 // Get an IProfAdmin interface.
 
-	EC_HRES_LOG(lpProfAdmin->GetProfileTable(0,
-		&lpProfTable), loggingMode);
+	EC_HRES_LOG(lpProfAdmin->GetProfileTable(0, &lpProfTable), loggingMode);
 
-	EC_HRES_LOG(lpProfTable->GetRowCount(0,
-		&ulRowCount), loggingMode);
+	EC_HRES_LOG(lpProfTable->GetRowCount(0,	&ulRowCount), loggingMode);
 
 Error:
 	goto Cleanup;
@@ -171,7 +165,7 @@ Cleanup:
 	return ulRowCount;
 }
 
-HRESULT GetProfiles(ULONG ulProfileCount, ProfileInfo * profileInfo, LoggingMode loggingMode)
+HRESULT HrGetProfiles(ULONG ulProfileCount, ProfileInfo * profileInfo, LoggingMode loggingMode)
 {
 	LPPROFADMIN lpProfAdmin = NULL;     // Profile Admin pointer
 	LPMAPITABLE lpProfTable = NULL;
@@ -364,7 +358,7 @@ HRESULT GetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo, LoggingMod
 				// Exchange account
 				if (0 == strcmp(lpSvcRows->aRow[i].lpProps[iServiceName].Value.lpszA, "MSEMS"))
 				{
-					profileInfo->profileServices[i].ulServiceType = SERVICETYPE_EXCHANGEACCOUNT;
+					profileInfo->profileServices[i].ulServiceType = SERVICETYPE_MAILBOX;
 					profileInfo->profileServices[i].exchangeAccountInfo = new ExchangeAccountInfo;
 					profileInfo->profileServices[i].exchangeAccountInfo->wszDatafilePath = std::wstring(L" ");
 					profileInfo->profileServices[i].exchangeAccountInfo->wszDisplayName = std::wstring(L" ");
@@ -635,23 +629,23 @@ HRESULT GetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo, LoggingMod
 										LPSPropValue prProfileType = NULL;
 										if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_PROFILE_TYPE, &prProfileType)))
 										{
-											profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].bDefaultMailbox = (prProfileType->Value.l == PROFILE_PRIMARY_USER);
+											profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].bPrimaryMailbox = (prProfileType->Value.l == PROFILE_PRIMARY_USER);
 
 											if (prProfileType->Value.l == PROFILE_PRIMARY_USER)
 											{
-												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulEntryType = ENTRYTYPE_PRIMARY;
+												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulProfileType = PROFILE_PRIMARY_USER;
 											}
 											else if (prProfileType->Value.l == PROFILE_DELEGATE)
 											{
-												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulEntryType = ENTRYTYPE_DELEGATE;
+												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulProfileType = PROFILE_DELEGATE;
 											}
 											else if (prProfileType->Value.l == PROFILE_PUBLIC_STORE)
 											{
-												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulEntryType = ENTRYTYPE_PUBLIC_FOLDERS;
+												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulProfileType = PROFILE_PUBLIC_STORE;
 											}
 											else
 											{
-												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulEntryType = ENTRYTYPE_UNKNOWN;
+												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulProfileType = 0;
 											}
 											if (prDisplayName) MAPIFreeBuffer(prProfileType);
 										}
@@ -1825,7 +1819,7 @@ HRESULT HrCloneProfile(ProfileInfo * profileInfo, LoggingMode loggingMode)
 	{
 		MAPIUID uidService = { 0 };
 		LPMAPIUID lpServiceUid = &uidService;
-		if (profileInfo->profileServices[i].ulServiceType == SERVICETYPE_EXCHANGEACCOUNT)
+		if (profileInfo->profileServices[i].ulServiceType == SERVICETYPE_MAILBOX)
 		{
 			Logger::Write(logLevelInfo, L"Adding exchange mailbox: " + profileInfo->profileServices[i].exchangeAccountInfo->wszEmailAddress, loggingMode);
 			EC_HRES_MSG(HrCreateMsemsServiceModernExt(TRUE,
@@ -1843,13 +1837,13 @@ HRESULT HrCloneProfile(ProfileInfo * profileInfo, LoggingMode loggingMode)
 			{
 				if (profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulProfileType == PROFILE_DELEGATE)
 				{
-					Logger::Write(logLevelInfo, L"Adding additional mailbox: " + profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszEmailAddress, loggingMode);
+					Logger::Write(logLevelInfo, L"Adding additional mailbox: " + profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress, loggingMode);
 					EC_HRES_MSG(HrAddDelegateMailboxModern(TRUE,
 						(LPWSTR)GetDefaultProfileName(loggingMode).c_str(),
 						FALSE,
 						uiServiceIndex,
 						(LPWSTR)profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszDisplayName.c_str(),
-						(LPWSTR)profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszEmailAddress.c_str(),
+						(LPWSTR)profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress.c_str(),
 						loggingMode), L"HrCloneProfile", L"0052");
 				}
 			}
@@ -1894,7 +1888,7 @@ VOID PrintProfile(ProfileInfo * profileInfo)
 			wprintf(L" -> [%i] Service resource flags: %#x\n", i, profileInfo->profileServices[i].ulResourceFlags);
 			MAPIUID uidService = { 0 };
 			LPMAPIUID lpServiceUid = &uidService;
-			if (profileInfo->profileServices[i].ulServiceType == SERVICETYPE_EXCHANGEACCOUNT)
+			if (profileInfo->profileServices[i].ulServiceType == SERVICETYPE_MAILBOX)
 			{
 				wprintf(L" -> [%i] Service type: %ls\n", i, L"Exchange Mailbox");
 				wprintf(L" -> [%i] E-mail address: %ls\n", i, profileInfo->profileServices[i].exchangeAccountInfo->wszEmailAddress.c_str());
@@ -1908,12 +1902,12 @@ VOID PrintProfile(ProfileInfo * profileInfo)
 					wprintf(L" -> [%i] -> Mailbox #%i\n", i, j);
 					if (profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulProfileType == PROFILE_DELEGATE)
 					{
-						wprintf(L" -> [%i] -> [%i] (Delegate) -> E-mail address: %ls\n", i, j, profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszEmailAddress.c_str());
+						wprintf(L" -> [%i] -> [%i] (Delegate) -> E-mail address: %ls\n", i, j, profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress.c_str());
 						wprintf(L" -> [%i] -> [%i] (Delegate) -> User display name: %ls\n", i, j, profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszDisplayName.c_str());
 					}
 					else
 					{
-						wprintf(L" -> [%i] -> [%i] (Other)-> E-mail address:%ls\n", i, j, profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszEmailAddress.c_str());
+						wprintf(L" -> [%i] -> [%i] (Other)-> E-mail address:%ls\n", i, j, profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress.c_str());
 						wprintf(L" -> [%i] -> [%i] (Other) -> User display name:%ls\n", i, j, profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszDisplayName.c_str());
 					}
 				}
@@ -2050,7 +2044,7 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo, LoggingM
 				if (0 == strcmp(lpSvcRows->aRow[i].lpProps[iServiceName].Value.lpszA, "MSEMS"))
 				{
 					profileInfo->profileServices[i].exchangeAccountInfo = new ExchangeAccountInfo();
-					profileInfo->profileServices[i].ulServiceType = SERVICETYPE_EXCHANGEACCOUNT;
+					profileInfo->profileServices[i].ulServiceType = SERVICETYPE_MAILBOX;
 					LPPROVIDERADMIN lpProvAdmin = NULL;
 
 					if (SUCCEEDED(lpServiceAdmin->AdminProviders((LPMAPIUID)lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb,
@@ -2210,6 +2204,7 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo, LoggingM
 									LPMAPIPROP lpMAPIProp = NULL;
 									if (SUCCEEDED(lpProfSection->QueryInterface(IID_IMAPIProp, (void**)&lpMAPIProp)))
 									{
+										// PR_DISPLAY_NAME
 										LPSPropValue prDisplayName = NULL;
 										if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_DISPLAY_NAME, &prDisplayName)))
 										{
@@ -2220,25 +2215,179 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo, LoggingM
 										{
 											profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszDisplayName = std::wstring(L" ");
 										}
-
+										
+										// PR_PROFILE_TYPE
 										LPSPropValue prProfileType = NULL;
 										if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_PROFILE_TYPE, &prProfileType)))
 										{
 											profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulProfileType = prProfileType->Value.l;
 										}
+										
+										// PR_PROFILE_USER_SMTP_EMAIL_ADDRESS
 										LPSPropValue profileUserSmtpEmailAddress = NULL;
 										if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_PROFILE_USER_SMTP_EMAIL_ADDRESS, &profileUserSmtpEmailAddress)))
 										{
 											if (profileUserSmtpEmailAddress)
 											{
-												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszEmailAddress = ConvertWideCharToStdWstring(ConvertMultiByteToWideChar(profileUserSmtpEmailAddress->Value.lpszA));
+												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress = ConvertWideCharToStdWstring(ConvertMultiByteToWideChar(profileUserSmtpEmailAddress->Value.lpszA));
 												if (profileUserSmtpEmailAddress) MAPIFreeBuffer(profileUserSmtpEmailAddress);
 											}
 											else
 											{
-												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszEmailAddress = std::wstring(L" ");
+												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress = std::wstring(L" ");
 											}
 										}
+
+										// PR_PROFILE_MAILBOX
+										LPSPropValue profileMailbox = NULL;
+										if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_PROFILE_MAILBOX, &profileMailbox)))
+										{
+											if (profileMailbox)
+											{
+												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszProfileMailbox = ConvertWideCharToStdWstring(ConvertMultiByteToWideChar(profileMailbox->Value.lpszA));
+												if (profileMailbox) MAPIFreeBuffer(profileMailbox);
+											}
+											else
+											{
+												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszProfileMailbox = std::wstring(L" ");
+											}
+										}
+										
+										// PR_PROFILE_SERVER_DN
+										LPSPropValue profileServerDN = NULL;
+										if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_PROFILE_SERVER_DN, &profileServerDN)))
+										{
+											if (profileMailbox)
+											{
+												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszProfileServerDN = ConvertWideCharToStdWstring(ConvertMultiByteToWideChar(profileServerDN->Value.lpszA));
+												if (profileServerDN) MAPIFreeBuffer(profileServerDN);
+											}
+											else
+											{
+												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszProfileServerDN = std::wstring(L" ");
+											}
+										}
+
+										// PR_ROH_PROXY_SERVER
+										LPSPropValue rohProxyServer = NULL;
+										if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_ROH_PROXY_SERVER, &rohProxyServer)))
+										{
+											if (rohProxyServer)
+											{
+												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszRohProxyServer = ConvertWideCharToStdWstring(rohProxyServer->Value.lpszW);
+												if (rohProxyServer) MAPIFreeBuffer(rohProxyServer);
+											}
+											else
+											{
+												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszRohProxyServer = std::wstring(L" ");
+											}
+										}
+
+										// PR_PROFILE_SERVER
+										LPSPropValue profileServer = NULL;
+										if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_PROFILE_SERVER, &profileServer)))
+										{
+											if (profileServer)
+											{
+												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszProfileServer = ConvertWideCharToStdWstring(ConvertMultiByteToWideChar(profileServerDN->Value.lpszA));
+												if (profileServer) MAPIFreeBuffer(profileServer);
+											}
+											else
+											{
+												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszProfileServer = std::wstring(L" ");
+											}
+										}
+
+										// PR_PROFILE_SERVER_FQDN_W
+										LPSPropValue profileServerFqdnW = NULL;
+										if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_PROFILE_SERVER_FQDN_W, &profileServerFqdnW)))
+										{
+											if (profileServerFqdnW)
+											{
+												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszProfileServerFqdnW = ConvertWideCharToStdWstring(profileServerFqdnW->Value.lpszW);
+												if (profileServerFqdnW) MAPIFreeBuffer(profileServerFqdnW);
+											}
+											else
+											{
+												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszProfileServerFqdnW = std::wstring(L" ");
+											}
+										}
+
+										// PR_PROFILE_LKG_AUTODISCOVER_URL
+										LPSPropValue profileAutodiscoverUrl = NULL;
+										if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_PROFILE_LKG_AUTODISCOVER_URL, &profileAutodiscoverUrl)))
+										{
+											if (profileAutodiscoverUrl)
+											{
+												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszAutodiscoverUrl = ConvertWideCharToStdWstring(profileAutodiscoverUrl->Value.lpszW);
+												if (profileServerFqdnW) MAPIFreeBuffer(profileAutodiscoverUrl);
+											}
+											else
+											{
+												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszAutodiscoverUrl = std::wstring(L" ");
+											}
+										}
+
+										// PR_PROFILE_MAPIHTTP_MAILSTORE_INTERNAL_URL
+										LPSPropValue profileMailStoreInternalUrl = NULL;
+										if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_PROFILE_MAPIHTTP_MAILSTORE_INTERNAL_URL, &profileMailStoreInternalUrl)))
+										{
+											if (profileMailStoreInternalUrl)
+											{
+												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszMailStoreInternalUrl = ConvertWideCharToStdWstring(profileMailStoreInternalUrl->Value.lpszW);
+												if (profileMailStoreInternalUrl) MAPIFreeBuffer(profileMailStoreInternalUrl);
+											}
+											else
+											{
+												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszMailStoreInternalUrl = std::wstring(L" ");
+											}
+										}
+
+										// PR_RESOURCE_FLAGS
+										LPSPropValue resourceFlags = NULL;
+										if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_RESOURCE_FLAGS, &resourceFlags)))
+										{
+											if (resourceFlags)
+											{
+												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulResourceFlags = resourceFlags->Value.l;
+												if (resourceFlags) MAPIFreeBuffer(resourceFlags);
+											}
+											else
+											{
+												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulResourceFlags = 0;
+											}
+										}
+
+										// PR_PROFILE_RPC_PROXY_SERVER_AUTH_PACKAGE
+										LPSPropValue rohAuthPackage = NULL;
+										if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_PROFILE_RPC_PROXY_SERVER_AUTH_PACKAGE, &rohAuthPackage)))
+										{
+											if (rohAuthPackage)
+											{
+												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulRohProxyAuthScheme = rohAuthPackage->Value.l;
+												if (rohAuthPackage) MAPIFreeBuffer(rohAuthPackage);
+											}
+											else
+											{
+												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulRohProxyAuthScheme = 0;
+											}
+										}
+
+										// PR_ROH_FLAGS
+										LPSPropValue rohFlags = NULL;
+										if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_ROH_FLAGS, &rohFlags)))
+										{
+											if (rohFlags)
+											{
+												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulRohFlags = rohFlags->Value.l;
+												if (rohFlags) MAPIFreeBuffer(rohFlags);
+											}
+											else
+											{
+												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulRohFlags = 0;
+											}
+										}
+
 									}
 								}
 							}
@@ -4117,3 +4266,58 @@ cleanup:
 }
 
 #pragma endregion
+
+
+HRESULT HrPromoteDelegatesLegacy(LPWSTR profileName, BOOL bDefaultProfile, int iStoreIndex, BOOL bDefaultStore, LoggingMode loggingMode)
+{
+	HRESULT hRes = S_OK;
+	ProfileInfo * profileInfo = new ProfileInfo();
+	if (bDefaultProfile)
+	{
+		hRes = GetProfile((LPWSTR)GetDefaultProfileName(loggingMode).c_str(), profileInfo, loggingMode);
+	}
+	else
+	{
+		hRes = GetProfile(profileName, profileInfo, loggingMode);
+	}
+
+	if (bDefaultStore)
+	{
+		for (int i = 0; i <= profileInfo->ulServiceCount; i++)
+		{
+			if (profileInfo->profileServices[i].bDefaultStore)
+			{
+				if (profileInfo->profileServices[i].ulServiceType == SERVICETYPE_MAILBOX)
+				{
+					for (int j = 0; j <= profileInfo->profileServices[i].exchangeAccountInfo->ulMailboxCount; j++)
+						if (profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulProfileType == PROFILE_DELEGATE)
+						{
+							if (SUCCEEDED(HrCreateMsemsServiceLegacyUnresolved(bDefaultProfile,
+								profileName,
+								(LPWSTR)profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszProfileMailbox.c_str(),
+								(LPWSTR)profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszProfileServer.c_str(),
+								loggingMode)))
+							{
+
+
+							}
+						}
+				}
+			}
+		}
+	}
+	else if (iStoreIndex == -1)
+	{
+
+	}
+	else
+	{
+		for (int i = 0; i <= profileInfo->ulServiceCount; i++)
+		{
+
+		}
+	}
+	return 0;
+}
+
+HRESULT HrDeleteProvider()
