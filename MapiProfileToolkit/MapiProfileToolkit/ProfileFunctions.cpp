@@ -76,9 +76,9 @@ std::wstring GetDefaultProfileName(LoggingMode loggingMode)
 	enum { iDisplayName, cptaProps };
 	SizedSPropTagArray(cptaProps, sptaProps) = { cptaProps, PR_DISPLAY_NAME_A };
 
-	EC_HRES_LOG(MAPIAdminProfiles(0, &lpProfAdmin), loggingMode); 
+	EC_HRES_LOG(MAPIAdminProfiles(0, &lpProfAdmin), loggingMode);
 
-	EC_HRES_LOG(lpProfAdmin->GetProfileTable(0,	&lpProfTable), loggingMode);
+	EC_HRES_LOG(lpProfAdmin->GetProfileTable(0, &lpProfTable), loggingMode);
 
 	// Allocate memory for the restriction
 	EC_HRES_LOG(MAPIAllocateBuffer(sizeof(SRestriction), (LPVOID*)&lpProfRes), loggingMode);
@@ -154,7 +154,7 @@ ULONG GetProfileCount(LoggingMode loggingMode)
 
 	EC_HRES_LOG(lpProfAdmin->GetProfileTable(0, &lpProfTable), loggingMode);
 
-	EC_HRES_LOG(lpProfTable->GetRowCount(0,	&ulRowCount), loggingMode);
+	EC_HRES_LOG(lpProfTable->GetRowCount(0, &ulRowCount), loggingMode);
 
 Error:
 	goto Cleanup;
@@ -1685,7 +1685,7 @@ HRESULT HrCreateProfile(LPWSTR lpszProfileName)
 	EC_HRES_MSG(MAPIAdminProfiles(0,              // Flags.
 		&lpProfAdmin), L"Calling MAPIAdminProfiles."); // Pointer to new IProfAdmin.
 
-													 // Create a new profile.
+													   // Create a new profile.
 	hRes = lpProfAdmin->CreateProfile((LPTSTR)ConvertWideCharToMultiByte(lpszProfileName),     // Name of new profile.
 		nullptr,          // Password for profile.
 		0,          // Handle to parent window.
@@ -1729,7 +1729,7 @@ HRESULT HrCreateProfile(LPWSTR lpszProfileName, LPSERVICEADMIN2 *lppSvcAdmin2)
 	EC_HRES_MSG(MAPIAdminProfiles(0,              // Flags.
 		&lpProfAdmin), L"Calling MAPIAdminProfiles."); // Pointer to new IProfAdmin.
 
-													 // Create a new profile.
+													   // Create a new profile.
 	hRes = lpProfAdmin->CreateProfile((LPTSTR)ConvertWideCharToMultiByte(lpszProfileName),     // Name of new profile.
 		nullptr,          // Password for profile.
 		0,          // Handle to parent window.
@@ -1752,7 +1752,7 @@ HRESULT HrCreateProfile(LPWSTR lpszProfileName, LPSERVICEADMIN2 *lppSvcAdmin2)
 		0,             // Flags.
 		&lpSvcAdmin), L"Calling AdminServices."); // Pointer to new IMsgServiceAdmin.
 
-													// Create the new message service for Exchange.
+												  // Create the new message service for Exchange.
 	if (lpSvcAdmin) EC_HRES_MSG(lpSvcAdmin->QueryInterface(IID_IMsgServiceAdmin2, (LPVOID*)&lpSvcAdmin2), L"Calling QueryInterface");
 
 	*lppSvcAdmin2 = lpSvcAdmin2;
@@ -1785,7 +1785,7 @@ HRESULT HrSetDefaultProfile(LPWSTR lpszProfileName)
 	EC_HRES_MSG(MAPIAdminProfiles(0,              // Flags.
 		&lpProfAdmin), L"Calling MAPIAdminProfiles."); // Pointer to new IProfAdmin.
 
-													 // Create a new profile.
+													   // Create a new profile.
 	EC_HRES_MSG(lpProfAdmin->SetDefaultProfile((LPTSTR)ConvertWideCharToMultiByte(lpszProfileName),     // Name of new profile.
 		0), L"Calling SetDefaultProfile.");        // Flags.
 
@@ -1936,7 +1936,7 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo, LoggingM
 
 	EC_HRES_MSG(MAPIAdminProfiles(0, // Flags
 		&lpProfAdmin), L"Calling MAPIAdminProfiles."); // Pointer to new IProfAdmin
-												  // Get an IProfAdmin interface.
+													   // Get an IProfAdmin interface.
 
 	EC_HRES_MSG(lpProfAdmin->GetProfileTable(0,
 		&lpProfTable), L"Calling GetProfileTable.");
@@ -2222,14 +2222,14 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo, LoggingM
 										{
 											profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszDisplayName = std::wstring(L" ");
 										}
-										
+
 										// PR_PROFILE_TYPE
 										LPSPropValue prProfileType = NULL;
 										if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_PROFILE_TYPE, &prProfileType)))
 										{
 											profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulProfileType = prProfileType->Value.l;
 										}
-										
+
 										// PR_PROFILE_USER_SMTP_EMAIL_ADDRESS
 										LPSPropValue profileUserSmtpEmailAddress = NULL;
 										if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_PROFILE_USER_SMTP_EMAIL_ADDRESS, &profileUserSmtpEmailAddress)))
@@ -2259,7 +2259,7 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo, LoggingM
 												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszProfileMailbox = std::wstring(L" ");
 											}
 										}
-										
+
 										// PR_PROFILE_SERVER_DN
 										LPSPropValue profileServerDN = NULL;
 										if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_PROFILE_SERVER_DN, &profileServerDN)))
@@ -2606,10 +2606,10 @@ HRESULT HrCreatePstService(LPSERVICEADMIN2 lpServiceAdmin2, LPMAPIUID * lppServi
 	LPPROFSECT		lpStoreProviderSect = nullptr;
 
 	// Adds a message service to the current profile and returns that newly added service UID.
-	EC_HRES_MSG(lpServiceAdmin2->CreateMsgServiceEx((LPTSTR)ConvertWideCharToMultiByte(lpszServiceName), 
-		(LPTSTR)ConvertWideCharToMultiByte(lpszDisplayName), 
-		NULL, 
-		0, 
+	EC_HRES_MSG(lpServiceAdmin2->CreateMsgServiceEx((LPTSTR)ConvertWideCharToMultiByte(lpszServiceName),
+		(LPTSTR)ConvertWideCharToMultiByte(lpszDisplayName),
+		NULL,
+		0,
 		&uidService), L"Calling CreateMsgServiceEx.");
 
 	EC_HRES_MSG(lpServiceAdmin2->OpenProfileSection(&uidService,
@@ -2732,7 +2732,7 @@ HRESULT HrAddDelegateMailboxModern(
 		// Allocate memory for the restriction
 		EC_HRES_MSG(MAPIAllocateBuffer(
 			sizeof(SRestriction),
-			(LPVOID*)&lpSvcRes), L"Calling MAPIAllocateBuffer" );
+			(LPVOID*)&lpSvcRes), L"Calling MAPIAllocateBuffer");
 
 		EC_HRES_MSG(MAPIAllocateBuffer(
 			sizeof(SRestriction) * 2,
@@ -3099,7 +3099,7 @@ HRESULT HrAddDelegateMailboxLegacy(BOOL bDefaultProfile,
 	EC_HRES_MSG(MAPIAdminProfiles(0, // Flags
 		&lpProfAdmin), L"Calling MAPIAdminProfiles"); // Pointer to new IProfAdmin
 
-									 // Begin process services
+													  // Begin process services
 
 
 	if (bDefaultProfile)
@@ -4305,68 +4305,40 @@ cleanup:
 #pragma endregion
 
 
-HRESULT HrPromoteDelegates(LPWSTR profileName, BOOL bDefaultProfile, BOOL bAllProfiles, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, int iOutlookVersion, LoggingMode loggingMode)
+HRESULT HrPromoteDelegates(LPWSTR lpwszProfileName, BOOL bDefaultProfile, BOOL bAllProfiles, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, int iOutlookVersion, ULONG ulConnectMode, LoggingMode loggingMode)
 {
 	HRESULT hRes = S_OK;
-	ProfileInfo * profileInfo = new ProfileInfo();
+
 	if (bDefaultProfile)
 	{
+		ProfileInfo * profileInfo = new ProfileInfo();
 		hRes = GetProfile((LPWSTR)GetDefaultProfileName(loggingMode).c_str(), profileInfo, loggingMode);
+		HrPromoteDelegatesInProfile((LPWSTR)profileInfo->wszProfileName.c_str(), profileInfo, iServiceIndex, bDefaultProfile, bAllServices, iOutlookVersion, ulConnectMode, loggingMode);
+
 	}
 	else if (bAllProfiles)
 	{
-
+		ULONG ulProfileCount = GetProfileCount(loggingMode);
+		ProfileInfo * profileInfo = new ProfileInfo[ulProfileCount];
+		hRes = HrGetProfiles(ulProfileCount, profileInfo, loggingMode);
+		for (int i = 0; i <= ulProfileCount; i++)
+		{
+			HrPromoteDelegatesInProfile((LPWSTR)profileInfo[i].wszProfileName.c_str(), &profileInfo[i], iServiceIndex, bDefaultProfile, bAllServices, iOutlookVersion, ulConnectMode, loggingMode);
+		}
 	}
 	else
 	{
-		hRes = GetProfile(profileName, profileInfo, loggingMode);
-	}
-
-	if (bDefaultService)
-	{
-		for (int i = 0; i <= profileInfo->ulServiceCount; i++)
+		if (lpwszProfileName)
 		{
-			if (profileInfo->profileServices[i].bDefaultStore)
-			{
-				if (profileInfo->profileServices[i].ulServiceType == SERVICETYPE_MAILBOX)
-				{
-					for (int j = 0; j <= profileInfo->profileServices[i].exchangeAccountInfo->ulMailboxCount; j++)
-						if (profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulProfileType == PROFILE_DELEGATE)
-						{
-							switch (iOutlookVersion)
-							{
-							case 2007:
-							case 2010:
-								if (SUCCEEDED(HrCreateMsemsServiceLegacyUnresolved(bDefaultProfile,
-									profileName,
-									(LPWSTR)profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszProfileMailbox.c_str(),
-									(LPWSTR)profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszProfileServer.c_str(),
-									loggingMode)))
-								{
-									
-								}
-								break;
-							case 2013:
-							case 2016:
-								break;
-							}
-
-						}
-				}
-			}
-		}
-	}
-	else if (iServiceIndex == -1)
-	{
-
-	}
-	else
-	{
-		for (int i = 0; i <= profileInfo->ulServiceCount; i++)
-		{
+			ProfileInfo * profileInfo = new ProfileInfo();
+			hRes = GetProfile(lpwszProfileName, profileInfo, loggingMode);
+			HrPromoteDelegatesInProfile((LPWSTR)profileInfo->wszProfileName.c_str(), profileInfo, iServiceIndex, bDefaultProfile, bAllServices, iOutlookVersion, ulConnectMode, loggingMode);
 
 		}
+		else
+			wprintf(L"The specified profile name is invalid or no profile name was specified.\n");
 	}
+
 	return 0;
 }
 
@@ -4544,8 +4516,8 @@ HRESULT HrDeleteProvider(LPWSTR lpwszProfileName, LPMAPIUID lpServiceUid, LPMAPI
 		}
 	}
 
-	Error:
-	Cleanup:
+Error:
+Cleanup:
 
 	return hRes;
 }

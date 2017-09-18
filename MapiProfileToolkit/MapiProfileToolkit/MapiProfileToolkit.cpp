@@ -394,7 +394,10 @@ BOOL ValidateScenario2(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 	pRunOpts->ulActionType = ACTIONTYPE_STANDARD;
 
 	pRunOpts->profileOptions = new ProfileOptions();
+	pRunOpts->profileOptions->ulProfileMode = PROFILEMODE_DEFAULT;
 	pRunOpts->serviceOptions = new ServiceOptions();
+	pRunOpts->serviceOptions->ulServiceMode = SERVICEMODE_DEFAULT;
+	pRunOpts->serviceOptions->ulConnectMode = CONNECT_MOH;
 	pRunOpts->mailboxOptions = new MailboxOptions();
 
 	for (int i = 1; i < argc; i++)
@@ -412,25 +415,21 @@ BOOL ValidateScenario2(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 				{
 					pRunOpts->profileOptions->ulProfileAction = ACTION_ADD;
 					i++;
-					break;
 				}
 				else if (wszValue == L"edit")
 				{
 					pRunOpts->profileOptions->ulProfileAction = ACTION_EDIT;
 					i++;
-					break;
 				}
 				else if (wszValue == L"remove")
 				{
 					pRunOpts->profileOptions->ulProfileAction = ACTION_REMOVE;
 					i++;
-					break;
 				}
 				else if (wszValue == L"list")
 				{
 					pRunOpts->profileOptions->ulProfileAction = ACTION_LIST;
 					i++;
-					break;
 				}
 				else
 				{
@@ -448,19 +447,19 @@ BOOL ValidateScenario2(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 				{
 					pRunOpts->profileOptions->ulProfileMode = PROFILEMODE_DEFAULT;
 					i++;
-					break;
+
 				}
 				else if (wszValue == L"one")
 				{
 					pRunOpts->profileOptions->ulProfileMode = PROFILEMODE_ONE;
 					i++;
-					break;
+
 				}
 				else if (wszValue == L"all")
 				{
 					pRunOpts->profileOptions->ulProfileMode = PROFILEMODE_ALL;
 					i++;
-					break;
+
 				}
 				else return false;
 			}
@@ -472,13 +471,13 @@ BOOL ValidateScenario2(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 				pRunOpts->profileOptions->wszProfileName = argv[i + 1];
 				pRunOpts->profileOptions->ulProfileMode = PROFILEMODE_ONE;
 				i++;
-				break;
+
 			}
 		}
 		else if ((wsArg == L"-setdefaultprofile") || (wsArg == L"-sdp"))
 		{
 			pRunOpts->profileOptions->bSetDefaultProfile = true;
-			break;
+
 		}
 		else if ((wsArg == L"-service") || (wsArg == L"-s"))
 		{
@@ -554,19 +553,19 @@ BOOL ValidateScenario2(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 				{
 					pRunOpts->serviceOptions->ulServiceMode = SERVICEMODE_DEFAULT;
 					i++;
-					break;
+
 				}
 				else if (wszValue == L"one")
 				{
 					pRunOpts->serviceOptions->ulServiceMode = SERVICEMODE_ONE;
 					i++;
-					break;
+
 				}
 				else if (wszValue == L"all")
 				{
 					pRunOpts->serviceOptions->ulServiceMode = SERVICEMODE_ALL;
 					i++;
-					break;
+
 				}
 				else return false;
 			}
@@ -638,7 +637,7 @@ BOOL ValidateScenario2(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 		else if ((wsArg == L"-setdefaultservice") || (wsArg == L"-sds"))
 		{
 			pRunOpts->serviceOptions->bSetDefaultservice = true;
-			break;
+
 		}
 		else if ((wsArg == L"-cachedmodemonths") || (wsArg == L"-cmm"))
 		{
@@ -646,7 +645,7 @@ BOOL ValidateScenario2(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 			{
 				pRunOpts->serviceOptions->iCachedModeMonths = _wtoi(argv[i + 1]);
 				i++;
-				break;
+
 			}
 		}
 		else if ((wsArg == L"-serviceindex") || (wsArg == L"-si"))
@@ -655,7 +654,7 @@ BOOL ValidateScenario2(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 			{
 				pRunOpts->serviceOptions->iServiceIndex = _wtoi(argv[i + 1]);
 				i++;
-				break;
+
 			}
 		}
 		else if ((wsArg == L"-abexternalurl") || (wsArg == L"-abeu"))
@@ -664,7 +663,7 @@ BOOL ValidateScenario2(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 			{
 				pRunOpts->serviceOptions->wszAddressBookExternalUrl = argv[i + 1];
 				i++;
-				break;
+
 			}
 		}
 		else if ((wsArg == L"-abinternalurl") || (wsArg == L"-abiu"))
@@ -673,7 +672,7 @@ BOOL ValidateScenario2(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 			{
 				pRunOpts->serviceOptions->wszAddressBookInternalUrl = argv[i + 1];
 				i++;
-				break;
+
 			}
 		}
 		else if ((wsArg == L"-autodiscoverurl") || (wsArg == L"-au"))
@@ -682,7 +681,7 @@ BOOL ValidateScenario2(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 			{
 				pRunOpts->serviceOptions->wszAutodiscoverUrl = argv[i + 1];
 				i++;
-				break;
+
 			}
 		}
 		else if ((wsArg == L"-mailboxdisplayname") || (wsArg == L"-mdn"))
@@ -692,7 +691,7 @@ BOOL ValidateScenario2(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 				pRunOpts->serviceOptions->wszMailboxDisplayName = argv[i + 1];
 				pRunOpts->mailboxOptions->wszMailboxDisplayName = argv[i + 1];
 				i++;
-				break;
+
 			}
 		}
 		else if ((wsArg == L"-mailboxlegacydn") || (wsArg == L"-mldn"))
@@ -702,7 +701,7 @@ BOOL ValidateScenario2(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 				pRunOpts->serviceOptions->wszMailboxLegacyDN = argv[i + 1];
 				pRunOpts->mailboxOptions->wszMailboxLegacyDN = argv[i + 1];
 				i++;
-				break;
+
 			}
 		}
 		else if ((wsArg == L"-mailstoreexternalurl") || (wsArg == L"-mseu"))
@@ -711,7 +710,7 @@ BOOL ValidateScenario2(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 			{
 				pRunOpts->serviceOptions->wszMailStoreExternalUrl = argv[i + 1];
 				i++;
-				break;
+
 			}
 		}
 		else if ((wsArg == L"-mailstoreinternalurl") || (wsArg == L"-msiu"))
@@ -720,7 +719,7 @@ BOOL ValidateScenario2(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 			{
 				pRunOpts->serviceOptions->wszMailStoreInternalUrl = argv[i + 1];
 				i++;
-				break;
+
 			}
 		}
 		else if ((wsArg == L"-rohproxyserver") || (wsArg == L"-rps"))
@@ -729,7 +728,7 @@ BOOL ValidateScenario2(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 			{
 				pRunOpts->serviceOptions->wszRohProxyServer = argv[i + 1];
 				i++;
-				break;
+
 			}
 		}
 		else if ((wsArg == L"-serverdisplayname") || (wsArg == L"-sdn"))
@@ -739,7 +738,7 @@ BOOL ValidateScenario2(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 				pRunOpts->serviceOptions->wszServerDisplayName = argv[i + 1];
 				pRunOpts->mailboxOptions->wszServerDisplayName = argv[i + 1];
 				i++;
-				break;
+
 			}
 		}
 		else if ((wsArg == L"-serverlegacydn") || (wsArg == L"-sldn"))
@@ -749,7 +748,7 @@ BOOL ValidateScenario2(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 				pRunOpts->serviceOptions->wszServerLegacyDN = argv[i + 1];
 				pRunOpts->mailboxOptions->wszServerLegacyDN = argv[i + 1];
 				i++;
-				break;
+
 			}
 		}
 		else if ((wsArg == L"-smtpaddress") || (wsArg == L"-sa"))
@@ -759,7 +758,7 @@ BOOL ValidateScenario2(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 				pRunOpts->serviceOptions->wszSmtpAddress = argv[i + 1];
 				pRunOpts->mailboxOptions->wszSmtpAddress = argv[i + 1];
 				i++;
-				break;
+
 			}
 		}
 		else if ((wsArg == L"-unresolvedserver") || (wsArg == L"-us"))
@@ -768,7 +767,7 @@ BOOL ValidateScenario2(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 			{
 				pRunOpts->serviceOptions->wszUnresolvedServer = argv[i + 1];
 				i++;
-				break;
+
 			}
 		}
 		else if ((wsArg == L"-unresolveduser") || (wsArg == L"-uu"))
@@ -777,23 +776,23 @@ BOOL ValidateScenario2(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 			{
 				pRunOpts->serviceOptions->wszUnresolvedUser = argv[i + 1];
 				i++;
-				break;
+
 			}
 		}
 		else if ((wsArg == L"-cachedmodeowner") || (wsArg == L"-cmo"))
 		{
 			pRunOpts->serviceOptions->ulCachedModeOwner = true;
-			break;
+
 		}
 		else if ((wsArg == L"-cachedmodepublicfolder") || (wsArg == L"-cmpf"))
 		{
 			pRunOpts->serviceOptions->ulCachedModePublicFolder = true;
-			break;
+
 		}
 		else if ((wsArg == L"-cachedmodeshared") || (wsArg == L"-cms"))
 		{
 			pRunOpts->serviceOptions->ulCachedModeShared = true;
-			break;
+
 		}
 		else if ((wsArg == L"-configflags") || (wsArg == L"-cf"))
 		{
@@ -801,7 +800,7 @@ BOOL ValidateScenario2(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 			{
 				pRunOpts->serviceOptions->ulConfigFlags = _wtol(argv[i + 1]);
 				i++;
-				break;
+
 			}
 		}
 		else if ((wsArg == L"-connectmode") || (wsArg == L"-cm"))
@@ -814,13 +813,13 @@ BOOL ValidateScenario2(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 				{
 					pRunOpts->serviceOptions->ulConnectMode = CONNECT_ROH;
 					i++;
-					break;
+
 				}
 				if (wszValue == L"moh")
 				{
 					pRunOpts->serviceOptions->ulConnectMode = CONNECT_MOH;
 					i++;
-					break;
+
 				}
 			}
 		}
@@ -830,7 +829,7 @@ BOOL ValidateScenario2(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 			{
 				pRunOpts->serviceOptions->ulResourceFlags = _wtol(argv[i + 1]);
 				i++;
-				break;
+
 			}
 		}
 		else return false;
@@ -1532,7 +1531,7 @@ void _tmain(int argc, _TCHAR* argv[])
 	RuntimeOptions * tkOptions = new RuntimeOptions();
 	loggingMode = loggingModeNone;
 	// Parse the command line arguments
-	if (!ValidateScenario(argc, argv, tkOptions))
+	if (!ValidateScenario2(argc, argv, tkOptions))
 	{
 		if (tkOptions->ulLoggingMode != loggingModeNone)
 		{
@@ -1579,6 +1578,7 @@ void _tmain(int argc, _TCHAR* argv[])
 						tkOptions->serviceOptions->ulServiceMode == SERVICEMODE_DEFAULT,
 						tkOptions->serviceOptions->ulServiceMode == SERVICEMODE_ALL,
 						tkOptions->iOutlookVersion,
+						tkOptions->serviceOptions->ulConnectMode,
 						loggingMode);
 					break;
 				case ACTION_LIST:
