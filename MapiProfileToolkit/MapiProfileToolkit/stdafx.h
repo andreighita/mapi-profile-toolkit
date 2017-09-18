@@ -55,12 +55,12 @@
 																} \
 								} while (0)
 
-#define EC_HRES_MSG(_hRes, wszMessage, wszTag) \
+#define EC_HRES_MSG(_hRes, wszMessage) \
 	do { \
 		hRes = _hRes; \
 		if (FAILED(hRes)) \
 																		{ \
-			std::wcout << L"METHOD: " << wszMessage << L". Tag: "<< wszTag << L"."; \
+			std::wcout << L"METHOD: " << __FUNCTION__  << L". Tag: "<< wszMessage << L"."; \
 			std::wcout << L"FILE: " << __FILEW__ << L".  LINE: " << std::dec << __LINE__ << L"\n"; \
 			std::wcout << "HRESULT: " << (wchar_t*) L#_hRes <<  L"\n"; \
 			goto Error; \

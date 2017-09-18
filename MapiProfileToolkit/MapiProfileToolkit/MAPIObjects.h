@@ -12,6 +12,7 @@
 */
 
 #include "stdafx.h"
+#include <MAPIDefS.h>
 
 #define PR_PST_CONFIG_FLAGS PROP_TAG(PT_LONG, 0x6770)
 #define PR_PST_PATH_W PROP_TAG(PT_UNICODE, 0x6700)
@@ -38,6 +39,8 @@ struct MailboxInfo
 	ULONG ulRohProxyAuthScheme; // PR_PROFILE_RPC_PROXY_SERVER_AUTH_PACKAGE
 	ULONG ulRohFlags; // PR_ROH_FLAGS
 	ULONG ulProfileType; // PR_PROFILE_TYPE
+	MAPIUID muidProviderUid;
+	MAPIUID muidServiceUid;
 };
 
 struct PstInfo
@@ -78,6 +81,7 @@ struct ExchangeAccountInfo
 	std::wstring wszHomeServerDN;
 	MailboxInfo * accountMailboxes;
 	ULONG ulProfileConfigFlags;
+
 };
 
 struct EMSMdbSection
@@ -136,6 +140,7 @@ struct ServiceInfo
 	ExchangeAccountInfo * exchangeAccountInfo;
 	AddressBookProviderInfo * addressBookProviderInfo;
 	PstInfo * pstInfo;
+	MAPIUID muidServiceUid;
 };
 
 struct ProfileInfo

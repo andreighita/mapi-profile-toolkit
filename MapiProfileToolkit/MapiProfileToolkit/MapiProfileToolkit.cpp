@@ -1564,6 +1564,7 @@ void _tmain(int argc, _TCHAR* argv[])
 			{
 			case ACTION_ADD:
 			case ACTION_EDIT:
+
 				switch (tkOptions->mailboxOptions->ulMailboxAction)
 				{
 				case ACTION_ADD:
@@ -1571,13 +1572,19 @@ void _tmain(int argc, _TCHAR* argv[])
 				case ACTION_REMOVE:
 					break;
 				case ACTION_PROMOTEDELEGATE:
-					if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_DEFAULT)
-					{
-						ProfileInfo
-					}
+					HrPromoteDelegates((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(),
+						tkOptions->profileOptions->ulProfileMode == PROFILEMODE_DEFAULT,
+						tkOptions->profileOptions->ulProfileMode == PROFILEMODE_ALL,
+						tkOptions->serviceOptions->iServiceIndex,
+						tkOptions->serviceOptions->ulServiceMode == SERVICEMODE_DEFAULT,
+						tkOptions->serviceOptions->ulServiceMode == SERVICEMODE_ALL,
+						tkOptions->iOutlookVersion,
+						loggingMode);
+					break;
 				case ACTION_LIST:
 					break;
-				}
+				};
+
 			case ACTION_REMOVE:
 			case ACTION_UPDATE:
 			case ACTION_LIST:
