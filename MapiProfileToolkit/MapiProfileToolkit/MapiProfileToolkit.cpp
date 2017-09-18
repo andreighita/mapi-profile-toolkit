@@ -596,7 +596,7 @@ BOOL ValidateScenario2(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 					pRunOpts->mailboxOptions->ulMailboxAction = ACTION_LIST;
 					i++;
 				}
-				else if (wszValue == L"promotedelegate")
+				else if (wszValue == L"promotedelegates")
 				{
 					pRunOpts->mailboxOptions->ulMailboxAction = ACTION_PROMOTEDELEGATE;
 					i++;
@@ -1631,7 +1631,7 @@ void _tmain(int argc, _TCHAR* argv[])
 					{
 						ProfileInfo * pProfileInfo = new ProfileInfo();
 						Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for profile: " + tkOptions->profileOptions->wszProfileName, loggingMode);
-						EC_HRES_LOG(GetProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(), pProfileInfo, loggingMode), loggingMode);
+						EC_HRES_LOG(HrGetProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(), pProfileInfo, loggingMode), loggingMode);
 						if (tkOptions->wszExportPath != L"")
 						{
 							Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for profile", loggingMode);
@@ -1654,7 +1654,7 @@ void _tmain(int argc, _TCHAR* argv[])
 
 						ProfileInfo * pProfileInfo = new ProfileInfo();
 						Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for default profile: " + tkOptions->profileOptions->wszProfileName, loggingMode);
-						EC_HRES_LOG(GetProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(), pProfileInfo, loggingMode), loggingMode);
+						EC_HRES_LOG(HrGetProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(), pProfileInfo, loggingMode), loggingMode);
 						if (tkOptions->wszExportPath != L"")
 						{
 							Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for default profile", loggingMode);
