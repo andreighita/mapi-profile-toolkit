@@ -4401,6 +4401,7 @@ HRESULT HrPromoteDelegatesInProfile(LPWSTR profileName, ProfileInfo * pProfileIn
 								}
 								else if (ulConnectMode == CONNECT_MOH)
 								{
+
 									if (SUCCEEDED(HrCreateMsemsServiceMOH(FALSE,
 										profileName,
 										(LPWSTR)pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress.c_str(),
@@ -4417,10 +4418,21 @@ HRESULT HrPromoteDelegatesInProfile(LPWSTR profileName, ProfileInfo * pProfileIn
 
 								break;
 							case 2016:
+								std::transform(pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress.begin(), pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress.end(), pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress.begin(), ::tolower);
+								std::wstring wszParsedAddress;
+								if (pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress.find(L"smtp:") != std::wstring::npos)
+								{
+									wszParsedAddress = pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress.substr(5, std::wstring::npos);
+								}
+								else
+								{
+									wszParsedAddress = pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress;
+								}
+
 								if (SUCCEEDED(HrCreateMsemsServiceModern(FALSE,
 									profileName,
-									(LPWSTR)pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress.c_str(),
-									(LPWSTR)pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress.c_str(),
+									(LPWSTR)wszParsedAddress.c_str(),
+									(LPWSTR)wszParsedAddress.c_str(),
 									loggingMode)))
 								{
 									EC_HRES_MSG(HrDeleteProvider(profileName, &pProfileInfo->profileServices[i].muidServiceUid, &pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].muidProviderUid, loggingMode), L"Calling HrDeleteProvider");

@@ -392,6 +392,7 @@ BOOL ValidateScenario2(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 	int iThreeParam = 0;
 	pRunOpts->iOutlookVersion = GetOutlookVersion();
 	pRunOpts->ulActionType = ACTIONTYPE_STANDARD;
+	pRunOpts->ulLoggingMode = loggingModeConsole;
 
 	pRunOpts->profileOptions = new ProfileOptions();
 	pRunOpts->profileOptions->ulProfileMode = PROFILEMODE_DEFAULT;
@@ -1529,7 +1530,6 @@ void _tmain(int argc, _TCHAR* argv[])
 
 	// Using the toolkip options to manage the runtime options
 	RuntimeOptions * tkOptions = new RuntimeOptions();
-	loggingMode = loggingModeNone;
 	// Parse the command line arguments
 	if (!ValidateScenario2(argc, argv, tkOptions))
 	{

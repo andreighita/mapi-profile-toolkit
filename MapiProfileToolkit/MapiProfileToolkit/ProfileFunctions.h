@@ -27,7 +27,10 @@
 #include <MSPST.h>
 #include <WinBase.h>
 #include <Shlwapi.h>
-
+#include <string>
+#include <utility>
+#include <iostream>
+#include <algorithm> 
 LPWSTR GetDefaultProfileNameLP(LoggingMode loggingMode);
 std::wstring GetDefaultProfileName(LoggingMode loggingMode);
 ULONG GetProfileCount(LoggingMode loggingMode);
