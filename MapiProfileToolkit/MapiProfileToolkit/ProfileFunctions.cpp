@@ -2135,7 +2135,9 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo, LoggingM
 								{
 									if (serviceUid)
 									{
-										profileInfo->profileServices[i].lpMuidServiceUid = (LPMAPIUID)serviceUid->Value.bin.lpb;
+										LPMAPIUID lpMuidServiceUid = NULL;
+										lpMuidServiceUid = &profileInfo->profileServices[i].muidServiceUid;
+										memcpy(lpMuidServiceUid, serviceUid->Value.bin.lpb, sizeof(MAPIUID));
 										if (serviceUid) MAPIFreeBuffer(serviceUid);
 									}
 								}
@@ -2144,6 +2146,7 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo, LoggingM
 						}
 
 						// End read the EMSMDB section
+
 
 						// Loop providers
 						LPMAPITABLE lpProvTable = NULL;
@@ -2207,6 +2210,7 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo, LoggingM
 								LPPROFSECT lpProfSection = NULL;
 								if (SUCCEEDED(lpServiceAdmin->OpenProfileSection((LPMAPIUID)lpProvRows->aRow[j].lpProps[iProvInstanceKey].Value.bin.lpb, NULL, MAPI_MODIFY | MAPI_FORCE_ACCESS, &lpProfSection)))
 								{
+
 									LPMAPIPROP lpMAPIProp = NULL;
 									if (SUCCEEDED(lpProfSection->QueryInterface(IID_IMAPIProp, (void**)&lpMAPIProp)))
 									{
@@ -2401,21 +2405,30 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo, LoggingM
 										{
 											if (serviceUid)
 											{
-												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].lpMuidServiceUid = (LPMAPIUID)serviceUid->Value.bin.lpb;
+												LPMAPIUID lpMuidServiceUid = NULL;
+												lpMuidServiceUid = &profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].muidServiceUid;
+												memcpy(lpMuidServiceUid, (LPMAPIUID)serviceUid->Value.bin.lpb, sizeof(MAPIUID));
 												if (serviceUid) MAPIFreeBuffer(serviceUid);
 											}
 										}
 
 										// PR_PROVIDER_UID
-										LPSPropValue providerUid = NULL;
-										if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_SERVICE_UID, &providerUid)))
-										{
-											if (providerUid)
-											{
-												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].lpMuidProviderUid = (LPMAPIUID)providerUid->Value.bin.lpb;
-												if (providerUid) MAPIFreeBuffer(providerUid);
-											}
-										}
+										LPMAPIUID lpMuidProviderUid = NULL;
+										lpMuidProviderUid = &profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].muidProviderUid;
+										memcpy(lpMuidProviderUid, (LPMAPIUID)lpProvRows->aRow[j].lpProps[iProvInstanceKey].Value.bin.lpb, sizeof(MAPIUID));
+
+										//LPSPropValue providerUid = NULL;
+										//hRes = HrGetOneProp(lpMAPIProp, PR_INSTANCE_KEY, &providerUid);
+										//if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_PROVIDER_UID, &providerUid)))
+										//{
+										//	if (providerUid)
+										//	{
+										//		LPMAPIUID lpMuidProviderUid = NULL;
+										//		lpMuidProviderUid = &profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].muidProviderUid;
+										//		memcpy(lpMuidProviderUid, (LPMAPIUID)providerUid->Value.bin.lpb, sizeof(MAPIUID));
+										//		if (providerUid) MAPIFreeBuffer(providerUid);
+										//	}
+										//}
 
 
 									}
@@ -4367,7 +4380,7 @@ HRESULT HrPromoteDelegatesInProfile(LPWSTR profileName, ProfileInfo * pProfileIn
 									(LPWSTR)pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszProfileServer.c_str(),
 									loggingMode)))
 								{
-									EC_HRES_MSG(HrDeleteProvider(profileName, pProfileInfo->profileServices[i].lpMuidServiceUid, pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].lpMuidProviderUid, loggingMode), L"Calling HrDeleteProvider");
+									EC_HRES_MSG(HrDeleteProvider(profileName, &pProfileInfo->profileServices[i].muidServiceUid, &pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].muidProviderUid, loggingMode), L"Calling HrDeleteProvider");
 								}
 								break;
 							case 2013:
@@ -4436,7 +4449,7 @@ HRESULT HrPromoteDelegatesInProfile(LPWSTR profileName, ProfileInfo * pProfileIn
 										(LPWSTR)pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->accountMailboxes[j].wszProfileServer.c_str(),
 										loggingMode)))
 									{
-										EC_HRES_MSG(HrDeleteProvider(profileName, &pProfileInfo->profileServices[i].muidServiceUid, &pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].muidProviderUid, loggingMode), L"Calling HrDeleteProvider");
+										EC_HRES_MSG(HrDeleteProvider(profileName, &pProfileInfo->profileServices[iServiceIndex].muidServiceUid, &pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->accountMailboxes[j].muidProviderUid, loggingMode), L"Calling HrDeleteProvider");
 									}
 									break;
 								case 2013:

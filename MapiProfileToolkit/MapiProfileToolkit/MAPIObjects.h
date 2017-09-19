@@ -39,8 +39,8 @@ struct MailboxInfo
 	ULONG ulRohProxyAuthScheme; // PR_PROFILE_RPC_PROXY_SERVER_AUTH_PACKAGE
 	ULONG ulRohFlags; // PR_ROH_FLAGS
 	ULONG ulProfileType; // PR_PROFILE_TYPE
-	LPMAPIUID lpMuidProviderUid;
-	LPMAPIUID lpMuidServiceUid;
+	MAPIUID muidProviderUid;
+	MAPIUID muidServiceUid;
 };
 
 struct PstInfo
@@ -140,7 +140,7 @@ struct ServiceInfo
 	ExchangeAccountInfo * exchangeAccountInfo;
 	AddressBookProviderInfo * addressBookProviderInfo;
 	PstInfo * pstInfo;
-	LPMAPIUID lpMuidServiceUid;
+	MAPIUID muidServiceUid;
 };
 
 struct ProfileInfo
