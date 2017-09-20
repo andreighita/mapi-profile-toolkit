@@ -2479,15 +2479,15 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo, LoggingM
 						// Allocate memory for the restriction
 						EC_HRES_MSG(MAPIAllocateBuffer(
 							sizeof(SRestriction),
-							(LPVOID*)&lpProvRes), L"HrGetProfile", L"0041");
+							(LPVOID*)&lpProvRes), L"Calling MAPIAllocateBuffer");
 
 						EC_HRES_MSG(MAPIAllocateBuffer(
 							sizeof(SRestriction) * 2,
-							(LPVOID*)&lpProvResLvl1), L"HrGetProfile", L"0042");
+							(LPVOID*)&lpProvResLvl1), L"Calling MAPIAllocateBuffer");
 
 						EC_HRES_MSG(MAPIAllocateBuffer(
 							sizeof(SPropValue),
-							(LPVOID*)&lpProvPropVal), L"HrGetProfile", L"0043");
+							(LPVOID*)&lpProvPropVal), L"Calling MAPIAllocateBuffer");
 
 						// Set up restriction to query the provider table
 						lpProvRes->rt = RES_AND;
@@ -3843,7 +3843,7 @@ HRESULT HrCreateMsemsServiceLegacyUnresolved(BOOL bDefaultProfile,
 		// First, the server name.
 		ZeroMemory(&rgval[0], sizeof(SPropValue));
 		rgval[0].ulPropTag = PR_PROFILE_UNRESOLVED_SERVER;
-		rgval[0].Value.lpszA = ConvertWideCharToMultiByte(lpszwServer);
+		rgval[0].Value.lpszA = ConvertWideCharToMultiByte(L"1d07c6cd-9c3f-42f8-93d3-7781e20725d9@adelaide.lab");
 		// Next, the DN of the mailbox.
 		ZeroMemory(&rgval[1], sizeof(SPropValue));
 		rgval[1].ulPropTag = PR_PROFILE_UNRESOLVED_NAME;
@@ -3857,6 +3857,8 @@ HRESULT HrCreateMsemsServiceLegacyUnresolved(BOOL bDefaultProfile,
 			2,
 			rgval);
 		if (FAILED(hRes)) goto Error;
+
+
 	}
 	goto cleanup;
 
@@ -3954,51 +3956,81 @@ HRESULT HrCreateMsemsServiceROH(BOOL bDefaultProfile,
 
 		printf("Configuring MsgService.\n");
 
-		ZeroMemory(&rgvalSvc[0], sizeof(SPropValue));
-		rgvalSvc[0].ulPropTag = PR_DISPLAY_NAME_A;
-		rgvalSvc[0].Value.lpszA = ConvertWideCharToMultiByte(lpszSmtpAddress);
+		int paramC = 0;
+		if (lpszSmtpAddress)
+		{
+			ZeroMemory(&rgvalSvc[paramC], sizeof(SPropValue));
+			rgvalSvc[paramC].ulPropTag = PR_DISPLAY_NAME_A;
+			rgvalSvc[paramC].Value.lpszA = ConvertWideCharToMultiByte(lpszSmtpAddress);
+			paramC++;
+		}
 
-		ZeroMemory(&rgvalSvc[1], sizeof(SPropValue));
-		rgvalSvc[1].ulPropTag = PR_PROFILE_HOME_SERVER;
-		rgvalSvc[1].Value.lpszA = ConvertWideCharToMultiByte(lpszUnresolvedServer);
+		if (lpszUnresolvedServer)
+		{
+			ZeroMemory(&rgvalSvc[paramC], sizeof(SPropValue));
+			rgvalSvc[paramC].ulPropTag = PR_PROFILE_HOME_SERVER;
+			rgvalSvc[paramC].Value.lpszA = ConvertWideCharToMultiByte(lpszUnresolvedServer);
+			paramC++;
+		}
 
-		ZeroMemory(&rgvalSvc[2], sizeof(SPropValue));
-		rgvalSvc[2].ulPropTag = PR_PROFILE_USER;
-		rgvalSvc[2].Value.lpszA = ConvertWideCharToMultiByte(lpszMailboxLegacyDn);
+		if (lpszMailboxLegacyDn)
+		{
+			ZeroMemory(&rgvalSvc[paramC], sizeof(SPropValue));
+			rgvalSvc[paramC].ulPropTag = PR_PROFILE_USER;
+			rgvalSvc[paramC].Value.lpszA = ConvertWideCharToMultiByte(lpszMailboxLegacyDn);
+			paramC++;
+		}
 
-		ZeroMemory(&rgvalSvc[3], sizeof(SPropValue));
-		rgvalSvc[3].ulPropTag = PR_PROFILE_HOME_SERVER_DN;
-		rgvalSvc[3].Value.lpszA = ConvertWideCharToMultiByte(lpszProfileServerDn);
+		if (lpszProfileServerDn)
+		{
+			ZeroMemory(&rgvalSvc[paramC], sizeof(SPropValue));
+			rgvalSvc[paramC].ulPropTag = PR_PROFILE_HOME_SERVER_DN;
+			rgvalSvc[paramC].Value.lpszA = ConvertWideCharToMultiByte(lpszProfileServerDn);
+			paramC++;
+		}
 
-		ZeroMemory(&rgvalSvc[4], sizeof(SPropValue));
-		rgvalSvc[4].ulPropTag = PR_PROFILE_CONFIG_FLAGS;
-		rgvalSvc[4].Value.l = CONFIG_SHOW_CONNECT_UI;
+		ZeroMemory(&rgvalSvc[paramC], sizeof(SPropValue));
+		rgvalSvc[paramC].ulPropTag = PR_PROFILE_CONFIG_FLAGS;
+		rgvalSvc[paramC].Value.l = CONFIG_SHOW_CONNECT_UI;
+		paramC++;
 
-		ZeroMemory(&rgvalSvc[5], sizeof(SPropValue));
-		rgvalSvc[5].ulPropTag = PR_ROH_PROXY_SERVER;
-		rgvalSvc[5].Value.lpszW = lpszRohProxyServer;
+		if (lpszRohProxyServer)
+		{
+			ZeroMemory(&rgvalSvc[paramC], sizeof(SPropValue));
+			rgvalSvc[paramC].ulPropTag = PR_ROH_PROXY_SERVER;
+			rgvalSvc[paramC].Value.lpszW = lpszRohProxyServer;
+			paramC++;
+		}
 
-		ZeroMemory(&rgvalSvc[6], sizeof(SPropValue));
-		rgvalSvc[6].ulPropTag = PR_ROH_FLAGS;
-		rgvalSvc[6].Value.l = ROHFLAGS_USE_ROH | ROHFLAGS_HTTP_FIRST_ON_FAST | ROHFLAGS_HTTP_FIRST_ON_SLOW;
+		ZeroMemory(&rgvalSvc[paramC], sizeof(SPropValue));
+		rgvalSvc[paramC].ulPropTag = PR_ROH_FLAGS;
+		rgvalSvc[paramC].Value.l = ROHFLAGS_USE_ROH | ROHFLAGS_HTTP_FIRST_ON_FAST | ROHFLAGS_HTTP_FIRST_ON_SLOW;
+		paramC++;
 
-		ZeroMemory(&rgvalSvc[7], sizeof(SPropValue));
-		rgvalSvc[7].ulPropTag = PR_ROH_PROXY_AUTH_SCHEME;
-		rgvalSvc[7].Value.l = RPC_C_HTTP_AUTHN_SCHEME_NTLM;
+		ZeroMemory(&rgvalSvc[paramC], sizeof(SPropValue));
+		rgvalSvc[paramC].ulPropTag = PR_ROH_PROXY_AUTH_SCHEME;
+		rgvalSvc[paramC].Value.l = RPC_C_HTTP_AUTHN_SCHEME_NTLM;
+		paramC++;
 
-		ZeroMemory(&rgvalSvc[8], sizeof(SPropValue));
-		rgvalSvc[8].ulPropTag = PR_PROFILE_AUTH_PACKAGE;
-		rgvalSvc[8].Value.l = RPC_C_AUTHN_WINNT;
+		ZeroMemory(&rgvalSvc[paramC], sizeof(SPropValue));
+		rgvalSvc[paramC].ulPropTag = PR_PROFILE_AUTH_PACKAGE;
+		rgvalSvc[paramC].Value.l = RPC_C_AUTHN_WINNT;
+		paramC++;
 
-		ZeroMemory(&rgvalSvc[9], sizeof(SPropValue));
-		rgvalSvc[9].ulPropTag = PR_PROFILE_SERVER_FQDN_W;
-		rgvalSvc[9].Value.lpszA = ConvertWideCharToMultiByte(lpszUnresolvedServer);
+
+		if (lpszUnresolvedServer)
+		{
+			ZeroMemory(&rgvalSvc[paramC], sizeof(SPropValue));
+			rgvalSvc[paramC].ulPropTag = PR_PROFILE_SERVER_FQDN_W;
+			rgvalSvc[paramC].Value.lpszW = lpszUnresolvedServer;
+			paramC++;
+		}
 
 		// Create the message service with the above properties.
 		hRes = lpServiceAdmin2->ConfigureMsgService(&uidService,
 			NULL,
 			0,
-			10,
+			paramC,
 			rgvalSvc);
 		if (FAILED(hRes)) goto Error;
 
@@ -4011,65 +4043,110 @@ HRESULT HrCreateMsemsServiceROH(BOOL bDefaultProfile,
 
 		EC_HRES_MSG(HrGetSections(lpServiceAdmin2, &uidService, &lpEmsMdbProfSect, &lpStoreProviderSect), L"Calling HrGetSections.");
 
+		paramC = 0;
 		// Set up a SPropValue array for the properties you need to configure.
-		ZeroMemory(&rgvalEmsMdbSect[0], sizeof(SPropValue));
-		rgvalEmsMdbSect[0].ulPropTag = PR_PROFILE_USER;
-		rgvalEmsMdbSect[0].Value.lpszA = ConvertWideCharToMultiByte(lpszMailboxLegacyDn);
+		if (lpszMailboxLegacyDn)
+		{
+			ZeroMemory(&rgvalEmsMdbSect[paramC], sizeof(SPropValue));
+			rgvalEmsMdbSect[paramC].ulPropTag = PR_PROFILE_USER;
+			rgvalEmsMdbSect[paramC].Value.lpszA = ConvertWideCharToMultiByte(lpszMailboxLegacyDn);
+			paramC++;
+		}
 
-		ZeroMemory(&rgvalEmsMdbSect[1], sizeof(SPropValue));
-		rgvalEmsMdbSect[1].ulPropTag = PR_PROFILE_HOME_SERVER;
-		rgvalEmsMdbSect[1].Value.lpszA = ConvertWideCharToMultiByte(lpszUnresolvedServer);
+		if (lpszUnresolvedServer)
+		{
+			ZeroMemory(&rgvalEmsMdbSect[paramC], sizeof(SPropValue));
+			rgvalEmsMdbSect[paramC].ulPropTag = PR_PROFILE_HOME_SERVER;
+			rgvalEmsMdbSect[paramC].Value.lpszA = ConvertWideCharToMultiByte(lpszUnresolvedServer);
+			paramC++;
+		}
 
-		ZeroMemory(&rgvalEmsMdbSect[2], sizeof(SPropValue));
-		rgvalEmsMdbSect[2].ulPropTag = PR_ROH_PROXY_SERVER;
-		rgvalEmsMdbSect[2].Value.lpszW = lpszRohProxyServer;
+		if (lpszRohProxyServer)
+		{
+			ZeroMemory(&rgvalEmsMdbSect[paramC], sizeof(SPropValue));
+			rgvalEmsMdbSect[paramC].ulPropTag = PR_ROH_PROXY_SERVER;
+			rgvalEmsMdbSect[paramC].Value.lpszW = lpszRohProxyServer;
+			paramC++;
+		}
 
-		ZeroMemory(&rgvalEmsMdbSect[3], sizeof(SPropValue));
-		rgvalEmsMdbSect[3].ulPropTag = PR_ROH_FLAGS;
-		rgvalEmsMdbSect[3].Value.l = ROHFLAGS_USE_ROH | ROHFLAGS_HTTP_FIRST_ON_FAST | ROHFLAGS_HTTP_FIRST_ON_SLOW;
+		ZeroMemory(&rgvalEmsMdbSect[paramC], sizeof(SPropValue));
+		rgvalEmsMdbSect[paramC].ulPropTag = PR_ROH_FLAGS;
+		rgvalEmsMdbSect[paramC].Value.l = ROHFLAGS_USE_ROH | ROHFLAGS_HTTP_FIRST_ON_FAST | ROHFLAGS_HTTP_FIRST_ON_SLOW;
+		paramC++;
 
-		ZeroMemory(&rgvalEmsMdbSect[4], sizeof(SPropValue));
-		rgvalEmsMdbSect[4].ulPropTag = PR_ROH_PROXY_AUTH_SCHEME;
-		rgvalEmsMdbSect[4].Value.l = RPC_C_HTTP_AUTHN_SCHEME_NTLM;
+		ZeroMemory(&rgvalEmsMdbSect[paramC], sizeof(SPropValue));
+		rgvalEmsMdbSect[paramC].ulPropTag = PR_ROH_PROXY_AUTH_SCHEME;
+		rgvalEmsMdbSect[paramC].Value.l = RPC_C_HTTP_AUTHN_SCHEME_NTLM;
+		paramC++;
 
-		ZeroMemory(&rgvalEmsMdbSect[5], sizeof(SPropValue));
-		rgvalEmsMdbSect[5].ulPropTag = PR_PROFILE_AUTH_PACKAGE;
-		rgvalEmsMdbSect[5].Value.l = RPC_C_AUTHN_WINNT;
+		ZeroMemory(&rgvalEmsMdbSect[paramC], sizeof(SPropValue));
+		rgvalEmsMdbSect[paramC].ulPropTag = PR_PROFILE_AUTH_PACKAGE;
+		rgvalEmsMdbSect[paramC].Value.l = RPC_C_AUTHN_WINNT;
+		paramC++;
 
-		ZeroMemory(&rgvalEmsMdbSect[6], sizeof(SPropValue));
-		rgvalEmsMdbSect[6].ulPropTag = PR_DISPLAY_NAME_W;
-		rgvalEmsMdbSect[6].Value.lpszW = lpszSmtpAddress;
+		if (lpszSmtpAddress)
+		{
+			ZeroMemory(&rgvalEmsMdbSect[paramC], sizeof(SPropValue));
+			rgvalEmsMdbSect[paramC].ulPropTag = PR_DISPLAY_NAME_W;
+			rgvalEmsMdbSect[paramC].Value.lpszW = lpszSmtpAddress;
+			paramC++;
+		}
 
-		ZeroMemory(&rgvalEmsMdbSect[7], sizeof(SPropValue));
-		rgvalEmsMdbSect[7].ulPropTag = PR_PROFILE_HOME_SERVER_DN;
-		rgvalEmsMdbSect[7].Value.lpszA = ConvertWideCharToMultiByte(lpszProfileServerDn);
+		if (lpszProfileServerDn)
+		{
+			ZeroMemory(&rgvalEmsMdbSect[paramC], sizeof(SPropValue));
+			rgvalEmsMdbSect[paramC].ulPropTag = PR_PROFILE_HOME_SERVER_DN;
+			rgvalEmsMdbSect[paramC].Value.lpszA = ConvertWideCharToMultiByte(lpszProfileServerDn);
+			paramC++;
+		}
 
-		ZeroMemory(&rgvalEmsMdbSect[8], sizeof(SPropValue));
-		rgvalEmsMdbSect[8].ulPropTag = PR_PROFILE_HOME_SERVER_FQDN;
-		rgvalEmsMdbSect[8].Value.lpszW = lpszUnresolvedServer;
+		if (lpszUnresolvedServer)
+		{
+			ZeroMemory(&rgvalEmsMdbSect[paramC], sizeof(SPropValue));
+			rgvalEmsMdbSect[paramC].ulPropTag = PR_PROFILE_HOME_SERVER_FQDN;
+			rgvalEmsMdbSect[paramC].Value.lpszW = lpszUnresolvedServer;
+			paramC++;
+		}
 
-		ZeroMemory(&rgvalEmsMdbSect[9], sizeof(SPropValue));
-		rgvalEmsMdbSect[9].ulPropTag = PR_PROFILE_UNRESOLVED_NAME;
-		rgvalEmsMdbSect[9].Value.lpszA = ConvertWideCharToMultiByte(lpszSmtpAddress);
+		if (lpszSmtpAddress)
+		{
+			ZeroMemory(&rgvalEmsMdbSect[paramC], sizeof(SPropValue));
+			rgvalEmsMdbSect[paramC].ulPropTag = PR_PROFILE_UNRESOLVED_NAME;
+			rgvalEmsMdbSect[paramC].Value.lpszA = ConvertWideCharToMultiByte(lpszSmtpAddress);
+			paramC++;
+		}
 
-		ZeroMemory(&rgvalEmsMdbSect[10], sizeof(SPropValue));
-		rgvalEmsMdbSect[10].ulPropTag = PR_PROFILE_UNRESOLVED_SERVER;
-		rgvalEmsMdbSect[10].Value.lpszA = ConvertWideCharToMultiByte(lpszUnresolvedServer);
+		if (lpszUnresolvedServer)
+		{
+			ZeroMemory(&rgvalEmsMdbSect[paramC], sizeof(SPropValue));
+			rgvalEmsMdbSect[paramC].ulPropTag = PR_PROFILE_UNRESOLVED_SERVER;
+			rgvalEmsMdbSect[paramC].Value.lpszA = ConvertWideCharToMultiByte(lpszUnresolvedServer);
+			paramC++;
+		}
 
-		ZeroMemory(&rgvalEmsMdbSect[11], sizeof(SPropValue));
-		rgvalEmsMdbSect[11].ulPropTag = PR_PROFILE_ACCT_NAME_W;
-		rgvalEmsMdbSect[11].Value.lpszW = lpszSmtpAddress;
+		if (lpszSmtpAddress)
+		{
+			ZeroMemory(&rgvalEmsMdbSect[paramC], sizeof(SPropValue));
+			rgvalEmsMdbSect[paramC].ulPropTag = PR_PROFILE_ACCT_NAME_W;
+			rgvalEmsMdbSect[paramC].Value.lpszW = lpszSmtpAddress;
+			paramC++;
+		}
 
-		ZeroMemory(&rgvalEmsMdbSect[12], sizeof(SPropValue));
-		rgvalEmsMdbSect[12].ulPropTag = PR_PROFILE_USER_SMTP_EMAIL_ADDRESS_W;
-		rgvalEmsMdbSect[12].Value.lpszW = (LPWSTR)wszSmtpAddress.c_str();
+		ZeroMemory(&rgvalEmsMdbSect[paramC], sizeof(SPropValue));
+		rgvalEmsMdbSect[paramC].ulPropTag = PR_PROFILE_USER_SMTP_EMAIL_ADDRESS_W;
+		rgvalEmsMdbSect[paramC].Value.lpszW = (LPWSTR)wszSmtpAddress.c_str();
+		paramC++;
 
-		ZeroMemory(&rgvalEmsMdbSect[13], sizeof(SPropValue));
-		rgvalEmsMdbSect[13].ulPropTag = PR_PROFILE_LKG_AUTODISCOVER_URL;
-		rgvalEmsMdbSect[13].Value.lpszW = lpszAutodiscoverUrl;
+		if (lpszAutodiscoverUrl)
+		{
+			ZeroMemory(&rgvalEmsMdbSect[paramC], sizeof(SPropValue));
+			rgvalEmsMdbSect[paramC].ulPropTag = PR_PROFILE_LKG_AUTODISCOVER_URL;
+			rgvalEmsMdbSect[paramC].Value.lpszW = lpszAutodiscoverUrl;
+			paramC++;
+		}
 
 		hRes = lpEmsMdbProfSect->SetProps(
-			14,
+			paramC,
 			rgvalEmsMdbSect,
 			nullptr);
 
@@ -4156,6 +4233,7 @@ HRESULT HrCreateMsemsServiceMOH(BOOL bDefaultProfile,
 	LPWSTR lpszMailStoreExternalUrl,
 	LPWSTR lpszAddressBookInternalUrl,
 	LPWSTR lpszAddressBookExternalUrl,
+	LPWSTR lpszRohProxyServer,
 	LoggingMode loggingMode)
 {
 	HRESULT hRes = S_OK; // Result code returned from MAPI calls.
@@ -4211,72 +4289,151 @@ HRESULT HrCreateMsemsServiceMOH(BOOL bDefaultProfile,
 		EC_HRES_MSG(lpServiceAdmin->QueryInterface(IID_IMsgServiceAdmin2, (LPVOID*)&lpServiceAdmin2), L"Calling QueryInterface.");
 
 		printf("Creating MsgService.\n");
+
 		// Adds a message service to the current profile and returns that newly added service UID.
 		hRes = lpServiceAdmin2->CreateMsgServiceEx((LPTSTR)"MSEMS", (LPTSTR)"Microsoft Exchange", NULL, 0, &uidService);
 		if (FAILED(hRes)) goto Error;
-		printf("Creating MsgService.\n");
-		// Adds a message service to the current profile and returns that newly added service UID.
-		hRes = lpServiceAdmin2->CreateMsgServiceEx((LPTSTR)"MSEMS", (LPTSTR)"Microsoft Exchange", NULL, 0, &uidService);
-		if (FAILED(hRes)) goto Error;
 
-		printf("Configuring MsgService.\n");
+		EC_HRES_MSG(HrGetSections(lpServiceAdmin2, &uidService, &lpEmsMdbProfSect, &lpStoreProviderSect), L"Calling HrGetSections");
 
-		ZeroMemory(&rgvalSvc[0], sizeof(SPropValue));
-		rgvalSvc[0].ulPropTag = PR_PROFILE_CONFIG_FLAGS;
-		rgvalSvc[0].Value.l = CONFIG_PROMPT_FOR_CREDENTIALS | CONFIG_SHOW_CONNECT_UI;
+		int paramC = 0;
+		std::vector<SPropValue> rgvalVector;
+		SPropValue sPropValue;
+		
+	
+		//Updating emsmdb section 
+		if (lpEmsMdbProfSect)
+		{
 
-		ZeroMemory(&rgvalSvc[1], sizeof(SPropValue));
-		rgvalSvc[1].ulPropTag = PR_PROFILE_AUTH_PACKAGE;
-		rgvalSvc[1].Value.l = RPC_C_AUTHN_GSS_NEGOTIATE;
+			rgvalVector.resize(0);
 
-		ZeroMemory(&rgvalSvc[2], sizeof(SPropValue));
-		rgvalSvc[2].ulPropTag = PR_PROFILE_MAPIHTTP_ADDRESSBOOK_INTERNAL_URL;
-		rgvalSvc[2].Value.lpszW = lpszAddressBookInternalUrl;
+			ZeroMemory(&sPropValue, sizeof(SPropValue));
+			sPropValue.ulPropTag = PR_PROFILE_USER_SMTP_EMAIL_ADDRESS_W;
+			sPropValue.Value.lpszW = (LPWSTR)wszSmtpAddress.c_str();
+			rgvalVector.push_back(sPropValue);
+			paramC++;
 
-		ZeroMemory(&rgvalSvc[3], sizeof(SPropValue));
-		rgvalSvc[3].ulPropTag = PR_PROFILE_MAPIHTTP_ADDRESSBOOK_INTERNAL_URL;
-		rgvalSvc[3].Value.lpszW = lpszAddressBookExternalUrl;
+			if (lpszAddressBookInternalUrl)
+			{
+				ZeroMemory(&sPropValue, sizeof(SPropValue));
+				sPropValue.ulPropTag = PR_PROFILE_MAPIHTTP_ADDRESSBOOK_INTERNAL_URL;
+				sPropValue.Value.lpszW = lpszAddressBookInternalUrl;
+				rgvalVector.push_back(sPropValue);
+				paramC++;
+			}
 
-		ZeroMemory(&rgvalSvc[4], sizeof(SPropValue));
-		rgvalSvc[4].ulPropTag = PR_PROFILE_USER;
-		rgvalSvc[4].Value.lpszA = ConvertWideCharToMultiByte(lpszMailboxDn);
+			if (lpszAddressBookInternalUrl)
+			{
+				ZeroMemory(&sPropValue, sizeof(SPropValue));
+				sPropValue.ulPropTag = PR_PROFILE_MAPIHTTP_ADDRESSBOOK_EXTERNAL_URL;
+				sPropValue.Value.lpszW = lpszAddressBookExternalUrl;
+				rgvalVector.push_back(sPropValue);
+				paramC++;
+			}
 
-		// Create the message service with the above properties.
-		hRes = lpServiceAdmin2->ConfigureMsgService(&uidService,
-			NULL,
-			0,
-			5,
-			rgvalSvc);
-		if (FAILED(hRes)) goto Error;
+			if (lpszSmtpAddress)
+			{
+				ZeroMemory(&sPropValue, sizeof(SPropValue));
+				sPropValue.ulPropTag = PR_DISPLAY_NAME_W;
+				sPropValue.Value.lpszW = lpszSmtpAddress;
+				rgvalVector.push_back(sPropValue);
+				paramC++;
+			}
 
-		printf("Accessing MsgService.\n");
+			if (lpszSmtpAddress)
+			{
+				ZeroMemory(&sPropValue, sizeof(SPropValue));
+				sPropValue.ulPropTag = PR_PROFILE_UNRESOLVED_NAME;
+				sPropValue.Value.lpszA = ConvertWideCharToMultiByte(lpszSmtpAddress);
+				rgvalVector.push_back(sPropValue);
+				paramC++;
+			}
+
+			if (lpszSmtpAddress)
+			{
+				ZeroMemory(&sPropValue, sizeof(SPropValue));
+				sPropValue.ulPropTag = PR_PROFILE_MAILBOX;
+				sPropValue.Value.lpszA = ConvertWideCharToMultiByte(lpszMailboxDn);
+				rgvalVector.push_back(sPropValue);
+				paramC++;
+			}
+
+			if (lpszRohProxyServer)
+			{
+				ZeroMemory(&sPropValue, sizeof(SPropValue));
+				sPropValue.ulPropTag = PR_ROH_PROXY_SERVER;
+				sPropValue.Value.lpszW = lpszRohProxyServer;
+				rgvalVector.push_back(sPropValue);
+				paramC++;
+			}
+			
+			
+			hRes = lpEmsMdbProfSect->SetProps(
+				rgvalVector.size(),
+				rgvalVector.data(),
+				nullptr);
+
+			if (FAILED(hRes))
+			{
+				goto Error;
+			}
+
+			printf("Saving changes.\n");
+			hRes = lpEmsMdbProfSect->SaveChanges(KEEP_OPEN_READWRITE);
+
+			if (FAILED(hRes))
+			{
+				goto Error;
+			}
+
+		}
 
 		//Updating store provider 
 		if (lpStoreProviderSect)
 		{
-			ZeroMemory(&rgvalStoreProvider[0], sizeof(SPropValue));
-			rgvalStoreProvider[0].ulPropTag = PR_PROFILE_USER_SMTP_EMAIL_ADDRESS_W;
-			rgvalStoreProvider[0].Value.lpszW = (LPWSTR)wszSmtpAddress.c_str();
+			
+			rgvalVector.resize(0);
 
-			ZeroMemory(&rgvalStoreProvider[1], sizeof(SPropValue));
-			rgvalStoreProvider[1].ulPropTag = PR_PROFILE_MAPIHTTP_MAILSTORE_EXTERNAL_URL;
-			rgvalStoreProvider[1].Value.lpszW = lpszAddressBookExternalUrl;
+			ZeroMemory(&sPropValue, sizeof(SPropValue));
+			sPropValue.ulPropTag = PR_PROFILE_USER_SMTP_EMAIL_ADDRESS_W;
+			sPropValue.Value.lpszW = (LPWSTR)wszSmtpAddress.c_str();
+			rgvalVector.push_back(sPropValue);
+			paramC++;
 
-			ZeroMemory(&rgvalStoreProvider[2], sizeof(SPropValue));
-			rgvalStoreProvider[2].ulPropTag = PR_DISPLAY_NAME_W;
-			rgvalStoreProvider[2].Value.lpszW = lpszSmtpAddress;
+			if (lpszAddressBookExternalUrl)
+			{
+				ZeroMemory(&sPropValue, sizeof(SPropValue));
+				sPropValue.ulPropTag = PR_PROFILE_MAPIHTTP_MAILSTORE_EXTERNAL_URL;
+				sPropValue.Value.lpszW = lpszMailStoreExternalUrl;
+				rgvalVector.push_back(sPropValue);
+				paramC++;
+			}
 
-			ZeroMemory(&rgvalStoreProvider[3], sizeof(SPropValue));
-			rgvalStoreProvider[3].ulPropTag = PR_PROFILE_MAPIHTTP_MAILSTORE_INTERNAL_URL;
-			rgvalStoreProvider[3].Value.lpszW = lpszMailStoreInternalUrl;
+			if (lpszSmtpAddress)
+			{
+				ZeroMemory(&sPropValue, sizeof(SPropValue));
+				sPropValue.ulPropTag = PR_DISPLAY_NAME_W;
+				sPropValue.Value.lpszW = lpszSmtpAddress;
+				rgvalVector.push_back(sPropValue);
+				paramC++;
+			}
+
+			if (lpszMailStoreInternalUrl)
+			{
+				ZeroMemory(&sPropValue, sizeof(SPropValue));
+				sPropValue.ulPropTag = PR_PROFILE_MAPIHTTP_MAILSTORE_INTERNAL_URL;
+				sPropValue.Value.lpszW = lpszMailStoreInternalUrl;
+				rgvalVector.push_back(sPropValue);
+				paramC++;
+			}
 
 			//ZeroMemory(&rgvalStoreProvider[4], sizeof(SPropValue));
 			//rgvalStoreProvider[4].ulPropTag = PR_PROFILE_USER;
 			//rgvalStoreProvider[4].Value.lpszA = ConvertWideCharToMultiByte(lpszMailboxDn);;
 
 			hRes = lpStoreProviderSect->SetProps(
-				4,
-				rgvalStoreProvider,
+				rgvalVector.size(),
+				rgvalVector.data(),
 				nullptr);
 
 			if (FAILED(hRes))
@@ -4373,7 +4530,6 @@ HRESULT HrPromoteDelegatesInProfile(LPWSTR profileName, ProfileInfo * pProfileIn
 							switch (iOutlookVersion)
 							{
 							case 2007:
-							case 2010:
 								if (SUCCEEDED(HrCreateMsemsServiceLegacyUnresolved(FALSE,
 									profileName,
 									(LPWSTR)pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszProfileMailbox.c_str(),
@@ -4383,17 +4539,22 @@ HRESULT HrPromoteDelegatesInProfile(LPWSTR profileName, ProfileInfo * pProfileIn
 									EC_HRES_MSG(HrDeleteProvider(profileName, &pProfileInfo->profileServices[i].muidServiceUid, &pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].muidProviderUid, loggingMode), L"Calling HrDeleteProvider");
 								}
 								break;
+							case 2010:
 							case 2013:
 								if (ulConnectMode == CONNECT_ROH)
 								{
+
+									std::wstring wszParsedSmtpAddress = SubstringToEnd(L"smtp:", pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress);
+									std::wstring wszPersonalisedServerName = SubstringToEnd(L"MailboxId=", pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszMailStoreInternalUrl);
+									std::wstring wszServerDN = SubstringFromStart(L"cn=Recipients", pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszProfileMailbox) + L"/cn=Configuration/cn=Servers/cn=" + wszPersonalisedServerName;
 									if (SUCCEEDED(HrCreateMsemsServiceROH(FALSE,
 										profileName,
-										(LPWSTR)pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress.c_str(),
+										(LPWSTR)wszParsedSmtpAddress.c_str(),
 										(LPWSTR)pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszProfileMailbox.c_str(),
-										(LPWSTR)pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszProfileServerFqdnW.c_str(),
+										(LPWSTR)wszPersonalisedServerName.c_str(),
 										(LPWSTR)pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszRohProxyServer.c_str(),
-										(LPWSTR)pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszProfileServerDN.c_str(),
-										(LPWSTR)pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszAutodiscoverUrl.c_str(),
+										(LPWSTR)wszServerDN.c_str(),
+										(LPWSTR)NULL,
 										loggingMode)))
 									{
 										EC_HRES_MSG(HrDeleteProvider(profileName, &pProfileInfo->profileServices[i].muidServiceUid, &pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].muidProviderUid, loggingMode), L"Calling HrDeleteProvider");
@@ -4404,12 +4565,13 @@ HRESULT HrPromoteDelegatesInProfile(LPWSTR profileName, ProfileInfo * pProfileIn
 
 									if (SUCCEEDED(HrCreateMsemsServiceMOH(FALSE,
 										profileName,
-										(LPWSTR)pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress.c_str(),
+										(LPWSTR)SubstringToEnd(L"smtp:", pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress).c_str(),
 										(LPWSTR)pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszProfileMailbox.c_str(),
 										(LPWSTR)pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszMailStoreInternalUrl.c_str(),
 										NULL,
 										NULL,
 										NULL,
+										(LPWSTR)pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszRohProxyServer.c_str(),
 										loggingMode)))
 									{
 										EC_HRES_MSG(HrDeleteProvider(profileName, &pProfileInfo->profileServices[i].muidServiceUid, &pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].muidProviderUid, loggingMode), L"Calling HrDeleteProvider");
@@ -4418,21 +4580,10 @@ HRESULT HrPromoteDelegatesInProfile(LPWSTR profileName, ProfileInfo * pProfileIn
 
 								break;
 							case 2016:
-								std::transform(pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress.begin(), pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress.end(), pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress.begin(), ::tolower);
-								std::wstring wszParsedAddress;
-								if (pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress.find(L"smtp:") != std::wstring::npos)
-								{
-									wszParsedAddress = pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress.substr(5, std::wstring::npos);
-								}
-								else
-								{
-									wszParsedAddress = pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress;
-								}
-
 								if (SUCCEEDED(HrCreateMsemsServiceModern(FALSE,
 									profileName,
-									(LPWSTR)wszParsedAddress.c_str(),
-									(LPWSTR)wszParsedAddress.c_str(),
+									(LPWSTR)SubstringToEnd(L"smtp:", pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress).c_str(),
+									(LPWSTR)SubstringToEnd(L"smtp:", pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress).c_str(),
 									loggingMode)))
 								{
 									EC_HRES_MSG(HrDeleteProvider(profileName, &pProfileInfo->profileServices[i].muidServiceUid, &pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].muidProviderUid, loggingMode), L"Calling HrDeleteProvider");

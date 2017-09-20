@@ -398,7 +398,7 @@ BOOL ValidateScenario2(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 	pRunOpts->profileOptions->ulProfileMode = PROFILEMODE_DEFAULT;
 	pRunOpts->serviceOptions = new ServiceOptions();
 	pRunOpts->serviceOptions->ulServiceMode = SERVICEMODE_DEFAULT;
-	pRunOpts->serviceOptions->ulConnectMode = CONNECT_MOH;
+	pRunOpts->serviceOptions->ulConnectMode = CONNECT_ROH;
 	pRunOpts->mailboxOptions = new MailboxOptions();
 
 	for (int i = 1; i < argc; i++)
@@ -1707,6 +1707,7 @@ void _tmain(int argc, _TCHAR* argv[])
 								(LPWSTR)tkOptions->serviceOptions->wszMailStoreExternalUrl.c_str(),
 								(LPWSTR)tkOptions->serviceOptions->wszAddressBookInternalUrl.c_str(),
 								(LPWSTR)tkOptions->serviceOptions->wszAddressBookExternalUrl.c_str(),
+								(LPWSTR)tkOptions->serviceOptions->wszRohProxyServer.c_str(),
 								loggingMode);
 						}
 						else

@@ -31,6 +31,8 @@
 #include <utility>
 #include <iostream>
 #include <algorithm> 
+#include <vector>
+
 LPWSTR GetDefaultProfileNameLP(LoggingMode loggingMode);
 std::wstring GetDefaultProfileName(LoggingMode loggingMode);
 ULONG GetProfileCount(LoggingMode loggingMode);
@@ -86,6 +88,7 @@ HRESULT HrCreateMsemsServiceMOH(BOOL bDefaultProfile,
 	LPWSTR lpszMailStoreExternalUrl,
 	LPWSTR lpszAddressBookInternalUrl,
 	LPWSTR lpszAddressBookExternalUrl,
+	LPWSTR lpszRohProxyServer,
 	LoggingMode loggingMode);
 
 HRESULT HrAddDelegateMailboxModern(

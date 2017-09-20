@@ -51,3 +51,33 @@ bool WStringReplace(std::wstring * wstr, const std::wstring original, const std:
 	return true;
 }
 
+std::wstring SubstringToEnd(std::wstring wszStringToFind, std::wstring wszStringToTrim)
+{
+	std::transform(wszStringToTrim.begin(), wszStringToTrim.end(), wszStringToTrim.begin(), ::tolower);
+	std::transform(wszStringToFind.begin(), wszStringToFind.end(), wszStringToFind.begin(), ::tolower);
+	size_t pos = wszStringToTrim.find(wszStringToFind);
+	if (pos != std::wstring::npos)
+	{
+		return wszStringToTrim.substr(pos + wszStringToFind.length(), std::wstring::npos);
+	}
+	else
+	{
+		return wszStringToTrim;
+	}
+}
+
+
+std::wstring SubstringFromStart(std::wstring wszStringToFind, std::wstring wszStringToTrim)
+{
+	std::transform(wszStringToTrim.begin(), wszStringToTrim.end(), wszStringToTrim.begin(), ::tolower);
+	std::transform(wszStringToFind.begin(), wszStringToFind.end(), wszStringToFind.begin(), ::tolower);
+	size_t pos = wszStringToTrim.find(wszStringToFind);
+	if (pos != std::wstring::npos)
+	{
+		return wszStringToTrim.substr(0, pos-1);
+	}
+	else
+	{
+		return wszStringToTrim;
+	}
+}
