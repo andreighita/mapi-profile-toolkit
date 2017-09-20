@@ -3912,34 +3912,36 @@ HRESULT HrPromoteDelegatesInProfile(LPWSTR lpwszProfileName, ProfileInfo * pProf
 						}
 					}
 				}
-				else if (iServiceIndex != -1)
+			}
+		}
+		else if (iServiceIndex != -1)
+		{
+			if (pProfileInfo->profileServices[iServiceIndex].ulServiceType == SERVICETYPE_MAILBOX)
+			{
+				for (int j = 0; j <= pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->ulMailboxCount; j++)
 				{
-					if (pProfileInfo->profileServices[iServiceIndex].ulServiceType == SERVICETYPE_MAILBOX)
+					if (pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->accountMailboxes[j].ulProfileType == PROFILE_DELEGATE)
 					{
-						for (int j = 0; j <= pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->ulMailboxCount; j++)
-						{
-							if (pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->accountMailboxes[j].ulProfileType == PROFILE_DELEGATE)
-							{
-								EC_HRES_MSG(HrPromoteDelegate(lpwszProfileName, iOutlookVersion, ulConnectMode, pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->accountMailboxes[j]), L"Calling HrPromoteDelegate");
-							}
-						}
-					}
-				}
-				else if (bAllServices)
-				{
-					if (pProfileInfo->profileServices[iServiceIndex].ulServiceType == SERVICETYPE_MAILBOX)
-					{
-						for (int j = 0; j <= pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->ulMailboxCount; j++)
-						{
-							if (pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->accountMailboxes[j].ulProfileType == PROFILE_DELEGATE)
-							{
-								EC_HRES_MSG(HrPromoteDelegate(lpwszProfileName, iOutlookVersion, ulConnectMode, pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j]), L"Calling HrPromoteDelegate");
-							}
-						}
+						EC_HRES_MSG(HrPromoteDelegate(lpwszProfileName, iOutlookVersion, ulConnectMode, pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->accountMailboxes[j]), L"Calling HrPromoteDelegate");
 					}
 				}
 			}
 		}
+		else if (bAllServices)
+		{
+			if (pProfileInfo->profileServices[iServiceIndex].ulServiceType == SERVICETYPE_MAILBOX)
+			{
+				for (int j = 0; j <= pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->ulMailboxCount; j++)
+				{
+					if (pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->accountMailboxes[j].ulProfileType == PROFILE_DELEGATE)
+					{
+						EC_HRES_MSG(HrPromoteDelegate(lpwszProfileName, iOutlookVersion, ulConnectMode, pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j]), L"Calling HrPromoteDelegate");
+					}
+				}
+			}
+		}
+
+
 	}
 Error:
 Cleanup:
