@@ -221,7 +221,7 @@ CleanUp:
 	return hr;
 }
 
-void ExportXML(ULONG cProfileInfo, ProfileInfo * profileInfo, std::wstring szExportPath, LoggingMode loggingMode)
+void ExportXML(ULONG cProfileInfo, ProfileInfo * profileInfo, std::wstring szExportPath)
 {
 	HRESULT hr = S_OK;
 	IXMLDOMDocument *pXMLDom = NULL;
@@ -465,7 +465,7 @@ void ExportXML(ULONG cProfileInfo, ProfileInfo * profileInfo, std::wstring szExp
 	CHK_HR(AppendChildToParent(pRoot, pXMLDom));
 
 	CHK_HR(pXMLDom->get_xml(&bstrXML));
-	Logger::Write(logLevelSuccess, L"Wrote info to xml :" + std::wstring(bstrXML), loggingMode);
+	Logger::Write(logLevelSuccess, L"Wrote info to xml :" + std::wstring(bstrXML));
 	if (szExportPath != L"")
 	{
 		std::wstring szComputerName = _wgetenv(L"COMPUTERNAME");
@@ -473,7 +473,7 @@ void ExportXML(ULONG cProfileInfo, ProfileInfo * profileInfo, std::wstring szExp
 		std::wstring szFullExportPath = szExportPath + L"\\" + szComputerName + L"_" + szUserName + L".xml";
 		CHK_HR(VariantFromString(szFullExportPath.c_str(), varFileName));
 		CHK_HR(pXMLDom->save(varFileName));
-		Logger::Write(logLevelSuccess, L"Profile information saved to " +  szFullExportPath, loggingMode);
+		Logger::Write(logLevelSuccess, L"Profile information saved to " +  szFullExportPath);
 	}
 	else
 	{
@@ -482,7 +482,7 @@ void ExportXML(ULONG cProfileInfo, ProfileInfo * profileInfo, std::wstring szExp
 		std::wstring szFullExportPath = szComputerName + L"_" + szUserName + L".xml";
 		CHK_HR(VariantFromString(szFullExportPath.c_str(), varFileName));
 		CHK_HR(pXMLDom->save(varFileName));
-		Logger::Write(logLevelSuccess, L"Profile information saved to " + szFullExportPath, loggingMode);
+		Logger::Write(logLevelSuccess, L"Profile information saved to " + szFullExportPath);
 	}
 
 CleanUp:

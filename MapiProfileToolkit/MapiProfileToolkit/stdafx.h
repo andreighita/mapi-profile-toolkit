@@ -50,7 +50,7 @@
 					{ \
 			std::wostringstream oss; \
 			oss << L"Error " << std::hex << _hRes << L" in file " << __FILE__ << L" at line " << std::dec << __LINE__ ; \
-			Logger::Write(logLevelError, oss.str() , loggerMode); \
+			Logger::Write(logLevelError, oss.str()); \
 			goto Error; \
 																} \
 								} while (0)
@@ -60,9 +60,9 @@
 		hRes = _hRes; \
 		if (FAILED(hRes)) \
 																		{ \
-			std::wcout << L"METHOD: " << __FUNCTION__  << L". Tag: "<< wszMessage << L"."; \
-			std::wcout << L"FILE: " << __FILEW__ << L".  LINE: " << std::dec << __LINE__ << L"\n"; \
-			std::wcout << "HRESULT: " << (wchar_t*) L#_hRes <<  L"\n"; \
+			std::wostringstream oss; \
+			oss << L"Method: " << __FUNCTIONW__ << L"\n Message: "<< wszMessage << L"\nFile: " << __FILE__ << L"\nLine:  " << std::dec << __LINE__ << L"\nError: " << std::hex << _hRes ; \
+			Logger::Write(logLevelError, oss.str()); \
 			goto Error; \
 																		} \
 									} while (0)

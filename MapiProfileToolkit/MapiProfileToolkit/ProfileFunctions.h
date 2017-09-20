@@ -33,25 +33,25 @@
 #include <algorithm> 
 #include <vector>
 
-LPWSTR GetDefaultProfileNameLP(LoggingMode loggingMode);
-std::wstring GetDefaultProfileName(LoggingMode loggingMode);
-ULONG GetProfileCount(LoggingMode loggingMode);
-HRESULT HrGetProfiles(ULONG ulProfileCount, ProfileInfo * profileInfo, LoggingMode loggingMode);
-//HRESULT GetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo, LoggingMode loggingMode);
-HRESULT UpdateCachedModeConfig(LPSTR lpszProfileName, ULONG ulSectionIndex, ULONG ulCachedModeOwner, ULONG ulCachedModeShared, ULONG ulCachedModePublicFolders, int iCachedModeMonths, LoggingMode loggingMode);
-HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszOldPath, LPWSTR lpszNewPath, bool bMoveFiles, LoggingMode loggingMode);
-HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszNewPath, bool bMoveFiles, LoggingMode loggingMode);
+LPWSTR GetDefaultProfileNameLP();
+std::wstring GetDefaultProfileName();
+ULONG GetProfileCount();
+HRESULT HrGetProfiles(ULONG ulProfileCount, ProfileInfo * profileInfo);
+//HRESULT GetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo);
+HRESULT UpdateCachedModeConfig(LPSTR lpszProfileName, ULONG ulSectionIndex, ULONG ulCachedModeOwner, ULONG ulCachedModeShared, ULONG ulCachedModePublicFolders, int iCachedModeMonths);
+HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszOldPath, LPWSTR lpszNewPath, bool bMoveFiles);
+HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszNewPath, bool bMoveFiles);
 HRESULT HrCreateProfile(LPWSTR lpszProfileName);
 HRESULT HrCreateProfile(LPWSTR lpszProfileName, LPSERVICEADMIN2 *lppSvcAdmin2);
 HRESULT HrSetDefaultProfile(LPWSTR lpszProfileName);
-HRESULT HrCloneProfile(ProfileInfo * profileInfo, LoggingMode loggingMode);
+HRESULT HrCloneProfile(ProfileInfo * profileInfo);
 VOID PrintProfile(ProfileInfo * profileInfo);
-HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo, LoggingMode loggingMode);
-HRESULT HrPromoteDelegates(LPWSTR lpwszProfileName, BOOL bDefaultProfile, BOOL bAllProfiles, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, int iOutlookVersion, ULONG ulConnectMode, LoggingMode loggingMode);
-HRESULT HrPromoteDelegatesInProfile(LPWSTR profileName, ProfileInfo * pProfileInfo, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, int iOutlookVersion, ULONG ulConnectMode, LoggingMode loggingMode);
-HRESULT HrDeleteProvider(LPWSTR lpwszProfileName, LPMAPIUID lpServiceUid, LPMAPIUID lpProviderUid, LoggingMode loggingMode);
+HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo);
+HRESULT HrPromoteDelegates(LPWSTR lpwszProfileName, BOOL bDefaultProfile, BOOL bAllProfiles, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, int iOutlookVersion, ULONG ulConnectMode);
+HRESULT HrPromoteDelegatesInProfile(LPWSTR profileName, ProfileInfo * pProfileInfo, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, int iOutlookVersion, ULONG ulConnectMode);
+HRESULT HrDeleteProvider(LPWSTR lpwszProfileName, LPMAPIUID lpServiceUid, LPMAPIUID lpProviderUid);
 HRESULT HrCreatePstService(LPSERVICEADMIN2 lpServiceAdmin2, LPMAPIUID * lppServiceUid, LPWSTR lpszServiceName, ULONG ulResourceFlags, ULONG ulPstConfigFlag, LPWSTR lpszPstPathW, LPWSTR lpszDisplayName);
-HRESULT HrGetDefaultMsemsServiceAdminProviderPtr(LPWSTR lpwszProfileName, LPPROVIDERADMIN * lppProvAdmin, LPMAPIUID * lppServiceUid, LoggingMode loggingMode);
+HRESULT HrGetDefaultMsemsServiceAdminProviderPtr(LPWSTR lpwszProfileName, LPPROVIDERADMIN * lppProvAdmin, LPMAPIUID * lppServiceUid);
 HRESULT HrGetSections(LPSERVICEADMIN2 lpSvcAdmin, LPMAPIUID lpServiceUid, LPPROFSECT * lppEmsMdbSection, LPPROFSECT * lppStoreProviderSection);
 HRESULT HrCreateMsemsServiceModernExt(BOOL bDefaultProfile,
 	LPWSTR lpwszProfileName,
@@ -59,18 +59,15 @@ HRESULT HrCreateMsemsServiceModernExt(BOOL bDefaultProfile,
 	ULONG ulProfileConfigFlags,
 	ULONG ulCachedModeMonths,
 	LPWSTR lpszSmtpAddress,
-	LPWSTR lpszDisplayName,
-	LoggingMode loggingMode);
+	LPWSTR lpszDisplayName);
 HRESULT HrCreateMsemsServiceModern(BOOL bDefaultProfile,
 	LPWSTR lpwszProfileName,
 	LPWSTR lpszSmtpAddress,
-	LPWSTR lpszDisplayName,
-	LoggingMode loggingMode);
+	LPWSTR lpszDisplayName);
 HRESULT HrCreateMsemsServiceLegacyUnresolved(BOOL bDefaultProfile,
 	LPWSTR lpwszProfileName,
 	LPWSTR lpszwMailboxDN,
-	LPWSTR lpszwServer,
-	LoggingMode loggingMode);
+	LPWSTR lpszwServer);
 HRESULT HrCreateMsemsServiceROH(BOOL bDefaultProfile,
 	LPWSTR lpwszProfileName,
 	LPWSTR lpszSmtpAddress,
@@ -78,8 +75,7 @@ HRESULT HrCreateMsemsServiceROH(BOOL bDefaultProfile,
 	LPWSTR lpszUnresolvedServer,
 	LPWSTR lpszRohProxyServer,
 	LPWSTR lpszProfileServerDn,
-	LPWSTR lpszAutodiscoverUrl,
-	LoggingMode loggingMode);
+	LPWSTR lpszAutodiscoverUrl);
 HRESULT HrCreateMsemsServiceMOH(BOOL bDefaultProfile,
 	LPWSTR lpwszProfileName,
 	LPWSTR lpszSmtpAddress,
@@ -88,8 +84,7 @@ HRESULT HrCreateMsemsServiceMOH(BOOL bDefaultProfile,
 	LPWSTR lpszMailStoreExternalUrl,
 	LPWSTR lpszAddressBookInternalUrl,
 	LPWSTR lpszAddressBookExternalUrl,
-	LPWSTR lpszRohProxyServer,
-	LoggingMode loggingMode);
+	LPWSTR lpszRohProxyServer);
 
 HRESULT HrAddDelegateMailboxModern(
 	BOOL bDefaultProfile,
@@ -97,8 +92,7 @@ HRESULT HrAddDelegateMailboxModern(
 	BOOL bDefaultService,
 	int iServiceIndex,
 	LPWSTR lpszwDisplayName,
-	LPWSTR lpszwSMTPAddress,
-	LoggingMode loggingMode);
+	LPWSTR lpszwSMTPAddress);
 
 HRESULT HrAddDelegateMailbox(BOOL bDefaultProfile,
 	LPWSTR lpwszProfileName,
@@ -112,8 +106,7 @@ HRESULT HrAddDelegateMailbox(BOOL bDefaultProfile,
 	LPWSTR lpRohProxyserver,
 	ULONG ulRohProxyServerFlags,
 	ULONG ulRohProxyServerAuthPackage,
-	LPWSTR lpwszMapiHttpMailStoreInternalUrl,
-	LoggingMode loggingMode);
+	LPWSTR lpwszMapiHttpMailStoreInternalUrl);
 HRESULT HrAddDelegateMailboxLegacy(BOOL bDefaultProfile,
 	LPWSTR lpwszProfileName,
 	BOOL bDefaultService,
@@ -121,5 +114,5 @@ HRESULT HrAddDelegateMailboxLegacy(BOOL bDefaultProfile,
 	LPWSTR lpszwMailboxDisplay,
 	LPWSTR lpszwMailboxDN,
 	LPWSTR lpszwServer,
-	LPWSTR lpszwServerDN,
-	LoggingMode loggingMode);
+	LPWSTR lpszwServerDN);
+HRESULT HrPromoteDelegate(LPWSTR lpwszProfileName, int iOutlookVersion, ULONG ulConnectMode, MailboxInfo mailboxInfo);

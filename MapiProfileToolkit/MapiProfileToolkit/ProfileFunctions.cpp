@@ -52,14 +52,14 @@
 
 #pragma region // Profile Methods //
 
-LPWSTR GetDefaultProfileNameLP(LoggingMode loggingMode)
+LPWSTR GetDefaultProfileNameLP()
 {
-	return (LPWSTR)GetDefaultProfileName(loggingMode).c_str();
+	return (LPWSTR)GetDefaultProfileName().c_str();
 }
 
 // GetDefaultProfileName
 // returns a std::wstring value with the name of the default Outlook profile
-std::wstring GetDefaultProfileName(LoggingMode loggingMode)
+std::wstring GetDefaultProfileName()
 {
 	std::wstring szDefaultProfileName;
 	LPPROFADMIN lpProfAdmin = NULL;     // Profile Admin pointer
@@ -70,22 +70,22 @@ std::wstring GetDefaultProfileName(LoggingMode loggingMode)
 	LPSRowSet lpProfRows = NULL;
 
 	HRESULT hRes = S_OK;
-	Logger::Write(logLevelInfo, L"Attempting to retrieve the default MAPI profile name", loggingMode);
+	Logger::Write(logLevelInfo, L"Attempting to retrieve the default MAPI profile name");
 
 	// Setting up an enum and a prop tag array with the props we'll use
 	enum { iDisplayName, cptaProps };
 	SizedSPropTagArray(cptaProps, sptaProps) = { cptaProps, PR_DISPLAY_NAME_A };
 
-	EC_HRES_LOG(MAPIAdminProfiles(0, &lpProfAdmin), loggingMode);
+	EC_HRES_MSG(MAPIAdminProfiles(0, &lpProfAdmin), L"Calling MAPIAdminProfiles" );
 
-	EC_HRES_LOG(lpProfAdmin->GetProfileTable(0, &lpProfTable), loggingMode);
+	EC_HRES_MSG(lpProfAdmin->GetProfileTable(0, &lpProfTable), L"Calling GetProfileTable");
 
 	// Allocate memory for the restriction
-	EC_HRES_LOG(MAPIAllocateBuffer(sizeof(SRestriction), (LPVOID*)&lpProfRes), loggingMode);
+	EC_HRES_MSG(MAPIAllocateBuffer(sizeof(SRestriction), (LPVOID*)&lpProfRes), L"Calling MAPIAllocateBuffer");
 
-	EC_HRES_LOG(MAPIAllocateBuffer(sizeof(SRestriction) * 2, (LPVOID*)&lpProfResLvl1), loggingMode);
+	EC_HRES_MSG(MAPIAllocateBuffer(sizeof(SRestriction) * 2, (LPVOID*)&lpProfResLvl1), L"Calling MAPIAllocateBuffer");
 
-	EC_HRES_LOG(MAPIAllocateBuffer(sizeof(SPropValue), (LPVOID*)&lpProfPropVal), loggingMode);
+	EC_HRES_MSG(MAPIAllocateBuffer(sizeof(SPropValue), (LPVOID*)&lpProfPropVal), L"Calling MAPIAllocateBuffer");
 
 	// Set up restriction to query the profile table
 	lpProfRes->rt = RES_AND;
@@ -105,16 +105,16 @@ std::wstring GetDefaultProfileName(LoggingMode loggingMode)
 	lpProfPropVal->Value.b = true;
 
 	// Query the table to get the the default profile only
-	EC_HRES_LOG(HrQueryAllRows(lpProfTable,
+	EC_HRES_MSG(HrQueryAllRows(lpProfTable,
 		(LPSPropTagArray)&sptaProps,
 		lpProfRes,
 		NULL,
 		0,
-		&lpProfRows), loggingMode);
+		&lpProfRows), L"Calling HrQueryAllRows");
 
 	if (lpProfRows->cRows == 0)
 	{
-		Logger::Write(logLevelFailed, L"No default profile set.", loggingMode);
+		Logger::Write(logLevelFailed, L"No default profile set.");
 	}
 	else if (lpProfRows->cRows == 1)
 	{
@@ -123,7 +123,7 @@ std::wstring GetDefaultProfileName(LoggingMode loggingMode)
 	}
 	else
 	{
-		Logger::Write(logLevelError, L"Query resulted in incosinstent results", loggingMode);
+		Logger::Write(logLevelError, L"Query resulted in incosinstent results");
 	}
 
 Error:
@@ -140,7 +140,7 @@ Cleanup:
 
 // GetProfileCount
 // returns the number of mapi profiles for the current user
-ULONG GetProfileCount(LoggingMode loggingMode)
+ULONG GetProfileCount()
 {
 	std::string szDefaultProfileName;
 	LPPROFADMIN lpProfAdmin = NULL;     // Profile Admin pointer
@@ -148,13 +148,13 @@ ULONG GetProfileCount(LoggingMode loggingMode)
 	ULONG ulRowCount = 0;
 	HRESULT hRes = S_OK;
 
-	EC_HRES_LOG(MAPIAdminProfiles(0, // Flags
-		&lpProfAdmin), loggingMode); // Pointer to new IProfAdmin
+	EC_HRES_MSG(MAPIAdminProfiles(0, // Flags
+		&lpProfAdmin), L"Calling MAPIAdminProfiles"); // Pointer to new IProfAdmin
 									 // Get an IProfAdmin interface.
 
-	EC_HRES_LOG(lpProfAdmin->GetProfileTable(0, &lpProfTable), loggingMode);
+	EC_HRES_MSG(lpProfAdmin->GetProfileTable(0, &lpProfTable), L"Calling GetProfileTable");
 
-	EC_HRES_LOG(lpProfTable->GetRowCount(0, &ulRowCount), loggingMode);
+	EC_HRES_MSG(lpProfTable->GetRowCount(0, &ulRowCount), L"Calling GetRowCount");
 
 Error:
 	goto Cleanup;
@@ -165,7 +165,7 @@ Cleanup:
 	return ulRowCount;
 }
 
-HRESULT HrGetProfiles(ULONG ulProfileCount, ProfileInfo * profileInfo, LoggingMode loggingMode)
+HRESULT HrGetProfiles(ULONG ulProfileCount, ProfileInfo * profileInfo)
 {
 	LPPROFADMIN lpProfAdmin = NULL;     // Profile Admin pointer
 	LPMAPITABLE lpProfTable = NULL;
@@ -177,26 +177,26 @@ HRESULT HrGetProfiles(ULONG ulProfileCount, ProfileInfo * profileInfo, LoggingMo
 	enum { iDisplayName, cptaProps };
 	SizedSPropTagArray(cptaProps, sptaProps) = { cptaProps, PR_DISPLAY_NAME_A };
 
-	EC_HRES_LOG(MAPIAdminProfiles(0, // Flags
-		&lpProfAdmin), loggingMode); // Pointer to new IProfAdmin
+	EC_HRES_MSG(MAPIAdminProfiles(0, // Flags
+		&lpProfAdmin), L"Calling MAPIAdminProfiles"); // Pointer to new IProfAdmin
 									 // Get an IProfAdmin interface.
 
-	EC_HRES_LOG(lpProfAdmin->GetProfileTable(0,
-		&lpProfTable), loggingMode);
+	EC_HRES_MSG(lpProfAdmin->GetProfileTable(0,
+		&lpProfTable), L"Calling GetProfileTable");
 
 	// Query the table to get the the default profile only
-	EC_HRES_LOG(HrQueryAllRows(lpProfTable,
+	EC_HRES_MSG(HrQueryAllRows(lpProfTable,
 		(LPSPropTagArray)&sptaProps,
 		NULL,
 		NULL,
 		0,
-		&lpProfRows), loggingMode);
+		&lpProfRows), L"Calling HrQueryAllRows");
 
 	if (lpProfRows->cRows == ulProfileCount)
 	{
 		for (unsigned int i = 0; i < lpProfRows->cRows; i++)
 		{
-			HrGetProfile(ConvertMultiByteToWideChar(lpProfRows->aRow[i].lpProps[iDisplayName].Value.lpszA), &profileInfo[i], loggingMode);
+			EC_HRES_MSG(HrGetProfile(ConvertMultiByteToWideChar(lpProfRows->aRow[i].lpProps[iDisplayName].Value.lpszA), &profileInfo[i]), L"Calling HrGetProfile");
 		}
 	}
 
@@ -210,631 +210,23 @@ Cleanup:
 	return hRes;
 }
 
-//HRESULT GetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo, LoggingMode loggingMode)
-//{
-//	HRESULT hRes = S_OK;
-//	profileInfo->wszProfileName = ConvertWideCharToStdWstring(lpszProfileName);
-//
-//	LPPROFADMIN lpProfAdmin = NULL;     // Profile Admin pointer
-//	LPSRestriction lpProfRes = NULL;
-//	LPSRestriction lpProfResLvl1 = NULL;
-//	LPSPropValue lpProfPropVal = NULL;
-//	LPMAPITABLE lpProfTable = NULL;
-//	LPSRowSet lpProfRows = NULL;
-//
-//	// Setting up an enum and a prop tag array with the props we'll use
-//	enum { iDisplayName, iDefaultProfile, cptaProps };
-//	SizedSPropTagArray(cptaProps, sptaProps) = { cptaProps, PR_DISPLAY_NAME, PR_DEFAULT_PROFILE };
-//
-//	EC_HRES_LOG(MAPIAdminProfiles(0, // Flags
-//		&lpProfAdmin), loggingMode); // Pointer to new IProfAdmin
-//									 // Get an IProfAdmin interface.
-//
-//	EC_HRES_LOG(lpProfAdmin->GetProfileTable(0,
-//		&lpProfTable), loggingMode);
-//
-//	// Allocate memory for the restriction
-//	EC_HRES_LOG(MAPIAllocateBuffer(
-//		sizeof(SRestriction),
-//		(LPVOID*)&lpProfRes), loggingMode);
-//
-//	EC_HRES_LOG(MAPIAllocateBuffer(
-//		sizeof(SRestriction) * 2,
-//		(LPVOID*)&lpProfResLvl1), loggingMode);
-//
-//	EC_HRES_LOG(MAPIAllocateBuffer(
-//		sizeof(SPropValue),
-//		(LPVOID*)&lpProfPropVal), loggingMode);
-//
-//	// Set up restriction to query the profile table
-//	lpProfRes->rt = RES_AND;
-//	lpProfRes->res.resAnd.cRes = 0x00000002;
-//	lpProfRes->res.resAnd.lpRes = lpProfResLvl1;
-//
-//	lpProfResLvl1[0].rt = RES_EXIST;
-//	lpProfResLvl1[0].res.resExist.ulPropTag = PR_DISPLAY_NAME_A;
-//	lpProfResLvl1[0].res.resExist.ulReserved1 = 0x00000000;
-//	lpProfResLvl1[0].res.resExist.ulReserved2 = 0x00000000;
-//	lpProfResLvl1[1].rt = RES_PROPERTY;
-//	lpProfResLvl1[1].res.resProperty.relop = RELOP_EQ;
-//	lpProfResLvl1[1].res.resProperty.ulPropTag = PR_DISPLAY_NAME_A;
-//	lpProfResLvl1[1].res.resProperty.lpProp = lpProfPropVal;
-//
-//	lpProfPropVal->ulPropTag = PR_DISPLAY_NAME_A;
-//	lpProfPropVal->Value.lpszA = ConvertWideCharToMultiByte(lpszProfileName);
-//
-//	// Query the table to get the the default profile only
-//	EC_HRES_LOG(HrQueryAllRows(lpProfTable,
-//		(LPSPropTagArray)&sptaProps,
-//		lpProfRes,
-//		NULL,
-//		0,
-//		&lpProfRows), loggingMode);
-//
-//	if (lpProfRows->cRows == 0)
-//	{
-//		return MAPI_E_NOT_FOUND;
-//	}
-//	else if (lpProfRows->cRows == 1)
-//	{
-//		profileInfo->bDefaultProfile = lpProfRows->aRow->lpProps[iDefaultProfile].Value.b;
-//	}
-//	else
-//	{
-//		return MAPI_E_CALL_FAILED;
-//	}
-//
-//	// Begin process services
-//	LPSERVICEADMIN lpServiceAdmin = NULL;
-//	LPMAPITABLE lpServiceTable = NULL;
-//	EC_HRES_LOG(lpProfAdmin->AdminServices((LPTSTR)lpszProfileName,
-//		LPTSTR(""),            // Password for that profile.
-//		NULL,                // Handle to parent window.
-//		MAPI_UNICODE,                    // Flags.
-//		&lpServiceAdmin), loggingMode);        // Pointer to new IMsgServiceAdmin.
-//
-//	if (lpServiceAdmin)
-//	{
-//		lpServiceAdmin->GetMsgServiceTable(0,
-//			&lpServiceTable);
-//		LPSRestriction lpSvcRes = NULL;
-//		LPSRestriction lpsvcResLvl1 = NULL;
-//		LPSPropValue lpSvcPropVal = NULL;
-//		LPSRowSet lpSvcRows = NULL;
-//
-//		// Setting up an enum and a prop tag array with the props we'll use
-//		enum { iServiceUid, iServiceName, iEmsMdbSectUid, iServiceResFlags, cptaSvcProps };
-//		SizedSPropTagArray(cptaSvcProps, sptaSvcProps) = { cptaSvcProps, PR_SERVICE_UID,PR_SERVICE_NAME_A, PR_EMSMDB_SECTION_UID, PR_RESOURCE_FLAGS };
-//
-//		//// Allocate memory for the restriction
-//		//EC_HRES_LOG(MAPIAllocateBuffer(
-//		//	sizeof(SRestriction),
-//		//	(LPVOID*)&lpSvcRes));
-//
-//		//EC_HRES_LOG(MAPIAllocateBuffer(
-//		//	sizeof(SRestriction) * 2,
-//		//	(LPVOID*)&lpsvcResLvl1));
-//
-//		//EC_HRES_LOG(MAPIAllocateBuffer(
-//		//	sizeof(SPropValue),
-//		//	(LPVOID*)&lpSvcPropVal));
-//
-//		//// Set up restriction to query the profile table
-//		//lpSvcRes->rt = RES_AND;
-//		//lpSvcRes->res.resAnd.cRes = 0x00000002;
-//		//lpSvcRes->res.resAnd.lpRes = lpsvcResLvl1;
-//
-//		//lpsvcResLvl1[0].rt = RES_EXIST;
-//		//lpsvcResLvl1[0].res.resExist.ulPropTag = PR_SERVICE_NAME_A;
-//		//lpsvcResLvl1[0].res.resExist.ulReserved1 = 0x00000000;
-//		//lpsvcResLvl1[0].res.resExist.ulReserved2 = 0x00000000;
-//		//lpsvcResLvl1[1].rt = RES_PROPERTY;
-//		//lpsvcResLvl1[1].res.resProperty.relop = RELOP_EQ;
-//		//lpsvcResLvl1[1].res.resProperty.ulPropTag = PR_SERVICE_NAME_A;
-//		//lpsvcResLvl1[1].res.resProperty.lpProp = lpSvcPropVal;
-//
-//		//lpSvcPropVal->ulPropTag = PR_SERVICE_NAME_A;
-//		//lpSvcPropVal->Value.lpszA = "MSEMS";
-//
-//		// Query the table to get the the default profile only
-//		EC_HRES_LOG(HrQueryAllRows(lpServiceTable,
-//			(LPSPropTagArray)&sptaSvcProps,
-//			NULL,
-//			NULL,
-//			0,
-//			&lpSvcRows), loggingMode);
-//
-//		if (lpSvcRows->cRows > 0)
-//		{
-//			profileInfo->ulServiceCount = lpSvcRows->cRows;
-//			profileInfo->profileServices = new ServiceInfo[lpSvcRows->cRows];;
-//
-//			// Start loop services
-//			for (unsigned int i = 0; i < lpSvcRows->cRows; i++)
-//			{
-//				profileInfo->profileServices[i].wszServiceName = ConvertWideCharToStdWstring(ConvertMultiByteToWideChar(lpSvcRows->aRow[i].lpProps[iServiceName].Value.lpszA));
-//				profileInfo->profileServices[i].bDefaultStore = (lpSvcRows->aRow[i].lpProps[iServiceResFlags].Value.l & SERVICE_DEFAULT_STORE);
-//				profileInfo->profileServices[i].ulServiceType = SERVICETYPE_OTHER;
-//				// Exchange account
-//				if (0 == strcmp(lpSvcRows->aRow[i].lpProps[iServiceName].Value.lpszA, "MSEMS"))
-//				{
-//					profileInfo->profileServices[i].ulServiceType = SERVICETYPE_MAILBOX;
-//					profileInfo->profileServices[i].exchangeAccountInfo = new ExchangeAccountInfo;
-//					profileInfo->profileServices[i].exchangeAccountInfo->wszDatafilePath = std::wstring(L" ");
-//					profileInfo->profileServices[i].exchangeAccountInfo->wszDisplayName = std::wstring(L" ");
-//					profileInfo->profileServices[i].exchangeAccountInfo->szUserEmailSmtpAddress = std::wstring(L" ");
-//					profileInfo->profileServices[i].exchangeAccountInfo->szUserName = std::wstring(L" ");
-//					profileInfo->profileServices[i].exchangeAccountInfo->wszHomeServerDN = std::wstring(L" ");
-//					profileInfo->profileServices[i].exchangeAccountInfo->wszHomeServerName = std::wstring(L" ");
-//					profileInfo->profileServices[i].exchangeAccountInfo->wszRohProxyServer = std::wstring(L" ");
-//					profileInfo->profileServices[i].exchangeAccountInfo->wszUnresolvedServer = std::wstring(L" ");
-//
-//					LPPROVIDERADMIN lpProvAdmin = NULL;
-//
-//					if (SUCCEEDED(lpServiceAdmin->AdminProviders((LPMAPIUID)lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb,
-//						0,
-//						&lpProvAdmin)))
-//					{
-//						// Read the EMSMDB section
-//						LPPROFSECT lpProfSect = NULL;
-//						if (SUCCEEDED(lpProvAdmin->OpenProfileSection((LPMAPIUID)lpSvcRows->aRow[i].lpProps[iEmsMdbSectUid].Value.bin.lpb,
-//							NULL,
-//							0L,
-//							&lpProfSect)))
-//						{
-//							LPMAPIPROP pMAPIProp = NULL;
-//							if (SUCCEEDED(lpProfSect->QueryInterface(IID_IMAPIProp, (void**)&pMAPIProp)))
-//							{
-//
-//								// bind to the PR_PROFILE_CONFIG_FLAGS property
-//								LPSPropValue profileUnresolvedName = NULL;
-//								if (SUCCEEDED(HrGetOneProp(pMAPIProp, PR_PROFILE_UNRESOLVED_NAME, &profileUnresolvedName)))
-//								{
-//									if (profileUnresolvedName)
-//									{
-//										profileInfo->profileServices[i].exchangeAccountInfo->szUserName = ConvertWideCharToStdWstring(ConvertMultiByteToWideChar(profileUnresolvedName->Value.lpszA));
-//										if (profileUnresolvedName) MAPIFreeBuffer(profileUnresolvedName);
-//									}
-//									else
-//									{
-//										profileInfo->profileServices[i].exchangeAccountInfo->szUserName = std::wstring(L" ");
-//									}
-//
-//								}
-//								// bind to the PR_RULE_ACTION_TYPE property to get the ammount to sync
-//								LPSPropValue profilePrRuleActionType = NULL;
-//								if (SUCCEEDED(HrGetOneProp(pMAPIProp, PR_RULE_ACTION_TYPE, &profilePrRuleActionType)))
-//								{
-//									if (profilePrRuleActionType)
-//									{
-//										profileInfo->profileServices[i].exchangeAccountInfo->iCachedModeMonths = profilePrRuleActionType->Value.i;
-//										if (profilePrRuleActionType) MAPIFreeBuffer(profilePrRuleActionType);
-//									}
-//
-//								}
-//								else
-//								{
-//									profileInfo->profileServices[i].exchangeAccountInfo->iCachedModeMonths = 0;
-//								}
-//								// bind to the PR_PROFILE_CONFIG_FLAGS property
-//								LPSPropValue profileConfigFlags = NULL;
-//								if (SUCCEEDED(HrGetOneProp(pMAPIProp, PR_PROFILE_CONFIG_FLAGS, &profileConfigFlags)))
-//								{
-//									if (profileConfigFlags)
-//									{
-//										if (profileConfigFlags->Value.l & CONFIG_OST_CACHE_PRIVATE)
-//										{
-//											profileInfo->profileServices[i].exchangeAccountInfo->bCachedModeEnabledOwner = 1;
-//										}
-//										else
-//										{
-//											profileInfo->profileServices[i].exchangeAccountInfo->bCachedModeEnabledOwner = 0;
-//										}
-//										if (profileConfigFlags->Value.l & CONFIG_OST_CACHE_DELEGATE_PIM)
-//										{
-//											profileInfo->profileServices[i].exchangeAccountInfo->bCachedModeEnabledShared = 1;
-//										}
-//										else
-//										{
-//											profileInfo->profileServices[i].exchangeAccountInfo->bCachedModeEnabledShared = 0;
-//										}
-//										if (profileConfigFlags->Value.l & CONFIG_OST_CACHE_PUBLIC)
-//										{
-//											profileInfo->profileServices[i].exchangeAccountInfo->bCachedModeEnabledPublicFolders = 1;
-//										}
-//										else
-//										{
-//											profileInfo->profileServices[i].exchangeAccountInfo->bCachedModeEnabledPublicFolders = 0;
-//										}
-//										if (profileConfigFlags) MAPIFreeBuffer(profileConfigFlags);
-//									}
-//								}
-//								// bind to the PR_PROFILE_USER_SMTP_EMAIL_ADDRESS property
-//								LPSPropValue profileUserSmtpEmailAddress = NULL;
-//								if (SUCCEEDED(HrGetOneProp(pMAPIProp, PR_PROFILE_USER_SMTP_EMAIL_ADDRESS, &profileUserSmtpEmailAddress)))
-//								{
-//									if (profileUserSmtpEmailAddress)
-//									{
-//										profileInfo->profileServices[i].exchangeAccountInfo->szUserEmailSmtpAddress = ConvertWideCharToStdWstring(ConvertMultiByteToWideChar(profileUserSmtpEmailAddress->Value.lpszA));
-//										if (profileUserSmtpEmailAddress) MAPIFreeBuffer(profileUserSmtpEmailAddress);
-//									}
-//									else
-//									{
-//										profileInfo->profileServices[i].exchangeAccountInfo->szUserEmailSmtpAddress = std::wstring(L" ");
-//									}
-//								}
-//								// bind to the PR_PROFILE_HOME_SERVER_DN property
-//								LPSPropValue profileHomeServerDn = NULL;
-//								if (SUCCEEDED(HrGetOneProp(pMAPIProp, PR_PROFILE_HOME_SERVER_DN, &profileHomeServerDn)))
-//								{
-//									if (profileHomeServerDn)
-//									{
-//										profileInfo->profileServices[i].exchangeAccountInfo->wszHomeServerDN = ConvertWideCharToStdWstring(ConvertMultiByteToWideChar(profileHomeServerDn->Value.lpszA));
-//										if (profileHomeServerDn) MAPIFreeBuffer(profileHomeServerDn);
-//									}
-//									else
-//									{
-//										profileInfo->profileServices[i].exchangeAccountInfo->wszHomeServerDN = std::wstring(L" ");
-//									}
-//								}
-//								// bind to the PR_PROFILE_UNRESOLVED_SERVER property
-//								LPSPropValue profileUnresolvedServer = NULL;
-//								if (SUCCEEDED(HrGetOneProp(pMAPIProp, PR_PROFILE_UNRESOLVED_SERVER, &profileUnresolvedServer)))
-//								{
-//									if (profileUnresolvedServer)
-//									{
-//										profileInfo->profileServices[i].exchangeAccountInfo->wszUnresolvedServer = ConvertWideCharToStdWstring(ConvertMultiByteToWideChar(profileUnresolvedServer->Value.lpszA));
-//										if (profileUnresolvedServer) MAPIFreeBuffer(profileUnresolvedServer);
-//									}
-//									else
-//									{
-//										profileInfo->profileServices[i].exchangeAccountInfo->wszUnresolvedServer = std::wstring(L" ");
-//									}
-//								}
-//								// bind to the PR_PROFILE_HOME_SERVER property
-//								LPSPropValue profileHomeServer = NULL;
-//								if (SUCCEEDED(HrGetOneProp(pMAPIProp, PR_PROFILE_HOME_SERVER, &profileHomeServer)))
-//								{
-//									if (profileHomeServer)
-//									{
-//										profileInfo->profileServices[i].exchangeAccountInfo->wszHomeServerName = ConvertWideCharToStdWstring(ConvertMultiByteToWideChar(profileHomeServer->Value.lpszA));
-//										if (profileHomeServer) MAPIFreeBuffer(profileHomeServer);
-//									}
-//									else
-//									{
-//										profileInfo->profileServices[i].exchangeAccountInfo->wszHomeServerName = std::wstring(L" ");
-//									}
-//								}
-//								// bind to the PR_ROH_PROXY_SERVER property
-//								LPSPropValue profileRohProxyServer = NULL;
-//								if (SUCCEEDED(HrGetOneProp(pMAPIProp, PR_ROH_PROXY_SERVER, &profileRohProxyServer)))
-//								{
-//									if (profileUserSmtpEmailAddress)
-//									{
-//										profileInfo->profileServices[i].exchangeAccountInfo->wszRohProxyServer = ConvertWideCharToStdWstring(ConvertMultiByteToWideChar(profileRohProxyServer->Value.lpszA));
-//										if (profileRohProxyServer) MAPIFreeBuffer(profileRohProxyServer);
-//									}
-//									else
-//									{
-//										profileInfo->profileServices[i].exchangeAccountInfo->wszRohProxyServer = std::wstring(L" ");
-//									}
-//								}
-//								LPSPropValue profileOfflineStorePath = NULL;
-//								if (SUCCEEDED(HrGetOneProp(pMAPIProp, PR_PROFILE_OFFLINE_STORE_PATH, &profileOfflineStorePath)))
-//								{
-//									if (profileOfflineStorePath)
-//									{
-//										profileInfo->profileServices[i].exchangeAccountInfo->wszDatafilePath = ConvertWideCharToStdWstring(ConvertMultiByteToWideChar(profileOfflineStorePath->Value.lpszA));
-//										if (profileOfflineStorePath) MAPIFreeBuffer(profileOfflineStorePath);
-//									}
-//									else
-//									{
-//										profileInfo->profileServices[i].exchangeAccountInfo->wszDatafilePath = std::wstring(L" ");
-//									}
-//								}
-//								LPSPropValue profileDisplayName = NULL;
-//								if (SUCCEEDED(HrGetOneProp(pMAPIProp, PR_DISPLAY_NAME_A, &profileDisplayName)))
-//								{
-//									if (profileDisplayName)
-//									{
-//										profileInfo->profileServices[i].exchangeAccountInfo->wszDisplayName = ConvertWideCharToStdWstring(ConvertMultiByteToWideChar(profileDisplayName->Value.lpszA));
-//										if (profileDisplayName) MAPIFreeBuffer(profileDisplayName);
-//									}
-//									else
-//									{
-//										profileInfo->profileServices[i].exchangeAccountInfo->wszDisplayName = std::wstring(L" ");
-//									}
-//								}
-//							}
-//							if (lpProfSect) lpProfSect->Release();
-//						}
-//						// End read the EMSMDB section
-//
-//						// Loop providers
-//						LPMAPITABLE lpProvTable = NULL;
-//						LPSRestriction lpProvRes = NULL;
-//						LPSRestriction lpProvResLvl1 = NULL;
-//						LPSPropValue lpProvPropVal = NULL;
-//						LPSRowSet lpProvRows = NULL;
-//
-//						// Setting up an enum and a prop tag array with the props we'll use
-//						enum { iProvInstanceKey, cptaProvProps };
-//						SizedSPropTagArray(cptaProvProps, sptaProvProps) = { cptaProvProps, PR_INSTANCE_KEY };
-//
-//						// Allocate memory for the restriction
-//						EC_HRES_LOG(MAPIAllocateBuffer(
-//							sizeof(SRestriction),
-//							(LPVOID*)&lpProvRes), loggingMode);
-//
-//						EC_HRES_LOG(MAPIAllocateBuffer(
-//							sizeof(SRestriction) * 2,
-//							(LPVOID*)&lpProvResLvl1), loggingMode);
-//
-//						EC_HRES_LOG(MAPIAllocateBuffer(
-//							sizeof(SPropValue),
-//							(LPVOID*)&lpProvPropVal), loggingMode);
-//
-//						// Set up restriction to query the provider table
-//						lpProvRes->rt = RES_AND;
-//						lpProvRes->res.resAnd.cRes = 0x00000002;
-//						lpProvRes->res.resAnd.lpRes = lpProvResLvl1;
-//
-//						lpProvResLvl1[0].rt = RES_EXIST;
-//						lpProvResLvl1[0].res.resExist.ulPropTag = PR_PROVIDER_DISPLAY_A;
-//						lpProvResLvl1[0].res.resExist.ulReserved1 = 0x00000000;
-//						lpProvResLvl1[0].res.resExist.ulReserved2 = 0x00000000;
-//						lpProvResLvl1[1].rt = RES_CONTENT;
-//						lpProvResLvl1[1].res.resContent.ulFuzzyLevel = FL_FULLSTRING;
-//						lpProvResLvl1[1].res.resContent.ulPropTag = PR_PROVIDER_DISPLAY_A;
-//						lpProvResLvl1[1].res.resContent.lpProp = lpProvPropVal;
-//
-//						lpProvPropVal->ulPropTag = PR_PROVIDER_DISPLAY_A;
-//						lpProvPropVal->Value.lpszA = "Microsoft Exchange Message Store";
-//
-//						lpProvAdmin->GetProviderTable(0,
-//							&lpProvTable);
-//						// Query the table to get the the default profile only
-//						EC_HRES_LOG(HrQueryAllRows(lpProvTable,
-//							(LPSPropTagArray)&sptaProvProps,
-//							lpProvRes,
-//							NULL,
-//							0,
-//							&lpProvRows), loggingMode);
-//
-//						if (lpProvRows->cRows > 0)
-//						{
-//							profileInfo->profileServices[i].exchangeAccountInfo->ulMailboxCount = lpProvRows->cRows;
-//							profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes = new MailboxInfo[lpProvRows->cRows];
-//
-//							for (unsigned int j = 0; j < lpProvRows->cRows; j++)
-//							{
-//								profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszDisplayName = std::wstring(L" ");
-//								LPPROFSECT lpProfSection = NULL;
-//								if (SUCCEEDED(lpServiceAdmin->OpenProfileSection((LPMAPIUID)lpProvRows->aRow[j].lpProps[iProvInstanceKey].Value.bin.lpb, NULL, MAPI_MODIFY | MAPI_FORCE_ACCESS, &lpProfSection)))
-//								{
-//									LPMAPIPROP lpMAPIProp = NULL;
-//									if (SUCCEEDED(lpProfSection->QueryInterface(IID_IMAPIProp, (void**)&lpMAPIProp)))
-//									{
-//										LPSPropValue prDisplayName = NULL;
-//										if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_DISPLAY_NAME, &prDisplayName)))
-//										{
-//											profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszDisplayName = ConvertWideCharToStdWstring(prDisplayName->Value.lpszW);
-//											if (prDisplayName) MAPIFreeBuffer(prDisplayName);
-//										}
-//										else
-//										{
-//											profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszDisplayName = std::wstring(L" ");
-//										}
-//
-//										LPSPropValue prProfileType = NULL;
-//										if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_PROFILE_TYPE, &prProfileType)))
-//										{
-//											profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].bPrimaryMailbox = (prProfileType->Value.l == PROFILE_PRIMARY_USER);
-//
-//											if (prProfileType->Value.l == PROFILE_PRIMARY_USER)
-//											{
-//												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulProfileType = PROFILE_PRIMARY_USER;
-//											}
-//											else if (prProfileType->Value.l == PROFILE_DELEGATE)
-//											{
-//												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulProfileType = PROFILE_DELEGATE;
-//											}
-//											else if (prProfileType->Value.l == PROFILE_PUBLIC_STORE)
-//											{
-//												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulProfileType = PROFILE_PUBLIC_STORE;
-//											}
-//											else
-//											{
-//												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulProfileType = 0;
-//											}
-//											if (prDisplayName) MAPIFreeBuffer(prProfileType);
-//										}
-//									}
-//								}
-//							}
-//							if (lpProvRows) FreeProws(lpProvRows);
-//						}
-//						else
-//						{
-//							profileInfo->profileServices[i].exchangeAccountInfo->ulMailboxCount = lpProvRows->cRows;
-//							profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes = new MailboxInfo[1];
-//						}
-//						if (lpProvPropVal) MAPIFreeBuffer(lpProvPropVal);
-//						if (lpProvResLvl1) MAPIFreeBuffer(lpProvResLvl1);
-//						if (lpProvRes) MAPIFreeBuffer(lpProvRes);
-//						if (lpProvTable) lpProvTable->Release();
-//						//End Loop Providers
-//						if (lpProvAdmin) lpProvAdmin->Release();
-//					}
-//
-//				}
-//
-//				else if ((0 == strcmp(lpSvcRows->aRow[i].lpProps[iServiceName].Value.lpszA, "MSPST MS")) || (0 == strcmp(lpSvcRows->aRow[i].lpProps[iServiceName].Value.lpszA, "MSUPST MS")))
-//				{
-//					profileInfo->profileServices[i].ulServiceType = SERVICETYPE_PST;
-//					profileInfo->profileServices[i].pstInfo = new PstInfo;
-//					profileInfo->profileServices[i].pstInfo->wszDisplayName = std::wstring(L" ");
-//					profileInfo->profileServices[i].pstInfo->wszPstPath = std::wstring(L" ");
-//
-//					LPPROVIDERADMIN lpProvAdmin = NULL;
-//
-//					if (SUCCEEDED(lpServiceAdmin->AdminProviders((LPMAPIUID)lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb,
-//						0,
-//						&lpProvAdmin)))
-//					{
-//						// Loop providers
-//						LPMAPITABLE lpProvTable = NULL;
-//						LPSRestriction lpProvRes = NULL;
-//						LPSRestriction lpProvResLvl1 = NULL;
-//						LPSPropValue lpProvPropVal = NULL;
-//						LPSRowSet lpProvRows = NULL;
-//
-//						// Setting up an enum and a prop tag array with the props we'll use
-//						enum { iProvInstanceKey, cptaProvProps };
-//						SizedSPropTagArray(cptaProvProps, sptaProvProps) = { cptaProvProps, PR_INSTANCE_KEY };
-//
-//						// Allocate memory for the restriction
-//						EC_HRES_LOG(MAPIAllocateBuffer(
-//							sizeof(SRestriction),
-//							(LPVOID*)&lpProvRes), loggingMode);
-//
-//						EC_HRES_LOG(MAPIAllocateBuffer(
-//							sizeof(SRestriction) * 2,
-//							(LPVOID*)&lpProvResLvl1), loggingMode);
-//
-//						EC_HRES_LOG(MAPIAllocateBuffer(
-//							sizeof(SPropValue),
-//							(LPVOID*)&lpProvPropVal), loggingMode);
-//
-//						// Set up restriction to query the provider table
-//						lpProvRes->rt = RES_AND;
-//						lpProvRes->res.resAnd.cRes = 0x00000002;
-//						lpProvRes->res.resAnd.lpRes = lpProvResLvl1;
-//
-//						lpProvResLvl1[0].rt = RES_EXIST;
-//						lpProvResLvl1[0].res.resExist.ulPropTag = PR_SERVICE_UID;
-//						lpProvResLvl1[0].res.resExist.ulReserved1 = 0x00000000;
-//						lpProvResLvl1[0].res.resExist.ulReserved2 = 0x00000000;
-//						lpProvResLvl1[1].rt = RES_PROPERTY;
-//						lpProvResLvl1[1].res.resProperty.relop = RELOP_EQ;
-//						lpProvResLvl1[1].res.resProperty.ulPropTag = PR_SERVICE_UID;
-//						lpProvResLvl1[1].res.resProperty.lpProp = lpProvPropVal;
-//
-//						lpProvPropVal->ulPropTag = PR_SERVICE_UID;
-//						lpProvPropVal->Value = lpSvcRows->aRow[i].lpProps[iServiceUid].Value;
-//
-//						lpProvAdmin->GetProviderTable(0,
-//							&lpProvTable);
-//						// Query the table to get the the default profile only
-//						EC_HRES_LOG(HrQueryAllRows(lpProvTable,
-//							(LPSPropTagArray)&sptaProvProps,
-//							lpProvRes,
-//							NULL,
-//							0,
-//							&lpProvRows), loggingMode);
-//
-//						if (lpProvRows->cRows > 0)
-//						{
-//
-//							LPPROFSECT lpProfSection = NULL;
-//							if (SUCCEEDED(lpServiceAdmin->OpenProfileSection((LPMAPIUID)lpProvRows->aRow->lpProps[iProvInstanceKey].Value.bin.lpb, NULL, MAPI_MODIFY | MAPI_FORCE_ACCESS, &lpProfSection)))
-//							{
-//								LPMAPIPROP lpMAPIProp = NULL;
-//								if (SUCCEEDED(lpProfSection->QueryInterface(IID_IMAPIProp, (void**)&lpMAPIProp)))
-//								{
-//									LPSPropValue prDisplayName = NULL;
-//									if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_DISPLAY_NAME_W, &prDisplayName)))
-//									{
-//										profileInfo->profileServices[i].pstInfo->wszDisplayName = ConvertWideCharToStdWstring(prDisplayName->Value.lpszW);
-//										if (prDisplayName) MAPIFreeBuffer(prDisplayName);
-//									}
-//									else
-//									{
-//										profileInfo->profileServices[i].pstInfo->wszDisplayName = std::wstring(L" ");
-//									}
-//									// bind to the PR_PST_PATH_W property
-//									LPSPropValue pstPathW = NULL;
-//									if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_PST_PATH_W, &pstPathW)))
-//									{
-//										if (pstPathW)
-//										{
-//											profileInfo->profileServices[i].pstInfo->wszPstPath = ConvertWideCharToStdWstring(pstPathW->Value.lpszW);
-//											if (pstPathW) MAPIFreeBuffer(pstPathW);
-//										}
-//										else
-//										{
-//											profileInfo->profileServices[i].pstInfo->wszPstPath = std::wstring(L" ");
-//										}
-//									}
-//									// bind to the PR_PST_CONFIG_FLAGS property to get the ammount to sync
-//									LPSPropValue pstConfigFlags = NULL;
-//									if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_PST_CONFIG_FLAGS, &pstConfigFlags)))
-//									{
-//										if (pstConfigFlags)
-//										{
-//											profileInfo->profileServices[i].pstInfo->ulPstType = pstConfigFlags->Value.l;
-//											if (pstConfigFlags) MAPIFreeBuffer(pstConfigFlags);
-//										}
-//									}
-//								}
-//							}
-//
-//							if (lpProvRows) FreeProws(lpProvRows);
-//						}
-//						if (lpProvPropVal) MAPIFreeBuffer(lpProvPropVal);
-//						if (lpProvResLvl1) MAPIFreeBuffer(lpProvResLvl1);
-//						if (lpProvRes) MAPIFreeBuffer(lpProvRes);
-//						if (lpProvTable) lpProvTable->Release();
-//						//End Loop Providers
-//						if (lpProvAdmin) lpProvAdmin->Release();
-//					}
-//
-//				}
-//
-//			}
-//			if (lpSvcRows) FreeProws(lpSvcRows);
-//			// End loop services
-//
-//
-//		}
-//
-//		if (lpSvcPropVal) MAPIFreeBuffer(lpSvcPropVal);
-//		if (lpsvcResLvl1) MAPIFreeBuffer(lpsvcResLvl1);
-//		if (lpSvcRes) MAPIFreeBuffer(lpSvcRes);
-//		if (lpServiceTable) lpServiceTable->Release();
-//		if (lpServiceAdmin) lpServiceAdmin->Release();
-//
-//	}
-//	// End process services
-//
-//Error:
-//	goto Cleanup;
-//Cleanup:
-//	// Free up memory
-//	if (lpProfRows) FreeProws(lpProfRows);
-//	if (lpProfTable) lpProfTable->Release();
-//	if (lpProfAdmin) lpProfAdmin->Release();
-//
-//	return hRes;
-//}
-
-HRESULT UpdateCachedModeConfig(LPSTR lpszProfileName, ULONG ulSectionIndex, ULONG ulCachedModeOwner, ULONG ulCachedModeShared, ULONG ulCachedModePublicFolders, int iCachedModeMonths, LoggingMode loggingMode)
+HRESULT UpdateCachedModeConfig(LPSTR lpszProfileName, ULONG ulSectionIndex, ULONG ulCachedModeOwner, ULONG ulCachedModeShared, ULONG ulCachedModePublicFolders, int iCachedModeMonths)
 {
 	HRESULT hRes = S_OK;
 	LPPROFADMIN lpProfAdmin = NULL;     // Profile Admin pointer
 
-	EC_HRES_LOG(MAPIAdminProfiles(0, // Flags
-		&lpProfAdmin), loggingMode); // Pointer to new IProfAdmin
+	EC_HRES_MSG(MAPIAdminProfiles(0, // Flags
+		&lpProfAdmin), L"Calling MAPIAdminProfiles"); // Pointer to new IProfAdmin
 									 // Get an IProfAdmin interface.
 
 									 // Begin process services
 	LPSERVICEADMIN lpServiceAdmin = NULL;
 	LPMAPITABLE lpServiceTable = NULL;
-	EC_HRES_LOG(lpProfAdmin->AdminServices((LPTSTR)lpszProfileName,
+	EC_HRES_MSG(lpProfAdmin->AdminServices((LPTSTR)lpszProfileName,
 		LPTSTR(""),            // Password for that profile.
 		NULL,                // Handle to parent window.
 		0,                    // Flags.
-		&lpServiceAdmin), loggingMode);        // Pointer to new IMsgServiceAdmin.
+		&lpServiceAdmin), L"Calling AdminServices");        // Pointer to new IMsgServiceAdmin.
 
 	if (lpServiceAdmin)
 	{
@@ -850,17 +242,17 @@ HRESULT UpdateCachedModeConfig(LPSTR lpszProfileName, ULONG ulSectionIndex, ULON
 		SizedSPropTagArray(cptaSvcProps, sptaSvcProps) = { cptaSvcProps, PR_SERVICE_UID,PR_SERVICE_NAME_A, PR_EMSMDB_SECTION_UID, PR_RESOURCE_FLAGS };
 
 		// Allocate memory for the restriction
-		EC_HRES_LOG(MAPIAllocateBuffer(
+		EC_HRES_MSG(MAPIAllocateBuffer(
 			sizeof(SRestriction),
-			(LPVOID*)&lpSvcRes), loggingMode);
+			(LPVOID*)&lpSvcRes), L"Calling MAPIAllocateBuffer");
 
-		EC_HRES_LOG(MAPIAllocateBuffer(
+		EC_HRES_MSG(MAPIAllocateBuffer(
 			sizeof(SRestriction) * 2,
-			(LPVOID*)&lpsvcResLvl1), loggingMode);
+			(LPVOID*)&lpsvcResLvl1), L"Calling MAPIAllocateBuffer");
 
-		EC_HRES_LOG(MAPIAllocateBuffer(
+		EC_HRES_MSG(MAPIAllocateBuffer(
 			sizeof(SPropValue),
-			(LPVOID*)&lpSvcPropVal), loggingMode);
+			(LPVOID*)&lpSvcPropVal), L"Calling MAPIAllocateBuffer");
 
 		// Set up restriction to query the profile table
 		lpSvcRes->rt = RES_AND;
@@ -880,12 +272,12 @@ HRESULT UpdateCachedModeConfig(LPSTR lpszProfileName, ULONG ulSectionIndex, ULON
 		lpSvcPropVal->Value.lpszA = "MSEMS";
 
 		// Query the table to get the the default profile only
-		EC_HRES_LOG(HrQueryAllRows(lpServiceTable,
+		EC_HRES_MSG(HrQueryAllRows(lpServiceTable,
 			(LPSPropTagArray)&sptaSvcProps,
 			lpSvcRes,
 			NULL,
 			0,
-			&lpSvcRows), loggingMode);
+			&lpSvcRows), L"Calling HrQueryAllRows");
 
 		if (lpSvcRows->cRows >= ulSectionIndex)
 		{
@@ -918,7 +310,7 @@ HRESULT UpdateCachedModeConfig(LPSTR lpszProfileName, ULONG ulSectionIndex, ULON
 										if (!(profileConfigFlags[0].Value.l & CONFIG_OST_CACHE_PRIVATE))
 										{
 											profileConfigFlags[0].Value.l = profileConfigFlags[0].Value.l ^ CONFIG_OST_CACHE_PRIVATE;
-											EC_HRES_LOG(lpProfSect->SetProps(1, profileConfigFlags, NULL), loggingMode);
+											EC_HRES_MSG(lpProfSect->SetProps(1, profileConfigFlags, NULL), L"Calling SetProps");
 											printf("Cached mode owner enabled.\n");
 										}
 										else
@@ -931,7 +323,7 @@ HRESULT UpdateCachedModeConfig(LPSTR lpszProfileName, ULONG ulSectionIndex, ULON
 										if (profileConfigFlags[0].Value.l & CONFIG_OST_CACHE_PRIVATE)
 										{
 											profileConfigFlags[0].Value.l = profileConfigFlags[0].Value.l ^ CONFIG_OST_CACHE_PRIVATE;
-											EC_HRES_LOG(lpProfSect->SetProps(1, profileConfigFlags, NULL), loggingMode);
+											EC_HRES_MSG(lpProfSect->SetProps(1, profileConfigFlags, NULL), L"Calling SetProps");
 											printf("Cached mode owner disabled.\n");
 										}
 										else
@@ -947,7 +339,7 @@ HRESULT UpdateCachedModeConfig(LPSTR lpszProfileName, ULONG ulSectionIndex, ULON
 										if (!(profileConfigFlags[0].Value.l & CONFIG_OST_CACHE_DELEGATE_PIM))
 										{
 											profileConfigFlags[0].Value.l = profileConfigFlags[0].Value.l ^ CONFIG_OST_CACHE_DELEGATE_PIM;
-											EC_HRES_LOG(lpProfSect->SetProps(1, profileConfigFlags, NULL), loggingMode);
+											EC_HRES_MSG(lpProfSect->SetProps(1, profileConfigFlags, NULL), L"Calling SetProps");
 											printf("Cached mode shared enabled.\n");
 										}
 										else
@@ -960,7 +352,7 @@ HRESULT UpdateCachedModeConfig(LPSTR lpszProfileName, ULONG ulSectionIndex, ULON
 										if (profileConfigFlags[0].Value.l & CONFIG_OST_CACHE_DELEGATE_PIM)
 										{
 											profileConfigFlags[0].Value.l = profileConfigFlags[0].Value.l ^ CONFIG_OST_CACHE_DELEGATE_PIM;
-											EC_HRES_LOG(lpProfSect->SetProps(1, profileConfigFlags, NULL), loggingMode);
+											EC_HRES_MSG(lpProfSect->SetProps(1, profileConfigFlags, NULL), L"Calling SetProps");
 											printf("Cached mode shared disabled.\n");
 										}
 										else
@@ -976,7 +368,7 @@ HRESULT UpdateCachedModeConfig(LPSTR lpszProfileName, ULONG ulSectionIndex, ULON
 										if (!(profileConfigFlags[0].Value.l & CONFIG_OST_CACHE_PUBLIC))
 										{
 											profileConfigFlags[0].Value.l = profileConfigFlags[0].Value.l ^ CONFIG_OST_CACHE_PUBLIC;
-											EC_HRES_LOG(lpProfSect->SetProps(1, profileConfigFlags, NULL), loggingMode);
+											EC_HRES_MSG(lpProfSect->SetProps(1, profileConfigFlags, NULL), L"Calling SetProps");
 											printf("Cached mode public folders enabled.\n");
 										}
 										else
@@ -989,7 +381,7 @@ HRESULT UpdateCachedModeConfig(LPSTR lpszProfileName, ULONG ulSectionIndex, ULON
 										if (profileConfigFlags[0].Value.l & CONFIG_OST_CACHE_PUBLIC)
 										{
 											profileConfigFlags[0].Value.l = profileConfigFlags[0].Value.l ^ CONFIG_OST_CACHE_PUBLIC;
-											EC_HRES_LOG(lpProfSect->SetProps(1, profileConfigFlags, NULL), loggingMode);
+											EC_HRES_MSG(lpProfSect->SetProps(1, profileConfigFlags, NULL), L"Calling SetProps");
 											printf("Cached mode public folders disabled.\n");
 										}
 										else
@@ -998,7 +390,7 @@ HRESULT UpdateCachedModeConfig(LPSTR lpszProfileName, ULONG ulSectionIndex, ULON
 										}
 									}
 								}
-								EC_HRES_LOG(lpProfSect->SaveChanges(0), loggingMode);
+								EC_HRES_MSG(lpProfSect->SaveChanges(0), L"Calling #");
 								if (profileConfigFlags) MAPIFreeBuffer(profileConfigFlags);
 							}
 						}
@@ -1010,10 +402,10 @@ HRESULT UpdateCachedModeConfig(LPSTR lpszProfileName, ULONG ulSectionIndex, ULON
 							{
 
 								profileRuleActionType[0].Value.i = iCachedModeMonths;
-								EC_HRES_LOG(lpProfSect->SetProps(1, profileRuleActionType, NULL), loggingMode);
+								EC_HRES_MSG(lpProfSect->SetProps(1, profileRuleActionType, NULL), L"Calling SetProps");
 								printf("Cached mode amount to sync set.\n");
 
-								EC_HRES_LOG(lpProfSect->SaveChanges(0), loggingMode);
+								EC_HRES_MSG(lpProfSect->SaveChanges(0), L"Calling SaveChanges");
 								if (profileRuleActionType) MAPIFreeBuffer(profileConfigFlags);
 							}
 						}
@@ -1051,7 +443,7 @@ Cleanup:
 	return S_OK;
 }
 
-HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszOldPath, LPWSTR lpszNewPath, bool bMoveFiles, LoggingMode loggingMode)
+HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszOldPath, LPWSTR lpszNewPath, bool bMoveFiles)
 {
 	HRESULT hRes = S_OK;
 
@@ -1066,25 +458,25 @@ HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszOldPath, LPWSTR lpszNew
 	enum { iDisplayName, cptaProps };
 	SizedSPropTagArray(cptaProps, sptaProps) = { cptaProps, PR_DISPLAY_NAME };
 
-	EC_HRES_LOG(MAPIAdminProfiles(0, // Flags
-		&lpProfAdmin), loggingMode); // Pointer to new IProfAdmin
+	EC_HRES_MSG(MAPIAdminProfiles(0, // Flags
+		&lpProfAdmin), L"Calling MAPIAdminProfiles"); // Pointer to new IProfAdmin
 									 // Get an IProfAdmin interface.
 
-	EC_HRES_LOG(lpProfAdmin->GetProfileTable(0,
-		&lpProfTable), loggingMode);
+	EC_HRES_MSG(lpProfAdmin->GetProfileTable(0,
+		&lpProfTable), L"Calling GetProfileTable");
 
 	// Allocate memory for the restriction
-	EC_HRES_LOG(MAPIAllocateBuffer(
+	EC_HRES_MSG(MAPIAllocateBuffer(
 		sizeof(SRestriction),
-		(LPVOID*)&lpProfRes), loggingMode);
+		(LPVOID*)&lpProfRes), L"Calling MAPIAllocateBuffer");
 
-	EC_HRES_LOG(MAPIAllocateBuffer(
+	EC_HRES_MSG(MAPIAllocateBuffer(
 		sizeof(SRestriction) * 2,
-		(LPVOID*)&lpProfResLvl1), loggingMode);
+		(LPVOID*)&lpProfResLvl1), L"Calling MAPIAllocateBuffer");
 
-	EC_HRES_LOG(MAPIAllocateBuffer(
+	EC_HRES_MSG(MAPIAllocateBuffer(
 		sizeof(SPropValue),
-		(LPVOID*)&lpProfPropVal), loggingMode);
+		(LPVOID*)&lpProfPropVal), L"Calling MAPIAllocateBuffer");
 
 	// Set up restriction to query the profile table
 	lpProfRes->rt = RES_AND;
@@ -1104,12 +496,12 @@ HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszOldPath, LPWSTR lpszNew
 	lpProfPropVal->Value.lpszA = ConvertWideCharToMultiByte(lpszProfileName);
 
 	// Query the table to get the the default profile only
-	EC_HRES_LOG(HrQueryAllRows(lpProfTable,
+	EC_HRES_MSG(HrQueryAllRows(lpProfTable,
 		(LPSPropTagArray)&sptaProps,
 		lpProfRes,
 		NULL,
 		0,
-		&lpProfRows), loggingMode);
+		&lpProfRows), L"Calling #");
 
 	if (lpProfRows->cRows == 0)
 	{
@@ -1123,11 +515,11 @@ HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszOldPath, LPWSTR lpszNew
 	// Begin process services
 	LPSERVICEADMIN lpServiceAdmin = NULL;
 	LPMAPITABLE lpServiceTable = NULL;
-	EC_HRES_LOG(lpProfAdmin->AdminServices((LPTSTR)lpszProfileName,
+	EC_HRES_MSG(lpProfAdmin->AdminServices((LPTSTR)lpszProfileName,
 		LPTSTR(""),            // Password for that profile.
 		NULL,                // Handle to parent window.
 		MAPI_UNICODE,                    // Flags.
-		&lpServiceAdmin), loggingMode);        // Pointer to new IMsgServiceAdmin.
+		&lpServiceAdmin), L"Calling #");        // Pointer to new IMsgServiceAdmin.
 
 	if (lpServiceAdmin)
 	{
@@ -1145,25 +537,25 @@ HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszOldPath, LPWSTR lpszNew
 		SizedSPropTagArray(cptaSvcProps, sptaSvcProps) = { cptaSvcProps, PR_SERVICE_UID,PR_SERVICE_NAME_A, PR_EMSMDB_SECTION_UID, PR_RESOURCE_FLAGS };
 
 		// Allocate memory for the restriction
-		EC_HRES_LOG(MAPIAllocateBuffer(
+		EC_HRES_MSG(MAPIAllocateBuffer(
 			sizeof(SRestriction),
-			(LPVOID*)&lpSvcRes), loggingMode);
+			(LPVOID*)&lpSvcRes), L"Calling MAPIAllocateBuffer");
 
-		EC_HRES_LOG(MAPIAllocateBuffer(
+		EC_HRES_MSG(MAPIAllocateBuffer(
 			sizeof(SRestriction) * 2,
-			(LPVOID*)&lpsvcResLvl1), loggingMode);
+			(LPVOID*)&lpsvcResLvl1), L"Calling MAPIAllocateBuffer");
 
-		EC_HRES_LOG(MAPIAllocateBuffer(
+		EC_HRES_MSG(MAPIAllocateBuffer(
 			sizeof(SRestriction) * 2,
-			(LPVOID*)&lpsvcResLvl2), loggingMode);
+			(LPVOID*)&lpsvcResLvl2), L"Calling MAPIAllocateBuffer");
 
-		EC_HRES_LOG(MAPIAllocateBuffer(
+		EC_HRES_MSG(MAPIAllocateBuffer(
 			sizeof(SPropValue),
-			(LPVOID*)&lpSvcPropVal1), loggingMode);
+			(LPVOID*)&lpSvcPropVal1), L"Calling MAPIAllocateBuffer");
 
-		EC_HRES_LOG(MAPIAllocateBuffer(
+		EC_HRES_MSG(MAPIAllocateBuffer(
 			sizeof(SPropValue),
-			(LPVOID*)&lpSvcPropVal2), loggingMode);
+			(LPVOID*)&lpSvcPropVal2), L"Calling MAPIAllocateBuffer");
 
 		// Set up restriction to query the profile table
 		lpSvcRes->rt = RES_AND;
@@ -1196,12 +588,12 @@ HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszOldPath, LPWSTR lpszNew
 		lpSvcPropVal2->Value.lpszA = "MSUPST MS";
 
 		// Query the table to get the the default profile only
-		EC_HRES_LOG(HrQueryAllRows(lpServiceTable,
+		EC_HRES_MSG(HrQueryAllRows(lpServiceTable,
 			(LPSPropTagArray)&sptaSvcProps,
 			lpSvcRes,
 			NULL,
 			0,
-			&lpSvcRows), loggingMode);
+			&lpSvcRows), L"Calling HrQueryAllRows");
 
 		if (lpSvcRows->cRows > 0)
 		{
@@ -1228,17 +620,17 @@ HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszOldPath, LPWSTR lpszNew
 					SizedSPropTagArray(cptaProvProps, sptaProvProps) = { cptaProvProps, PR_INSTANCE_KEY };
 
 					// Allocate memory for the restriction
-					EC_HRES_LOG(MAPIAllocateBuffer(
+					EC_HRES_MSG(MAPIAllocateBuffer(
 						sizeof(SRestriction),
-						(LPVOID*)&lpProvRes), loggingMode);
+						(LPVOID*)&lpProvRes), L"Calling MAPIAllocateBuffer");
 
-					EC_HRES_LOG(MAPIAllocateBuffer(
+					EC_HRES_MSG(MAPIAllocateBuffer(
 						sizeof(SRestriction) * 2,
-						(LPVOID*)&lpProvResLvl1), loggingMode);
+						(LPVOID*)&lpProvResLvl1), L"Calling MAPIAllocateBuffer");
 
-					EC_HRES_LOG(MAPIAllocateBuffer(
+					EC_HRES_MSG(MAPIAllocateBuffer(
 						sizeof(SPropValue),
-						(LPVOID*)&lpProvPropVal), loggingMode);
+						(LPVOID*)&lpProvPropVal), L"Calling MAPIAllocateBuffer");
 
 					// Set up restriction to query the provider table
 					lpProvRes->rt = RES_AND;
@@ -1261,12 +653,12 @@ HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszOldPath, LPWSTR lpszNew
 						&lpProvTable);
 
 					// Query the table to get the the default profile only
-					EC_HRES_LOG(HrQueryAllRows(lpProvTable,
+					EC_HRES_MSG(HrQueryAllRows(lpProvTable,
 						(LPSPropTagArray)&sptaProvProps,
 						lpProvRes,
 						NULL,
 						0,
-						&lpProvRows), loggingMode);
+						&lpProvRows), L"Calling HrQueryAllRows");
 
 					if (lpProvRows->cRows > 0)
 					{
@@ -1298,7 +690,7 @@ HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszOldPath, LPWSTR lpszNew
 													{
 														wprintf(L"Updating path for data file named %s\n", pstPathW->Value.lpszW);
 														pstPathW[0].Value.lpszW = (LPWSTR)szCurrentPath.c_str();
-														EC_HRES_LOG(lpProfSection->SetProps(1, pstPathW, NULL), loggingMode);
+														EC_HRES_MSG(lpProfSection->SetProps(1, pstPathW, NULL), L"Calling SetProps");
 													}
 													else
 													{
@@ -1309,7 +701,7 @@ HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszOldPath, LPWSTR lpszNew
 												{
 													wprintf(L"Updating path for data file named %s\n", pstPathW->Value.lpszW);
 													pstPathW[0].Value.lpszW = (LPWSTR)szCurrentPath.c_str();
-													EC_HRES_LOG(lpProfSection->SetProps(1, pstPathW, NULL), loggingMode);
+													EC_HRES_MSG(lpProfSection->SetProps(1, pstPathW, NULL), L"Calling SetProps");
 												}
 											}
 											if (pstPathW) MAPIFreeBuffer(pstPathW);
@@ -1357,7 +749,7 @@ Cleanup:
 	return hRes;
 }
 
-HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszNewPath, bool bMoveFiles, LoggingMode loggingMode)
+HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszNewPath, bool bMoveFiles)
 {
 	HRESULT hRes = S_OK;
 
@@ -1372,25 +764,25 @@ HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszNewPath, bool bMoveFile
 	enum { iDisplayName, cptaProps };
 	SizedSPropTagArray(cptaProps, sptaProps) = { cptaProps, PR_DISPLAY_NAME };
 
-	EC_HRES_LOG(MAPIAdminProfiles(0, // Flags
-		&lpProfAdmin), loggingMode); // Pointer to new IProfAdmin
+	EC_HRES_MSG(MAPIAdminProfiles(0, // Flags
+		&lpProfAdmin), L"Calling MAPIAdminProfiles"); // Pointer to new IProfAdmin
 									 // Get an IProfAdmin interface.
 
-	EC_HRES_LOG(lpProfAdmin->GetProfileTable(0,
-		&lpProfTable), loggingMode);
+	EC_HRES_MSG(lpProfAdmin->GetProfileTable(0,
+		&lpProfTable), L"Calling GetProfileTable");
 
 	// Allocate memory for the restriction
-	EC_HRES_LOG(MAPIAllocateBuffer(
+	EC_HRES_MSG(MAPIAllocateBuffer(
 		sizeof(SRestriction),
-		(LPVOID*)&lpProfRes), loggingMode);
+		(LPVOID*)&lpProfRes), L"Calling MAPIAllocateBuffer");
 
-	EC_HRES_LOG(MAPIAllocateBuffer(
+	EC_HRES_MSG(MAPIAllocateBuffer(
 		sizeof(SRestriction) * 2,
-		(LPVOID*)&lpProfResLvl1), loggingMode);
+		(LPVOID*)&lpProfResLvl1), L"Calling MAPIAllocateBuffer");
 
-	EC_HRES_LOG(MAPIAllocateBuffer(
+	EC_HRES_MSG(MAPIAllocateBuffer(
 		sizeof(SPropValue),
-		(LPVOID*)&lpProfPropVal), loggingMode);
+		(LPVOID*)&lpProfPropVal), L"Calling MAPIAllocateBuffer");
 
 	// Set up restriction to query the profile table
 	lpProfRes->rt = RES_AND;
@@ -1410,12 +802,12 @@ HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszNewPath, bool bMoveFile
 	lpProfPropVal->Value.lpszA = ConvertWideCharToMultiByte(lpszProfileName);
 
 	// Query the table to get the the default profile only
-	EC_HRES_LOG(HrQueryAllRows(lpProfTable,
+	EC_HRES_MSG(HrQueryAllRows(lpProfTable,
 		(LPSPropTagArray)&sptaProps,
 		lpProfRes,
 		NULL,
 		0,
-		&lpProfRows), loggingMode);
+		&lpProfRows), L"Calling HrQueryAllRows");
 
 	if (lpProfRows->cRows == 0)
 	{
@@ -1429,11 +821,11 @@ HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszNewPath, bool bMoveFile
 	// Begin process services
 	LPSERVICEADMIN lpServiceAdmin = NULL;
 	LPMAPITABLE lpServiceTable = NULL;
-	EC_HRES_LOG(lpProfAdmin->AdminServices((LPTSTR)lpszProfileName,
+	EC_HRES_MSG(lpProfAdmin->AdminServices((LPTSTR)lpszProfileName,
 		LPTSTR(""),            // Password for that profile.
 		NULL,                // Handle to parent window.
 		MAPI_UNICODE,                    // Flags.
-		&lpServiceAdmin), loggingMode);        // Pointer to new IMsgServiceAdmin.
+		&lpServiceAdmin), L"Calling AdminServices");        // Pointer to new IMsgServiceAdmin.
 
 	if (lpServiceAdmin)
 	{
@@ -1451,25 +843,25 @@ HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszNewPath, bool bMoveFile
 		SizedSPropTagArray(cptaSvcProps, sptaSvcProps) = { cptaSvcProps, PR_SERVICE_UID,PR_SERVICE_NAME_A, PR_EMSMDB_SECTION_UID, PR_RESOURCE_FLAGS };
 
 		// Allocate memory for the restriction
-		EC_HRES_LOG(MAPIAllocateBuffer(
+		EC_HRES_MSG(MAPIAllocateBuffer(
 			sizeof(SRestriction),
-			(LPVOID*)&lpSvcRes), loggingMode);
+			(LPVOID*)&lpSvcRes), L"Calling MAPIAllocateBuffer");
 
-		EC_HRES_LOG(MAPIAllocateBuffer(
+		EC_HRES_MSG(MAPIAllocateBuffer(
 			sizeof(SRestriction) * 2,
-			(LPVOID*)&lpsvcResLvl1), loggingMode);
+			(LPVOID*)&lpsvcResLvl1), L"Calling MAPIAllocateBuffer");
 
-		EC_HRES_LOG(MAPIAllocateBuffer(
+		EC_HRES_MSG(MAPIAllocateBuffer(
 			sizeof(SRestriction) * 2,
-			(LPVOID*)&lpsvcResLvl2), loggingMode);
+			(LPVOID*)&lpsvcResLvl2), L"Calling MAPIAllocateBuffer");
 
-		EC_HRES_LOG(MAPIAllocateBuffer(
+		EC_HRES_MSG(MAPIAllocateBuffer(
 			sizeof(SPropValue),
-			(LPVOID*)&lpSvcPropVal1), loggingMode);
+			(LPVOID*)&lpSvcPropVal1), L"Calling MAPIAllocateBuffer");
 
-		EC_HRES_LOG(MAPIAllocateBuffer(
+		EC_HRES_MSG(MAPIAllocateBuffer(
 			sizeof(SPropValue),
-			(LPVOID*)&lpSvcPropVal2), loggingMode);
+			(LPVOID*)&lpSvcPropVal2), L"Calling MAPIAllocateBuffer");
 
 		// Set up restriction to query the profile table
 		lpSvcRes->rt = RES_AND;
@@ -1502,12 +894,12 @@ HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszNewPath, bool bMoveFile
 		lpSvcPropVal2->Value.lpszA = "MSUPST MS";
 
 		// Query the table to get the the default profile only
-		EC_HRES_LOG(HrQueryAllRows(lpServiceTable,
+		EC_HRES_MSG(HrQueryAllRows(lpServiceTable,
 			(LPSPropTagArray)&sptaSvcProps,
 			lpSvcRes,
 			NULL,
 			0,
-			&lpSvcRows), loggingMode);
+			&lpSvcRows), L"Calling HrQueryAllRows");
 
 		if (lpSvcRows->cRows > 0)
 		{
@@ -1534,17 +926,17 @@ HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszNewPath, bool bMoveFile
 					SizedSPropTagArray(cptaProvProps, sptaProvProps) = { cptaProvProps, PR_INSTANCE_KEY };
 
 					// Allocate memory for the restriction
-					EC_HRES_LOG(MAPIAllocateBuffer(
+					EC_HRES_MSG(MAPIAllocateBuffer(
 						sizeof(SRestriction),
-						(LPVOID*)&lpProvRes), loggingMode);
+						(LPVOID*)&lpProvRes), L"Calling MAPIAllocateBuffer");
 
-					EC_HRES_LOG(MAPIAllocateBuffer(
+					EC_HRES_MSG(MAPIAllocateBuffer(
 						sizeof(SRestriction) * 2,
-						(LPVOID*)&lpProvResLvl1), loggingMode);
+						(LPVOID*)&lpProvResLvl1), L"Calling MAPIAllocateBuffer");
 
-					EC_HRES_LOG(MAPIAllocateBuffer(
+					EC_HRES_MSG(MAPIAllocateBuffer(
 						sizeof(SPropValue),
-						(LPVOID*)&lpProvPropVal), loggingMode);
+						(LPVOID*)&lpProvPropVal), L"Calling MAPIAllocateBuffer");
 
 					// Set up restriction to query the provider table
 					lpProvRes->rt = RES_AND;
@@ -1567,12 +959,12 @@ HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszNewPath, bool bMoveFile
 						&lpProvTable);
 
 					// Query the table to get the the default profile only
-					EC_HRES_LOG(HrQueryAllRows(lpProvTable,
+					EC_HRES_MSG(HrQueryAllRows(lpProvTable,
 						(LPSPropTagArray)&sptaProvProps,
 						lpProvRes,
 						NULL,
 						0,
-						&lpProvRows), loggingMode);
+						&lpProvRows), L"Calling HrQueryAllRows");
 
 					if (lpProvRows->cRows > 0)
 					{
@@ -1608,7 +1000,7 @@ HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszNewPath, bool bMoveFile
 														{
 															wprintf(L"Updating path for data file named %s\n", pstPathW->Value.lpszW);
 															pstPathW[0].Value.lpszW = (LPWSTR)szCurrentPath.c_str();
-															EC_HRES_LOG(lpProfSection->SetProps(1, pstPathW, NULL), loggingMode);
+															EC_HRES_MSG(lpProfSection->SetProps(1, pstPathW, NULL), L"Calling SetProps");
 														}
 														else
 														{
@@ -1619,7 +1011,7 @@ HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszNewPath, bool bMoveFile
 													{
 														wprintf(L"Updating path for data file named %s\n", pstPathW->Value.lpszW);
 														pstPathW[0].Value.lpszW = (LPWSTR)szCurrentPath.c_str();
-														EC_HRES_LOG(lpProfSection->SetProps(1, pstPathW, NULL), loggingMode);
+														EC_HRES_MSG(lpProfSection->SetProps(1, pstPathW, NULL), L"Calling SetProps");
 													}
 												}
 											}
@@ -1667,7 +1059,6 @@ Cleanup:
 
 	return hRes;
 }
-
 
 HRESULT HrCreateProfile(LPWSTR lpszProfileName)
 {
@@ -1746,7 +1137,7 @@ HRESULT HrCreateProfile(LPWSTR lpszProfileName, LPSERVICEADMIN2 *lppSvcAdmin2)
 	}
 
 	// Get an IMsgServiceAdmin interface off of the IProfAdmin interface.
-	EC_HRES_MSG(hRes = lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpszProfileName),     // Profile that we want to modify.
+	EC_HRES_MSG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpszProfileName),     // Profile that we want to modify.
 		nullptr,          // Password for that profile.
 		0,          // Handle to parent window.
 		0,             // Flags.
@@ -1801,13 +1192,13 @@ Cleanup:
 }
 
 // Outlook 2016
-HRESULT HrCloneProfile(ProfileInfo * profileInfo, LoggingMode loggingMode)
+HRESULT HrCloneProfile(ProfileInfo * profileInfo)
 {
 	HRESULT hRes = S_OK;
 	LPSERVICEADMIN2 lpServiceAdmin = NULL;
 	unsigned int uiServiceIndex = 0;
 	profileInfo->wszProfileName = profileInfo->wszProfileName + L"_Clone";
-	Logger::Write(logLevelInfo, L"Creating new profile named: " + profileInfo->wszProfileName, loggingMode);
+	Logger::Write(logLevelInfo, L"Creating new profile named: " + profileInfo->wszProfileName);
 	EC_HRES_MSG(HrCreateProfile((LPWSTR)profileInfo->wszProfileName.c_str(), &lpServiceAdmin), L"Calling HrCreateProfile.");
 	for (unsigned int i = 0; i < profileInfo->ulServiceCount; i++)
 	{
@@ -1815,15 +1206,14 @@ HRESULT HrCloneProfile(ProfileInfo * profileInfo, LoggingMode loggingMode)
 		LPMAPIUID lpServiceUid = &uidService;
 		if (profileInfo->profileServices[i].ulServiceType == SERVICETYPE_MAILBOX)
 		{
-			Logger::Write(logLevelInfo, L"Adding exchange mailbox: " + profileInfo->profileServices[i].exchangeAccountInfo->wszEmailAddress, loggingMode);
+			Logger::Write(logLevelInfo, L"Adding exchange mailbox: " + profileInfo->profileServices[i].exchangeAccountInfo->wszEmailAddress);
 			EC_HRES_MSG(HrCreateMsemsServiceModernExt(TRUE,
-				(LPWSTR)GetDefaultProfileName(loggingMode).c_str(),
+				(LPWSTR)GetDefaultProfileName().c_str(),
 				profileInfo->profileServices[i].ulResourceFlags,
 				profileInfo->profileServices[i].exchangeAccountInfo->ulProfileConfigFlags,
 				profileInfo->profileServices[i].exchangeAccountInfo->iCachedModeMonths,
 				(LPWSTR)profileInfo->profileServices[i].exchangeAccountInfo->wszEmailAddress.c_str(),
-				(LPWSTR)profileInfo->profileServices[i].exchangeAccountInfo->wszDisplayName.c_str(),
-				loggingMode), L"Calling HrCreateMsemsServiceModernExt.");
+				(LPWSTR)profileInfo->profileServices[i].exchangeAccountInfo->wszDisplayName.c_str()), L"Calling HrCreateMsemsServiceModernExt.");
 
 			MAPIUID uidService = { 0 };
 			memcpy((LPVOID)&uidService, lpServiceUid, sizeof(MAPIUID));
@@ -1831,21 +1221,20 @@ HRESULT HrCloneProfile(ProfileInfo * profileInfo, LoggingMode loggingMode)
 			{
 				if (profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulProfileType == PROFILE_DELEGATE)
 				{
-					Logger::Write(logLevelInfo, L"Adding additional mailbox: " + profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress, loggingMode);
+					Logger::Write(logLevelInfo, L"Adding additional mailbox: " + profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress);
 					EC_HRES_MSG(HrAddDelegateMailboxModern(TRUE,
-						(LPWSTR)GetDefaultProfileName(loggingMode).c_str(),
+						(LPWSTR)GetDefaultProfileName().c_str(),
 						FALSE,
 						uiServiceIndex,
 						(LPWSTR)profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszDisplayName.c_str(),
-						(LPWSTR)profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress.c_str(),
-						loggingMode), L"Calling HrAddDelegateMailboxModern.");
+						(LPWSTR)profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress.c_str()), L"Calling HrAddDelegateMailboxModern.");
 				}
 			}
 			uiServiceIndex++;
 		}
 		else if (profileInfo->profileServices[i].ulServiceType == SERVICETYPE_PST)
 		{
-			Logger::Write(logLevelInfo, L"Adding PST file: " + profileInfo->profileServices[i].pstInfo->wszPstPath, loggingMode);
+			Logger::Write(logLevelInfo, L"Adding PST file: " + profileInfo->profileServices[i].pstInfo->wszPstPath);
 			EC_HRES_MSG(HrCreatePstService(lpServiceAdmin,
 				&lpServiceUid,
 				(LPWSTR)profileInfo->profileServices[i].wszServiceName.c_str(),
@@ -1858,7 +1247,7 @@ HRESULT HrCloneProfile(ProfileInfo * profileInfo, LoggingMode loggingMode)
 
 	}
 
-	Logger::Write(logLevelInfo, L"Setting profile as default.", loggingMode);
+	Logger::Write(logLevelInfo, L"Setting profile as default.");
 	EC_HRES_MSG(HrSetDefaultProfile((LPWSTR)profileInfo->wszProfileName.c_str()), L"Calling HrSetDefaultProfile.");
 	goto Cleanup;
 
@@ -1918,7 +1307,7 @@ VOID PrintProfile(ProfileInfo * profileInfo)
 
 }
 
-HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo, LoggingMode loggingMode)
+HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo)
 {
 	HRESULT hRes = S_OK;
 	profileInfo->wszProfileName = ConvertWideCharToStdWstring(lpszProfileName);
@@ -2701,15 +2090,14 @@ HRESULT HrAddDelegateMailboxModern(
 	BOOL bDefaultService,
 	int iServiceIndex,
 	LPWSTR lpszwDisplayName,
-	LPWSTR lpszwSMTPAddress,
-	LoggingMode loggingMode)
+	LPWSTR lpszwSMTPAddress)
 {
 
 	HRESULT hRes = S_OK;
 	LPPROFADMIN lpProfAdmin = NULL;
 
-	EC_HRES_LOG(MAPIAdminProfiles(0, // Flags
-		&lpProfAdmin), loggingMode); // Pointer to new IProfAdmin
+	EC_HRES_MSG(MAPIAdminProfiles(0, // Flags
+		&lpProfAdmin), L"Calling #"); // Pointer to new IProfAdmin
 
 									 // Begin process services
 	LPSERVICEADMIN lpServiceAdmin = NULL;
@@ -2717,7 +2105,7 @@ HRESULT HrAddDelegateMailboxModern(
 
 	if (bDefaultProfile)
 	{
-		lpwszProfileName = (LPWSTR)GetDefaultProfileName(loggingMode).c_str();
+		lpwszProfileName = (LPWSTR)GetDefaultProfileName().c_str();
 	}
 
 	EC_HRES_MSG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
@@ -2887,8 +2275,7 @@ HRESULT HrAddDelegateMailbox(BOOL bDefaultProfile,
 	LPWSTR lpRohProxyserver,
 	ULONG ulRohProxyServerFlags,
 	ULONG ulRohProxyServerAuthPackage,
-	LPWSTR lpwszMapiHttpMailStoreInternalUrl,
-	LoggingMode loggingMode)
+	LPWSTR lpwszMapiHttpMailStoreInternalUrl)
 {
 	HRESULT hRes = S_OK; // Result code returned from MAPI calls.
 	SPropValue rgval[5]; // Property value structure to hold configuration info.
@@ -2904,7 +2291,7 @@ HRESULT HrAddDelegateMailbox(BOOL bDefaultProfile,
 
 	if (bDefaultProfile)
 	{
-		lpwszProfileName = (LPWSTR)GetDefaultProfileName(loggingMode).c_str();
+		lpwszProfileName = (LPWSTR)GetDefaultProfileName().c_str();
 	}
 
 	EC_HRES_MSG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
@@ -3093,8 +2480,7 @@ HRESULT HrAddDelegateMailboxLegacy(BOOL bDefaultProfile,
 	LPWSTR lpszwMailboxDisplay,
 	LPWSTR lpszwMailboxDN,
 	LPWSTR lpszwServer,
-	LPWSTR lpszwServerDN,
-	LoggingMode loggingMode)
+	LPWSTR lpszwServerDN)
 {
 	HRESULT hRes = S_OK; // Result code returned from MAPI calls.
 	SPropValue rgval[4]; // Property value structure to hold configuration info.
@@ -3114,7 +2500,7 @@ HRESULT HrAddDelegateMailboxLegacy(BOOL bDefaultProfile,
 
 	if (bDefaultProfile)
 	{
-		lpwszProfileName = (LPWSTR)GetDefaultProfileName(loggingMode).c_str();
+		lpwszProfileName = (LPWSTR)GetDefaultProfileName().c_str();
 	}
 
 	EC_HRES_MSG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
@@ -3279,23 +2665,23 @@ cleanup:
 
 // HrGetDefaultMsemsServiceAdminProviderPtr
 // Returns the provider admin interface pointer for the default service in a given profile
-HRESULT HrGetDefaultMsemsServiceAdminProviderPtr(LPWSTR lpwszProfileName, LPPROVIDERADMIN * lppProvAdmin, LPMAPIUID * lppServiceUid, LoggingMode loggingMode)
+HRESULT HrGetDefaultMsemsServiceAdminProviderPtr(LPWSTR lpwszProfileName, LPPROVIDERADMIN * lppProvAdmin, LPMAPIUID * lppServiceUid)
 {
 	HRESULT hRes = S_OK;
 	LPPROFADMIN lpProfAdmin = NULL;     // Profile Admin pointer
 
-	EC_HRES_LOG(MAPIAdminProfiles(0, // Flags
-		&lpProfAdmin), loggingMode); // Pointer to new IProfAdmin
+	EC_HRES_MSG(MAPIAdminProfiles(0, // Flags
+		&lpProfAdmin), L"Calling #"); // Pointer to new IProfAdmin
 									 // Get an IProfAdmin interface.
 
 									 // Begin process services
 	LPSERVICEADMIN lpServiceAdmin = NULL;
 	LPMAPITABLE lpServiceTable = NULL;
-	EC_HRES_LOG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
+	EC_HRES_MSG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
 		LPTSTR(""),            // Password for that profile.
 		NULL,                // Handle to parent window.
 		0,                    // Flags.
-		&lpServiceAdmin), loggingMode);        // Pointer to new IMsgServiceAdmin.
+		&lpServiceAdmin), L"Calling #");        // Pointer to new IMsgServiceAdmin.
 
 	if (lpServiceAdmin)
 	{
@@ -3311,17 +2697,17 @@ HRESULT HrGetDefaultMsemsServiceAdminProviderPtr(LPWSTR lpwszProfileName, LPPROV
 		SizedSPropTagArray(cptaSvcProps, sptaSvcProps) = { cptaSvcProps, PR_SERVICE_UID, PR_RESOURCE_FLAGS };
 
 		// Allocate memory for the restriction
-		EC_HRES_LOG(MAPIAllocateBuffer(
+		EC_HRES_MSG(MAPIAllocateBuffer(
 			sizeof(SRestriction),
-			(LPVOID*)&lpSvcRes), loggingMode);
+			(LPVOID*)&lpSvcRes), L"Calling #");
 
-		EC_HRES_LOG(MAPIAllocateBuffer(
+		EC_HRES_MSG(MAPIAllocateBuffer(
 			sizeof(SRestriction) * 2,
-			(LPVOID*)&lpsvcResLvl1), loggingMode);
+			(LPVOID*)&lpsvcResLvl1), L"Calling #");
 
-		EC_HRES_LOG(MAPIAllocateBuffer(
+		EC_HRES_MSG(MAPIAllocateBuffer(
 			sizeof(SPropValue),
-			(LPVOID*)&lpSvcPropVal), loggingMode);
+			(LPVOID*)&lpSvcPropVal), L"Calling #");
 
 		// Set up restriction to query the profile table
 		lpSvcRes->rt = RES_AND;
@@ -3341,12 +2727,12 @@ HRESULT HrGetDefaultMsemsServiceAdminProviderPtr(LPWSTR lpwszProfileName, LPPROV
 		lpSvcPropVal->Value.lpszA = "MSEMS";
 
 		// Query the table to get the the default profile only
-		EC_HRES_LOG(HrQueryAllRows(lpServiceTable,
+		EC_HRES_MSG(HrQueryAllRows(lpServiceTable,
 			(LPSPropTagArray)&sptaSvcProps,
 			lpSvcRes,
 			NULL,
 			0,
-			&lpSvcRows), loggingMode);
+			&lpSvcRows), L"Calling #");
 
 		if (lpSvcRows->cRows > 0)
 		{
@@ -3480,8 +2866,7 @@ HRESULT HrCreateMsemsServiceModernExt(BOOL bDefaultProfile,
 	ULONG ulProfileConfigFlags,
 	ULONG ulCachedModeMonths,
 	LPWSTR lpszSmtpAddress,
-	LPWSTR lpszDisplayName,
-	LoggingMode loggingMode)
+	LPWSTR lpszDisplayName)
 {
 	HRESULT			hRes = S_OK; // Result code returned from MAPI calls.
 	SPropValue		rgvalEmsMdbSect[7]; // Property value structure to hold configuration info.
@@ -3498,20 +2883,20 @@ HRESULT HrCreateMsemsServiceModernExt(BOOL bDefaultProfile,
 	LPSERVICEADMIN2 lpServiceAdmin2 = NULL;
 	LPMAPITABLE lpServiceTable = NULL;
 
-	EC_HRES_LOG(MAPIAdminProfiles(0, // Flags
-		&lpProfAdmin), loggingMode); // Pointer to new IProfAdmin
+	EC_HRES_MSG(MAPIAdminProfiles(0, // Flags
+		&lpProfAdmin), L"Calling #"); // Pointer to new IProfAdmin
 
 									 // Begin process services
 	if (bDefaultProfile)
 	{
-		lpwszProfileName = (LPWSTR)GetDefaultProfileName(loggingMode).c_str();
+		lpwszProfileName = (LPWSTR)GetDefaultProfileName().c_str();
 	}
 
-	EC_HRES_LOG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
+	EC_HRES_MSG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
 		LPTSTR(""),            // Password for that profile.
 		NULL,                // Handle to parent window.
 		0,                    // Flags.
-		&lpServiceAdmin), loggingMode);        // Pointer to new IMsgServiceAdmin.
+		&lpServiceAdmin), L"Calling #");        // Pointer to new IMsgServiceAdmin.
 
 	if (lpServiceAdmin)
 	{
@@ -3652,8 +3037,7 @@ Cleanup:
 HRESULT HrCreateMsemsServiceModern(BOOL bDefaultProfile,
 	LPWSTR lpwszProfileName,
 	LPWSTR lpszSmtpAddress,
-	LPWSTR lpszDisplayName,
-	LoggingMode loggingMode)
+	LPWSTR lpszDisplayName	)
 {
 	HRESULT			hRes = S_OK; // Result code returned from MAPI calls.
 	SPropValue		rgvalEmsMdbSect[5]; // Property value structure to hold configuration info.
@@ -3670,21 +3054,21 @@ HRESULT HrCreateMsemsServiceModern(BOOL bDefaultProfile,
 	LPSERVICEADMIN2 lpServiceAdmin2 = NULL;
 	LPMAPITABLE lpServiceTable = NULL;
 
-	EC_HRES_LOG(MAPIAdminProfiles(0, // Flags
-		&lpProfAdmin), loggingMode); // Pointer to new IProfAdmin
+	EC_HRES_MSG(MAPIAdminProfiles(0, // Flags
+		&lpProfAdmin), L"Calling #"); // Pointer to new IProfAdmin
 
 									 // Begin process services
 
 	if (bDefaultProfile)
 	{
-		lpwszProfileName = (LPWSTR)GetDefaultProfileName(loggingMode).c_str();
+		lpwszProfileName = (LPWSTR)GetDefaultProfileName().c_str();
 	}
 
-	EC_HRES_LOG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
+	EC_HRES_MSG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
 		LPTSTR(""),            // Password for that profile.
 		NULL,                // Handle to parent window.
 		0,                    // Flags.
-		&lpServiceAdmin), loggingMode);        // Pointer to new IMsgServiceAdmin.
+		&lpServiceAdmin), L"Calling #");        // Pointer to new IMsgServiceAdmin.
 
 	if (lpServiceAdmin)
 	{
@@ -3789,8 +3173,7 @@ Cleanup:
 HRESULT HrCreateMsemsServiceLegacyUnresolved(BOOL bDefaultProfile,
 	LPWSTR lpwszProfileName,
 	LPWSTR lpszwMailboxDN,
-	LPWSTR lpszwServer,
-	LoggingMode loggingMode)
+	LPWSTR lpszwServer)
 {
 	HRESULT hRes = S_OK; // Result code returned from MAPI calls.
 	LPPROFADMIN lpProfAdmin = NULL; // Profile Admin pointer.
@@ -3812,22 +3195,22 @@ HRESULT HrCreateMsemsServiceLegacyUnresolved(BOOL bDefaultProfile,
 
 
 
-	EC_HRES_LOG(MAPIAdminProfiles(0, // Flags
-		&lpProfAdmin), loggingMode); // Pointer to new IProfAdmin
+	EC_HRES_MSG(MAPIAdminProfiles(0, // Flags
+		&lpProfAdmin), L"Calling #"); // Pointer to new IProfAdmin
 
 									 // Begin process services
 
 
 	if (bDefaultProfile)
 	{
-		lpwszProfileName = (LPWSTR)GetDefaultProfileName(loggingMode).c_str();
+		lpwszProfileName = (LPWSTR)GetDefaultProfileName().c_str();
 	}
 
-	EC_HRES_LOG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
+	EC_HRES_MSG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
 		LPTSTR(""),            // Password for that profile.
 		NULL,                // Handle to parent window.
 		0,                    // Flags.
-		&lpServiceAdmin), loggingMode);        // Pointer to new IMsgServiceAdmin.
+		&lpServiceAdmin), L"Calling #");        // Pointer to new IMsgServiceAdmin.
 
 	if (lpServiceAdmin)
 	{
@@ -3896,8 +3279,7 @@ HRESULT HrCreateMsemsServiceROH(BOOL bDefaultProfile,
 	LPWSTR lpszUnresolvedServer,
 	LPWSTR lpszRohProxyServer,
 	LPWSTR lpszProfileServerDn,
-	LPWSTR lpszAutodiscoverUrl,
-	LoggingMode loggingMode)
+	LPWSTR lpszAutodiscoverUrl)
 {
 	HRESULT hRes = S_OK; // Result code returned from MAPI calls.
 	SPropValue rgvalSvc[10];
@@ -3927,21 +3309,21 @@ HRESULT HrCreateMsemsServiceROH(BOOL bDefaultProfile,
 	LPSERVICEADMIN2 lpServiceAdmin2 = NULL;
 	LPMAPITABLE lpServiceTable = NULL;
 
-	EC_HRES_LOG(MAPIAdminProfiles(0, // Flags
-		&lpProfAdmin), loggingMode); // Pointer to new IProfAdmin
+	EC_HRES_MSG(MAPIAdminProfiles(0, // Flags
+		&lpProfAdmin), L"Calling MAPIAdminProfiles"); // Pointer to new IProfAdmin
 
 									 // Begin process services
 
 	if (bDefaultProfile)
 	{
-		lpwszProfileName = (LPWSTR)GetDefaultProfileName(loggingMode).c_str();
+		lpwszProfileName = (LPWSTR)GetDefaultProfileName().c_str();
 	}
 
-	EC_HRES_LOG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
+	EC_HRES_MSG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
 		LPTSTR(""),            // Password for that profile.
 		NULL,                // Handle to parent window.
 		0,                    // Flags.
-		&lpServiceAdmin), loggingMode);        // Pointer to new IMsgServiceAdmin.
+		&lpServiceAdmin), L"Calling AdminServices");        // Pointer to new IMsgServiceAdmin.
 
 	if (lpServiceAdmin)
 	{
@@ -4233,8 +3615,7 @@ HRESULT HrCreateMsemsServiceMOH(BOOL bDefaultProfile,
 	LPWSTR lpszMailStoreExternalUrl,
 	LPWSTR lpszAddressBookInternalUrl,
 	LPWSTR lpszAddressBookExternalUrl,
-	LPWSTR lpszRohProxyServer,
-	LoggingMode loggingMode)
+	LPWSTR lpszRohProxyServer)
 {
 	HRESULT hRes = S_OK; // Result code returned from MAPI calls.
 	SPropValue rgvalSvc[5];
@@ -4264,8 +3645,8 @@ HRESULT HrCreateMsemsServiceMOH(BOOL bDefaultProfile,
 	//SizedSPropTagArray(1, sptGlobal) = { 1, PR_STORE_PROVIDERS };
 	LPPROFADMIN lpProfAdmin = NULL;
 
-	EC_HRES_LOG(MAPIAdminProfiles(0, // Flags
-		&lpProfAdmin), loggingMode); // Pointer to new IProfAdmin
+	EC_HRES_MSG(MAPIAdminProfiles(0, // Flags
+		&lpProfAdmin), L"Calling #"); // Pointer to new IProfAdmin
 
 									 // Begin process services
 	LPSERVICEADMIN lpServiceAdmin = NULL;
@@ -4274,14 +3655,14 @@ HRESULT HrCreateMsemsServiceMOH(BOOL bDefaultProfile,
 
 	if (bDefaultProfile)
 	{
-		lpwszProfileName = (LPWSTR)GetDefaultProfileName(loggingMode).c_str();
+		lpwszProfileName = (LPWSTR)GetDefaultProfileName().c_str();
 	}
 
-	EC_HRES_LOG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
+	EC_HRES_MSG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
 		LPTSTR(""),            // Password for that profile.
 		NULL,                // Handle to parent window.
 		0,                    // Flags.
-		&lpServiceAdmin), loggingMode);        // Pointer to new IMsgServiceAdmin.
+		&lpServiceAdmin), L"Calling #");        // Pointer to new IMsgServiceAdmin.
 
 	if (lpServiceAdmin)
 	{
@@ -4472,25 +3853,25 @@ cleanup:
 #pragma endregion
 
 
-HRESULT HrPromoteDelegates(LPWSTR lpwszProfileName, BOOL bDefaultProfile, BOOL bAllProfiles, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, int iOutlookVersion, ULONG ulConnectMode, LoggingMode loggingMode)
+HRESULT HrPromoteDelegates(LPWSTR lpwszProfileName, BOOL bDefaultProfile, BOOL bAllProfiles, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, int iOutlookVersion, ULONG ulConnectMode)
 {
 	HRESULT hRes = S_OK;
 
 	if (bDefaultProfile)
 	{
 		ProfileInfo * profileInfo = new ProfileInfo();
-		EC_HRES_MSG(HrGetProfile((LPWSTR)GetDefaultProfileName(loggingMode).c_str(), profileInfo, loggingMode), L"Calling GetProfile");
-		EC_HRES_MSG(HrPromoteDelegatesInProfile((LPWSTR)profileInfo->wszProfileName.c_str(), profileInfo, iServiceIndex, bDefaultProfile, bAllServices, iOutlookVersion, ulConnectMode, loggingMode), L"Calling HrPromoteDelegatesInProfile");
+		EC_HRES_MSG(HrGetProfile((LPWSTR)GetDefaultProfileName().c_str(), profileInfo), L"Calling GetProfile");
+		EC_HRES_MSG(HrPromoteDelegatesInProfile((LPWSTR)profileInfo->wszProfileName.c_str(), profileInfo, iServiceIndex, bDefaultProfile, bAllServices, iOutlookVersion, ulConnectMode), L"Calling HrPromoteDelegatesInProfile");
 
 	}
 	else if (bAllProfiles)
 	{
-		ULONG ulProfileCount = GetProfileCount(loggingMode);
+		ULONG ulProfileCount = GetProfileCount();
 		ProfileInfo * profileInfo = new ProfileInfo[ulProfileCount];
-		hRes = HrGetProfiles(ulProfileCount, profileInfo, loggingMode);
+		hRes = HrGetProfiles(ulProfileCount, profileInfo);
 		for (int i = 0; i <= ulProfileCount; i++)
 		{
-			HrPromoteDelegatesInProfile((LPWSTR)profileInfo[i].wszProfileName.c_str(), &profileInfo[i], iServiceIndex, bDefaultProfile, bAllServices, iOutlookVersion, ulConnectMode, loggingMode);
+			HrPromoteDelegatesInProfile((LPWSTR)profileInfo[i].wszProfileName.c_str(), &profileInfo[i], iServiceIndex, bDefaultProfile, bAllServices, iOutlookVersion, ulConnectMode);
 		}
 	}
 	else
@@ -4498,8 +3879,8 @@ HRESULT HrPromoteDelegates(LPWSTR lpwszProfileName, BOOL bDefaultProfile, BOOL b
 		if (lpwszProfileName)
 		{
 			ProfileInfo * profileInfo = new ProfileInfo();
-			hRes = HrGetProfile(lpwszProfileName, profileInfo, loggingMode);
-			HrPromoteDelegatesInProfile((LPWSTR)profileInfo->wszProfileName.c_str(), profileInfo, iServiceIndex, bDefaultProfile, bAllServices, iOutlookVersion, ulConnectMode, loggingMode);
+			hRes = HrGetProfile(lpwszProfileName, profileInfo);
+			HrPromoteDelegatesInProfile((LPWSTR)profileInfo->wszProfileName.c_str(), profileInfo, iServiceIndex, bDefaultProfile, bAllServices, iOutlookVersion, ulConnectMode);
 
 		}
 		else
@@ -4511,7 +3892,7 @@ Error:
 	return hRes;
 }
 
-HRESULT HrPromoteDelegatesInProfile(LPWSTR profileName, ProfileInfo * pProfileInfo, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, int iOutlookVersion, ULONG ulConnectMode, LoggingMode loggingMode)
+HRESULT HrPromoteDelegatesInProfile(LPWSTR lpwszProfileName, ProfileInfo * pProfileInfo, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, int iOutlookVersion, ULONG ulConnectMode)
 {
 	HRESULT hRes = S_OK;
 
@@ -4527,70 +3908,7 @@ HRESULT HrPromoteDelegatesInProfile(LPWSTR profileName, ProfileInfo * pProfileIn
 					{
 						if (pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulProfileType == PROFILE_DELEGATE)
 						{
-							switch (iOutlookVersion)
-							{
-							case 2007:
-								if (SUCCEEDED(HrCreateMsemsServiceLegacyUnresolved(FALSE,
-									profileName,
-									(LPWSTR)pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszProfileMailbox.c_str(),
-									(LPWSTR)pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszProfileServer.c_str(),
-									loggingMode)))
-								{
-									EC_HRES_MSG(HrDeleteProvider(profileName, &pProfileInfo->profileServices[i].muidServiceUid, &pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].muidProviderUid, loggingMode), L"Calling HrDeleteProvider");
-								}
-								break;
-							case 2010:
-							case 2013:
-								if (ulConnectMode == CONNECT_ROH)
-								{
-
-									std::wstring wszParsedSmtpAddress = SubstringToEnd(L"smtp:", pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress);
-									std::wstring wszPersonalisedServerName = SubstringToEnd(L"MailboxId=", pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszMailStoreInternalUrl);
-									std::wstring wszServerDN = SubstringFromStart(L"cn=Recipients", pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszProfileMailbox) + L"/cn=Configuration/cn=Servers/cn=" + wszPersonalisedServerName;
-									if (SUCCEEDED(HrCreateMsemsServiceROH(FALSE,
-										profileName,
-										(LPWSTR)wszParsedSmtpAddress.c_str(),
-										(LPWSTR)pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszProfileMailbox.c_str(),
-										(LPWSTR)wszPersonalisedServerName.c_str(),
-										(LPWSTR)pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszRohProxyServer.c_str(),
-										(LPWSTR)wszServerDN.c_str(),
-										(LPWSTR)NULL,
-										loggingMode)))
-									{
-										EC_HRES_MSG(HrDeleteProvider(profileName, &pProfileInfo->profileServices[i].muidServiceUid, &pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].muidProviderUid, loggingMode), L"Calling HrDeleteProvider");
-									}
-								}
-								else if (ulConnectMode == CONNECT_MOH)
-								{
-
-									if (SUCCEEDED(HrCreateMsemsServiceMOH(FALSE,
-										profileName,
-										(LPWSTR)SubstringToEnd(L"smtp:", pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress).c_str(),
-										(LPWSTR)pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszProfileMailbox.c_str(),
-										(LPWSTR)pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszMailStoreInternalUrl.c_str(),
-										NULL,
-										NULL,
-										NULL,
-										(LPWSTR)pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszRohProxyServer.c_str(),
-										loggingMode)))
-									{
-										EC_HRES_MSG(HrDeleteProvider(profileName, &pProfileInfo->profileServices[i].muidServiceUid, &pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].muidProviderUid, loggingMode), L"Calling HrDeleteProvider");
-									}
-								}
-
-								break;
-							case 2016:
-								if (SUCCEEDED(HrCreateMsemsServiceModern(FALSE,
-									profileName,
-									(LPWSTR)SubstringToEnd(L"smtp:", pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress).c_str(),
-									(LPWSTR)SubstringToEnd(L"smtp:", pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress).c_str(),
-									loggingMode)))
-								{
-									EC_HRES_MSG(HrDeleteProvider(profileName, &pProfileInfo->profileServices[i].muidServiceUid, &pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].muidProviderUid, loggingMode), L"Calling HrDeleteProvider");
-								}
-
-								break;
-							}
+							EC_HRES_MSG(HrPromoteDelegate(lpwszProfileName, iOutlookVersion, ulConnectMode, pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j]), L"Calling HrPromoteDelegate");
 						}
 					}
 				}
@@ -4602,24 +3920,7 @@ HRESULT HrPromoteDelegatesInProfile(LPWSTR profileName, ProfileInfo * pProfileIn
 						{
 							if (pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->accountMailboxes[j].ulProfileType == PROFILE_DELEGATE)
 							{
-								switch (iOutlookVersion)
-								{
-								case 2007:
-								case 2010:
-									if (SUCCEEDED(HrCreateMsemsServiceLegacyUnresolved(FALSE,
-										profileName,
-										(LPWSTR)pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->accountMailboxes[j].wszProfileMailbox.c_str(),
-										(LPWSTR)pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->accountMailboxes[j].wszProfileServer.c_str(),
-										loggingMode)))
-									{
-										EC_HRES_MSG(HrDeleteProvider(profileName, &pProfileInfo->profileServices[iServiceIndex].muidServiceUid, &pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->accountMailboxes[j].muidProviderUid, loggingMode), L"Calling HrDeleteProvider");
-									}
-									break;
-								case 2013:
-								case 2016:
-									break;
-								}
-
+								EC_HRES_MSG(HrPromoteDelegate(lpwszProfileName, iOutlookVersion, ulConnectMode, pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->accountMailboxes[j]), L"Calling HrPromoteDelegate");
 							}
 						}
 					}
@@ -4632,24 +3933,7 @@ HRESULT HrPromoteDelegatesInProfile(LPWSTR profileName, ProfileInfo * pProfileIn
 						{
 							if (pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->accountMailboxes[j].ulProfileType == PROFILE_DELEGATE)
 							{
-								switch (iOutlookVersion)
-								{
-								case 2007:
-								case 2010:
-									if (SUCCEEDED(HrCreateMsemsServiceLegacyUnresolved(FALSE,
-										profileName,
-										(LPWSTR)pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->accountMailboxes[j].wszProfileMailbox.c_str(),
-										(LPWSTR)pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->accountMailboxes[j].wszProfileServer.c_str(),
-										loggingMode)))
-									{
-										EC_HRES_MSG(HrDeleteProvider(profileName, &pProfileInfo->profileServices[i].muidServiceUid, &pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].muidProviderUid, loggingMode), L"Calling HrDeleteProvider");
-									}
-									break;
-								case 2013:
-								case 2016:
-									break;
-								}
-
+								EC_HRES_MSG(HrPromoteDelegate(lpwszProfileName, iOutlookVersion, ulConnectMode, pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j]), L"Calling HrPromoteDelegate");
 							}
 						}
 					}
@@ -4663,31 +3947,113 @@ Cleanup:
 	return hRes;
 }
 
+HRESULT HrPromoteDelegate(LPWSTR lpwszProfileName, int iOutlookVersion, ULONG ulConnectMode, MailboxInfo mailboxInfo)
+{
+	HRESULT hRes = S_OK;
+	switch (iOutlookVersion)
+	{
+	case 2007:
+		// I haven't tested this so best not use it
+		//if (SUCCEEDED(HrCreateMsemsServiceLegacyUnresolved(FALSE,
+		//	profileName,
+		//	(LPWSTR)mailboxInfo.wszProfileMailbox.c_str(),
+		//	(LPWSTR)mailboxInfo.wszProfileServer.c_str(),
+		//	loggingMode)))
+		//{
+		//	EC_HRES_MSG(HrDeleteProvider(profileName, &pProfileInfo->profileServices[i].muidServiceUid, &mailboxInfo.muidProviderUid, loggingMode), L"Calling HrDeleteProvider");
+		//}
+		Logger::Write(logLevelError, L"This client version is not currently supported.");
+		break;
+	case 2010:
+	case 2013:
+		if (ulConnectMode == CONNECT_ROH)
+		{
+			// This id a bit of a hack since delegate mailboxes don't need to have the personalised server name in the delegate provider
+			// I'm just creating these based on the legacyDN and the MailStore so best check that those have value
+			Logger::Write(logLevelError, L"Validating delegate information.");
+			if ((mailboxInfo.wszMailStoreInternalUrl != L"") && (mailboxInfo.wszProfileMailbox != L""))
+			{
+				std::wstring wszParsedSmtpAddress = SubstringToEnd(L"smtp:", mailboxInfo.wszSmtpAddress);
+				std::wstring wszPersonalisedServerName = SubstringToEnd(L"MailboxId=", mailboxInfo.wszMailStoreInternalUrl);
+				std::wstring wszServerDN = SubstringFromStart(L"cn=Recipients", mailboxInfo.wszProfileMailbox) + L"/cn=Configuration/cn=Servers/cn=" + wszPersonalisedServerName;
 
+				Logger::Write(logLevelInfo, L"Creating and configuring new ROH service.");
+				if (SUCCEEDED(HrCreateMsemsServiceROH(FALSE,
+					lpwszProfileName,
+					(LPWSTR)wszParsedSmtpAddress.c_str(),
+					(LPWSTR)mailboxInfo.wszProfileMailbox.c_str(),
+					(LPWSTR)wszPersonalisedServerName.c_str(),
+					(LPWSTR)mailboxInfo.wszRohProxyServer.c_str(),
+					(LPWSTR)wszServerDN.c_str(),
+					(LPWSTR)NULL)))
+				{
+					EC_HRES_MSG(HrDeleteProvider(lpwszProfileName, &mailboxInfo.muidServiceUid, &mailboxInfo.muidProviderUid), L"Calling HrDeleteProvider");
+				}
+			}
+			else
+				Logger::Write(logLevelError, L"Not enough information in the profile for ROH mailbox.");
+		}
+		// best not be used for now as I haven't sorted it out
+		else if (ulConnectMode == CONNECT_MOH)
+		{
+			Logger::Write(logLevelError, L"MOH logic is not currently available.");
+			//if (SUCCEEDED(HrCreateMsemsServiceMOH(FALSE,
+			//	profileName,
+			//	(LPWSTR)SubstringToEnd(L"smtp:", mailboxInfo.wszSmtpAddress).c_str(),
+			//	(LPWSTR)mailboxInfo.wszProfileMailbox.c_str(),
+			//	(LPWSTR)mailboxInfo.wszMailStoreInternalUrl.c_str(),
+			//	NULL,
+			//	NULL,
+			//	NULL,
+			//	(LPWSTR)mailboxInfo.wszRohProxyServer.c_str(),
+			//	loggingMode)))
+			//{
+			//	EC_HRES_MSG(HrDeleteProvider(profileName, &pProfileInfo->profileServices[i].muidServiceUid, &mailboxInfo.muidProviderUid, loggingMode), L"Calling HrDeleteProvider");
+			//}
+		}
+
+		break;
+	case 2016:
+		Logger::Write(logLevelInfo, L"Creating and configuring new service.");
+		if (SUCCEEDED(HrCreateMsemsServiceModern(FALSE,
+			lpwszProfileName,
+			(LPWSTR)SubstringToEnd(L"smtp:", mailboxInfo.wszSmtpAddress).c_str(),
+			(LPWSTR)SubstringToEnd(L"smtp:", mailboxInfo.wszSmtpAddress).c_str())))
+		{
+			EC_HRES_MSG(HrDeleteProvider(lpwszProfileName, &mailboxInfo.muidServiceUid, &mailboxInfo.muidProviderUid), L"Calling HrDeleteProvider");
+		}
+
+		break;
+	}
+
+Error:
+Cleanup:
+	return hRes;
+}
 // HrDeleteProvider
 // Deletes the provider with the specified UID from the service with the specified UID in a given profile
-HRESULT HrDeleteProvider(LPWSTR lpwszProfileName, LPMAPIUID lpServiceUid, LPMAPIUID lpProviderUid, LoggingMode loggingMode)
+HRESULT HrDeleteProvider(LPWSTR lpwszProfileName, LPMAPIUID lpServiceUid, LPMAPIUID lpProviderUid)
 {
 	HRESULT hRes = S_OK;
 	LPPROFADMIN lpProfAdmin = NULL;
 	LPSERVICEADMIN lpServiceAdmin = NULL;
 	LPPROVIDERADMIN lpProviderAdmin = NULL;
 
-	EC_HRES_LOG(MAPIAdminProfiles(0, // Flags
-		&lpProfAdmin), loggingMode); // Pointer to new IProfAdmin
+	EC_HRES_MSG(MAPIAdminProfiles(0, // Flags
+		&lpProfAdmin), L"Calling MAPIAdminProfiles"); // Pointer to new IProfAdmin
 
-	EC_HRES_LOG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
+	EC_HRES_MSG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
 		LPTSTR(""),            // Password for that profile.
 		NULL,                // Handle to parent window.
 		0,                    // Flags.
-		&lpServiceAdmin), loggingMode);        // Pointer to new IMsgServiceAdmin.
+		&lpServiceAdmin), L"Calling AdminServices");        // Pointer to new IMsgServiceAdmin.
 
 	if (lpServiceAdmin)
 	{
-		EC_HRES_LOG(lpServiceAdmin->AdminProviders(lpServiceUid, NULL, &lpProviderAdmin), loggingMode);
+		EC_HRES_MSG(lpServiceAdmin->AdminProviders(lpServiceUid, NULL, &lpProviderAdmin), L"Calling AdminProviders");
 		if (lpProviderAdmin)
 		{
-			EC_HRES_LOG(lpProviderAdmin->DeleteProvider(lpProviderUid), loggingMode);
+			EC_HRES_MSG(lpProviderAdmin->DeleteProvider(lpProviderUid), L"Calling DeleteProvider");
 		}
 	}
 

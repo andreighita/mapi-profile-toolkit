@@ -78,12 +78,14 @@ enum
 	INPUTMODE_USERINPUT, 
 	INPUTMODE_ACTIVEDIRECTORY 
 };
+
+// Make sure any changes in here are reflected in Logger.h as well
 enum 
 { 
-	LOGGINGODE_CONSOLE_AND_FILE, 
+	LOGGINGMODE_NONE,
 	LOGGINGMODE_CONSOLE, 
 	LOGGINGMODE_FILE, 
-	LOGGINGMODE_NONE 
+	LOGGINGODE_CONSOLE_AND_FILE
 };
 
 struct ProfileOptions
