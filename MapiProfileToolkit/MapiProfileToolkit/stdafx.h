@@ -58,10 +58,11 @@
 #define EC_HRES_MSG(_hRes, wszMessage) \
 	do { \
 		hRes = _hRes; \
+		Logger::Write(logLevelInfo, wszMessage); \
 		if (FAILED(hRes)) \
 																		{ \
 			std::wostringstream oss; \
-			oss << L"Method: " << __FUNCTIONW__ << L"\n Message: "<< wszMessage << L"\nFile: " << __FILE__ << L"\nLine:  " << std::dec << __LINE__ << L"\nError: " << std::hex << _hRes ; \
+			oss << L"Method: " << __FUNCTIONW__ << L"\nFile: " << __FILE__ << L"\nLine:  " << std::dec << __LINE__ << L"\nError: " << std::hex << _hRes ; \
 			Logger::Write(logLevelError, oss.str()); \
 			goto Error; \
 																		} \

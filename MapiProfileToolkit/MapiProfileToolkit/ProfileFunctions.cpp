@@ -210,7 +210,9 @@ Cleanup:
 	return hRes;
 }
 
-HRESULT UpdateCachedModeConfig(LPSTR lpszProfileName, ULONG ulSectionIndex, ULONG ulCachedModeOwner, ULONG ulCachedModeShared, ULONG ulCachedModePublicFolders, int iCachedModeMonths)
+
+
+HRESULT HrSetCachedModeOneService(LPSTR lpszProfileName, LPMAPIUID lpServiceUid, bool bCachedModeOwner, bool bCachedModeShared, bool bCachedModePublicFolders, int iCachedModeMonths)
 {
 	HRESULT hRes = S_OK;
 	LPPROFADMIN lpProfAdmin = NULL;     // Profile Admin pointer
@@ -221,7 +223,6 @@ HRESULT UpdateCachedModeConfig(LPSTR lpszProfileName, ULONG ulSectionIndex, ULON
 
 									 // Begin process services
 	LPSERVICEADMIN lpServiceAdmin = NULL;
-	LPMAPITABLE lpServiceTable = NULL;
 	EC_HRES_MSG(lpProfAdmin->AdminServices((LPTSTR)lpszProfileName,
 		LPTSTR(""),            // Password for that profile.
 		NULL,                // Handle to parent window.
@@ -230,204 +231,135 @@ HRESULT UpdateCachedModeConfig(LPSTR lpszProfileName, ULONG ulSectionIndex, ULON
 
 	if (lpServiceAdmin)
 	{
-		lpServiceAdmin->GetMsgServiceTable(0,
-			&lpServiceTable);
-		LPSRestriction lpSvcRes = NULL;
-		LPSRestriction lpsvcResLvl1 = NULL;
-		LPSPropValue lpSvcPropVal = NULL;
-		LPSRowSet lpSvcRows = NULL;
-
-		// Setting up an enum and a prop tag array with the props we'll use
-		enum { iServiceUid, iServiceName, iEmsMdbSectUid, iServiceResFlags, cptaSvcProps };
-		SizedSPropTagArray(cptaSvcProps, sptaSvcProps) = { cptaSvcProps, PR_SERVICE_UID,PR_SERVICE_NAME_A, PR_EMSMDB_SECTION_UID, PR_RESOURCE_FLAGS };
-
-		// Allocate memory for the restriction
-		EC_HRES_MSG(MAPIAllocateBuffer(
-			sizeof(SRestriction),
-			(LPVOID*)&lpSvcRes), L"Calling MAPIAllocateBuffer");
-
-		EC_HRES_MSG(MAPIAllocateBuffer(
-			sizeof(SRestriction) * 2,
-			(LPVOID*)&lpsvcResLvl1), L"Calling MAPIAllocateBuffer");
-
-		EC_HRES_MSG(MAPIAllocateBuffer(
-			sizeof(SPropValue),
-			(LPVOID*)&lpSvcPropVal), L"Calling MAPIAllocateBuffer");
-
-		// Set up restriction to query the profile table
-		lpSvcRes->rt = RES_AND;
-		lpSvcRes->res.resAnd.cRes = 0x00000002;
-		lpSvcRes->res.resAnd.lpRes = lpsvcResLvl1;
-
-		lpsvcResLvl1[0].rt = RES_EXIST;
-		lpsvcResLvl1[0].res.resExist.ulPropTag = PR_SERVICE_NAME_A;
-		lpsvcResLvl1[0].res.resExist.ulReserved1 = 0x00000000;
-		lpsvcResLvl1[0].res.resExist.ulReserved2 = 0x00000000;
-		lpsvcResLvl1[1].rt = RES_PROPERTY;
-		lpsvcResLvl1[1].res.resProperty.relop = RELOP_EQ;
-		lpsvcResLvl1[1].res.resProperty.ulPropTag = PR_SERVICE_NAME_A;
-		lpsvcResLvl1[1].res.resProperty.lpProp = lpSvcPropVal;
-
-		lpSvcPropVal->ulPropTag = PR_SERVICE_NAME_A;
-		lpSvcPropVal->Value.lpszA = "MSEMS";
-
-		// Query the table to get the the default profile only
-		EC_HRES_MSG(HrQueryAllRows(lpServiceTable,
-			(LPSPropTagArray)&sptaSvcProps,
-			lpSvcRes,
-			NULL,
+		LPPROVIDERADMIN lpProvAdmin = NULL;
+		LPPROFSECT lpEmsMdbProfSect, lpStoreProviderProfSect = NULL;
+		if (SUCCEEDED(lpServiceAdmin->AdminProviders((LPMAPIUID)lpServiceUid,
 			0,
-			&lpSvcRows), L"Calling HrQueryAllRows");
-
-		if (lpSvcRows->cRows >= ulSectionIndex)
+			&lpProvAdmin)))
 		{
-			LPPROVIDERADMIN lpProvAdmin = NULL;
-
-			if (SUCCEEDED(lpServiceAdmin->AdminProviders((LPMAPIUID)lpSvcRows->aRow[ulSectionIndex - 1].lpProps[iServiceUid].Value.bin.lpb,
-				0,
-				&lpProvAdmin)))
+			EC_HRES_MSG(HrGetSections(lpServiceAdmin, lpServiceUid, &lpEmsMdbProfSect, &lpStoreProviderProfSect), L"Calling HrGetSections");
+			// Access the EMSMDB section
+			if (lpEmsMdbProfSect)
 			{
-				// Access the EMSMDB section
-				LPPROFSECT lpProfSect = NULL;
-				if (SUCCEEDED(lpProvAdmin->OpenProfileSection((LPMAPIUID)lpSvcRows->aRow[ulSectionIndex - 1].lpProps[iEmsMdbSectUid].Value.bin.lpb,
-					NULL,
-					MAPI_MODIFY,
-					&lpProfSect)))
+				LPMAPIPROP pMAPIProp = NULL;
+				if (SUCCEEDED(lpEmsMdbProfSect->QueryInterface(IID_IMAPIProp, (void**)&pMAPIProp)))
 				{
-					LPMAPIPROP pMAPIProp = NULL;
-					if (SUCCEEDED(lpProfSect->QueryInterface(IID_IMAPIProp, (void**)&pMAPIProp)))
+					// bind to the PR_PROFILE_CONFIG_FLAGS property
+					LPSPropValue profileConfigFlags = NULL;
+					if (SUCCEEDED(HrGetOneProp(pMAPIProp, PR_PROFILE_CONFIG_FLAGS, &profileConfigFlags)))
 					{
-						// bind to the PR_PROFILE_CONFIG_FLAGS property
-						LPSPropValue profileConfigFlags = NULL;
-						if (SUCCEEDED(HrGetOneProp(pMAPIProp, PR_PROFILE_CONFIG_FLAGS, &profileConfigFlags)))
+						if (profileConfigFlags)
 						{
-							if (profileConfigFlags)
+							if (bCachedModeOwner)
 							{
-								if (ulCachedModeOwner > 0)
+								if (!(profileConfigFlags[0].Value.l & CONFIG_OST_CACHE_PRIVATE))
 								{
-									if (ulCachedModeOwner == CACHEDMODE_ENABLED)
-									{
-										if (!(profileConfigFlags[0].Value.l & CONFIG_OST_CACHE_PRIVATE))
-										{
-											profileConfigFlags[0].Value.l = profileConfigFlags[0].Value.l ^ CONFIG_OST_CACHE_PRIVATE;
-											EC_HRES_MSG(lpProfSect->SetProps(1, profileConfigFlags, NULL), L"Calling SetProps");
-											printf("Cached mode owner enabled.\n");
-										}
-										else
-										{
-											printf("Cached mode owner already enabled on service.\n");
-										}
-									}
-									else
-									{
-										if (profileConfigFlags[0].Value.l & CONFIG_OST_CACHE_PRIVATE)
-										{
-											profileConfigFlags[0].Value.l = profileConfigFlags[0].Value.l ^ CONFIG_OST_CACHE_PRIVATE;
-											EC_HRES_MSG(lpProfSect->SetProps(1, profileConfigFlags, NULL), L"Calling SetProps");
-											printf("Cached mode owner disabled.\n");
-										}
-										else
-										{
-											printf("Cached mode owner already disabled on service.\n");
-										}
-									}
+									profileConfigFlags[0].Value.l = profileConfigFlags[0].Value.l ^ CONFIG_OST_CACHE_PRIVATE;
+									EC_HRES_MSG(lpEmsMdbProfSect->SetProps(1, profileConfigFlags, NULL), L"Calling SetProps");
+									printf("Cached mode owner enabled.\n");
 								}
-								if (ulCachedModeShared > 0)
+								else
 								{
-									if (ulCachedModeShared == CACHEDMODE_ENABLED)
-									{
-										if (!(profileConfigFlags[0].Value.l & CONFIG_OST_CACHE_DELEGATE_PIM))
-										{
-											profileConfigFlags[0].Value.l = profileConfigFlags[0].Value.l ^ CONFIG_OST_CACHE_DELEGATE_PIM;
-											EC_HRES_MSG(lpProfSect->SetProps(1, profileConfigFlags, NULL), L"Calling SetProps");
-											printf("Cached mode shared enabled.\n");
-										}
-										else
-										{
-											printf("Cached mode shared already enabled on service.\n");
-										}
-									}
-									else
-									{
-										if (profileConfigFlags[0].Value.l & CONFIG_OST_CACHE_DELEGATE_PIM)
-										{
-											profileConfigFlags[0].Value.l = profileConfigFlags[0].Value.l ^ CONFIG_OST_CACHE_DELEGATE_PIM;
-											EC_HRES_MSG(lpProfSect->SetProps(1, profileConfigFlags, NULL), L"Calling SetProps");
-											printf("Cached mode shared disabled.\n");
-										}
-										else
-										{
-											printf("Cached mode shared already disabled on service.\n");
-										}
-									}
+									printf("Cached mode owner already enabled on service.\n");
 								}
-								if (ulCachedModePublicFolders > 0)
-								{
-									if (ulCachedModePublicFolders == CACHEDMODE_ENABLED)
-									{
-										if (!(profileConfigFlags[0].Value.l & CONFIG_OST_CACHE_PUBLIC))
-										{
-											profileConfigFlags[0].Value.l = profileConfigFlags[0].Value.l ^ CONFIG_OST_CACHE_PUBLIC;
-											EC_HRES_MSG(lpProfSect->SetProps(1, profileConfigFlags, NULL), L"Calling SetProps");
-											printf("Cached mode public folders enabled.\n");
-										}
-										else
-										{
-											printf("Cached mode public folders already enabled on service.\n");
-										}
-									}
-									else
-									{
-										if (profileConfigFlags[0].Value.l & CONFIG_OST_CACHE_PUBLIC)
-										{
-											profileConfigFlags[0].Value.l = profileConfigFlags[0].Value.l ^ CONFIG_OST_CACHE_PUBLIC;
-											EC_HRES_MSG(lpProfSect->SetProps(1, profileConfigFlags, NULL), L"Calling SetProps");
-											printf("Cached mode public folders disabled.\n");
-										}
-										else
-										{
-											printf("Cached mode public folders already disabled on service.\n");
-										}
-									}
-								}
-								EC_HRES_MSG(lpProfSect->SaveChanges(0), L"Calling #");
-								if (profileConfigFlags) MAPIFreeBuffer(profileConfigFlags);
 							}
-						}
-						// bind to the PR_RULE_ACTION_TYPE property for setting the amout of mail to cache
-						LPSPropValue profileRuleActionType = NULL;
-						if (SUCCEEDED(HrGetOneProp(pMAPIProp, PR_RULE_ACTION_TYPE, &profileRuleActionType)))
-						{
-							if (profileRuleActionType)
+							else
 							{
-
-								profileRuleActionType[0].Value.i = iCachedModeMonths;
-								EC_HRES_MSG(lpProfSect->SetProps(1, profileRuleActionType, NULL), L"Calling SetProps");
-								printf("Cached mode amount to sync set.\n");
-
-								EC_HRES_MSG(lpProfSect->SaveChanges(0), L"Calling SaveChanges");
-								if (profileRuleActionType) MAPIFreeBuffer(profileConfigFlags);
+								if (profileConfigFlags[0].Value.l & CONFIG_OST_CACHE_PRIVATE)
+								{
+									profileConfigFlags[0].Value.l = profileConfigFlags[0].Value.l ^ CONFIG_OST_CACHE_PRIVATE;
+									EC_HRES_MSG(lpEmsMdbProfSect->SetProps(1, profileConfigFlags, NULL), L"Calling SetProps");
+									printf("Cached mode owner disabled.\n");
+								}
+								else
+								{
+									printf("Cached mode owner already disabled on service.\n");
+								}
 							}
+
+
+							if (bCachedModeShared)
+							{
+								if (!(profileConfigFlags[0].Value.l & CONFIG_OST_CACHE_DELEGATE_PIM))
+								{
+									profileConfigFlags[0].Value.l = profileConfigFlags[0].Value.l ^ CONFIG_OST_CACHE_DELEGATE_PIM;
+									EC_HRES_MSG(lpEmsMdbProfSect->SetProps(1, profileConfigFlags, NULL), L"Calling SetProps");
+									printf("Cached mode shared enabled.\n");
+								}
+								else
+								{
+									printf("Cached mode shared already enabled on service.\n");
+								}
+							}
+							else
+							{
+								if (profileConfigFlags[0].Value.l & CONFIG_OST_CACHE_DELEGATE_PIM)
+								{
+									profileConfigFlags[0].Value.l = profileConfigFlags[0].Value.l ^ CONFIG_OST_CACHE_DELEGATE_PIM;
+									EC_HRES_MSG(lpEmsMdbProfSect->SetProps(1, profileConfigFlags, NULL), L"Calling SetProps");
+									printf("Cached mode shared disabled.\n");
+								}
+								else
+								{
+									printf("Cached mode shared already disabled on service.\n");
+								}
+							}
+
+
+							if (bCachedModePublicFolders)
+							{
+								if (!(profileConfigFlags[0].Value.l & CONFIG_OST_CACHE_PUBLIC))
+								{
+									profileConfigFlags[0].Value.l = profileConfigFlags[0].Value.l ^ CONFIG_OST_CACHE_PUBLIC;
+									EC_HRES_MSG(lpEmsMdbProfSect->SetProps(1, profileConfigFlags, NULL), L"Calling SetProps");
+									printf("Cached mode public folders enabled.\n");
+								}
+								else
+								{
+									printf("Cached mode public folders already enabled on service.\n");
+								}
+							}
+							else
+							{
+								if (profileConfigFlags[0].Value.l & CONFIG_OST_CACHE_PUBLIC)
+								{
+									profileConfigFlags[0].Value.l = profileConfigFlags[0].Value.l ^ CONFIG_OST_CACHE_PUBLIC;
+									EC_HRES_MSG(lpEmsMdbProfSect->SetProps(1, profileConfigFlags, NULL), L"Calling SetProps");
+									printf("Cached mode public folders disabled.\n");
+								}
+								else
+								{
+									printf("Cached mode public folders already disabled on service.\n");
+								}
+							}
+
+							EC_HRES_MSG(lpEmsMdbProfSect->SaveChanges(0), L"Calling #");
+							if (profileConfigFlags) MAPIFreeBuffer(profileConfigFlags);
 						}
 					}
-					if (lpProfSect) lpProfSect->Release();
-				}
+					// bind to the PR_RULE_ACTION_TYPE property for setting the amout of mail to cache
+					LPSPropValue profileRuleActionType = NULL;
+					if (SUCCEEDED(HrGetOneProp(pMAPIProp, PR_RULE_ACTION_TYPE, &profileRuleActionType)))
+					{
+						if (profileRuleActionType)
+						{
 
-				if (lpProvAdmin) lpProvAdmin->Release();
+							profileRuleActionType[0].Value.i = iCachedModeMonths;
+							EC_HRES_MSG(lpEmsMdbProfSect->SetProps(1, profileRuleActionType, NULL), L"Calling SetProps");
+							printf("Cached mode amount to sync set.\n");
+
+							EC_HRES_MSG(lpEmsMdbProfSect->SaveChanges(0), L"Calling SaveChanges");
+							if (profileRuleActionType) MAPIFreeBuffer(profileConfigFlags);
+						}
+					}
+				}
+				if (lpEmsMdbProfSect) lpEmsMdbProfSect->Release();
 			}
 
-			if (lpSvcRows) FreeProws(lpSvcRows);
-		}
-		else
-		{
-			printf("Invalid service index specified %u.\n", ulSectionIndex);
-			printf("Highest possible index is %u.\n", lpSvcRows->cRows);
+			if (lpProvAdmin) lpProvAdmin->Release();
+
 		}
 
-		if (lpSvcPropVal) MAPIFreeBuffer(lpSvcPropVal);
-		if (lpsvcResLvl1) MAPIFreeBuffer(lpsvcResLvl1);
-		if (lpSvcRes) MAPIFreeBuffer(lpSvcRes);
-		if (lpServiceTable) lpServiceTable->Release();
 		if (lpServiceAdmin) lpServiceAdmin->Release();
 
 	}
@@ -442,6 +374,9 @@ Cleanup:
 	return hRes;
 	return S_OK;
 }
+
+
+
 
 HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszOldPath, LPWSTR lpszNewPath, bool bMoveFiles)
 {
@@ -2790,7 +2725,10 @@ HRESULT HrGetSections(LPSERVICEADMIN2 lpSvcAdmin, LPMAPIUID lpServiceUid, LPPROF
 	if (!lpSvcAdmin || !lpServiceUid || !lppStoreProviderSection)
 		return E_INVALIDARG;
 
-	*lppStoreProviderSection = nullptr;
+	if (NULL != lppStoreProviderSection)
+	{
+		*lppStoreProviderSection = nullptr;
+	}
 	if (NULL != lppEmsMdbSection)
 	{
 		*lppEmsMdbSection = nullptr;
@@ -2816,11 +2754,14 @@ HRESULT HrGetSections(LPSERVICEADMIN2 lpSvcAdmin, LPMAPIUID lpServiceUid, LPPROF
 			EC_HRES_MSG(lpProps[1].Value.err, L"Cheking Value.err");
 	}
 
-	EC_HRES_MSG(lpSvcAdmin->OpenProfileSection(
-		(LPMAPIUID)lpProps[0].Value.bin.lpb,
-		0,
-		MAPI_FORCE_ACCESS | MAPI_MODIFY,
-		&lpStoreProvProfSect), L"Calling OpenProfileSection.");
+	if (NULL != lpStoreProvProfSect)
+	{
+		EC_HRES_MSG(lpSvcAdmin->OpenProfileSection(
+			(LPMAPIUID)lpProps[0].Value.bin.lpb,
+			0,
+			MAPI_FORCE_ACCESS | MAPI_MODIFY,
+			&lpStoreProvProfSect), L"Calling OpenProfileSection.");
+	}
 
 	if (NULL != lppEmsMdbSection)
 	{
@@ -2833,6 +2774,88 @@ HRESULT HrGetSections(LPSERVICEADMIN2 lpSvcAdmin, LPMAPIUID lpServiceUid, LPPROF
 
 	if (NULL != lppEmsMdbSection)
 		*lppEmsMdbSection = lpEmsMdbProfSect;
+
+	if (NULL != lppStoreProviderSection)
+		*lppStoreProviderSection = lpStoreProvProfSect;
+Error:
+	goto Cleanup;
+
+Cleanup:
+	if (lpSvcProfSect) lpSvcProfSect->Release();
+	if (lpProps)
+	{
+		MAPIFreeBuffer(lpProps);
+		lpProps = nullptr;
+	}
+	return hRes;
+}
+
+// HrGetSections
+// Returns the EMSMDB and StoreProvider sections of a service
+HRESULT HrGetSections(LPSERVICEADMIN lpSvcAdmin, LPMAPIUID lpServiceUid, LPPROFSECT * lppEmsMdbSection, LPPROFSECT * lppStoreProviderSection)
+{
+	HRESULT hRes = S_OK;
+	SizedSPropTagArray(2, sptaUids) = { 2,{ PR_STORE_PROVIDERS, PR_EMSMDB_SECTION_UID } };
+	ULONG				cValues = 0;
+	LPSPropValue		lpProps = nullptr;
+	LPPROFSECT			lpSvcProfSect = nullptr;
+	LPPROFSECT			lpEmsMdbProfSect = nullptr;
+	LPPROFSECT			lpStoreProvProfSect = nullptr;
+
+	if (!lpSvcAdmin || !lpServiceUid || !lppStoreProviderSection)
+		return E_INVALIDARG;
+
+	if (NULL != lppStoreProviderSection)
+	{
+		*lppStoreProviderSection = nullptr;
+	}
+	if (NULL != lppEmsMdbSection)
+	{
+		*lppEmsMdbSection = nullptr;
+	}
+
+	EC_HRES_MSG(lpSvcAdmin->OpenProfileSection(lpServiceUid, NULL, MAPI_FORCE_ACCESS | MAPI_MODIFY, &lpSvcProfSect), L"Calling OpenProfileSection.");
+
+	EC_HRES_MSG(lpSvcProfSect->GetProps(
+		(LPSPropTagArray)&sptaUids,
+		0,
+		&cValues,
+		&lpProps), L"Calling GetProps.");
+
+	if (cValues != 2)
+		return E_FAIL;
+
+
+	if (lpProps[0].ulPropTag != sptaUids.aulPropTag[0])
+		EC_HRES_MSG(lpProps[0].Value.err, L"Cheking Value.err");
+	if (NULL != lppEmsMdbSection)
+	{
+		if (lpProps[1].ulPropTag != sptaUids.aulPropTag[1])
+			EC_HRES_MSG(lpProps[1].Value.err, L"Cheking Value.err");
+	}
+
+	if (NULL != lpStoreProvProfSect)
+	{
+		EC_HRES_MSG(lpSvcAdmin->OpenProfileSection(
+			(LPMAPIUID)lpProps[0].Value.bin.lpb,
+			0,
+			MAPI_FORCE_ACCESS | MAPI_MODIFY,
+			&lpStoreProvProfSect), L"Calling OpenProfileSection.");
+	}
+
+	if (NULL != lppEmsMdbSection)
+	{
+		EC_HRES_MSG(lpSvcAdmin->OpenProfileSection(
+			(LPMAPIUID)lpProps[1].Value.bin.lpb,
+			0,
+			MAPI_FORCE_ACCESS | MAPI_MODIFY,
+			&lpEmsMdbProfSect), L"Calling OpenProfileSection.");
+	}
+
+	if (NULL != lppEmsMdbSection)
+		*lppEmsMdbSection = lpEmsMdbProfSect;
+
+	if (NULL != lppStoreProviderSection)
 	*lppStoreProviderSection = lpStoreProvProfSect;
 Error:
 	goto Cleanup;
@@ -3852,8 +3875,7 @@ cleanup:
 
 #pragma endregion
 
-
-HRESULT HrPromoteDelegates(LPWSTR lpwszProfileName, BOOL bDefaultProfile, BOOL bAllProfiles, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, int iOutlookVersion, ULONG ulConnectMode)
+HRESULT HrSetCachedMode(LPWSTR lpwszProfileName, BOOL bDefaultProfile, BOOL bAllProfiles, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, bool bCachedModeOwner, bool bCachedModeShared, bool bCachedModePublicFolders, int iCachedModeMonths)
 {
 	HRESULT hRes = S_OK;
 
@@ -3861,7 +3883,7 @@ HRESULT HrPromoteDelegates(LPWSTR lpwszProfileName, BOOL bDefaultProfile, BOOL b
 	{
 		ProfileInfo * profileInfo = new ProfileInfo();
 		EC_HRES_MSG(HrGetProfile((LPWSTR)GetDefaultProfileName().c_str(), profileInfo), L"Calling GetProfile");
-		EC_HRES_MSG(HrPromoteDelegatesInProfile((LPWSTR)profileInfo->wszProfileName.c_str(), profileInfo, iServiceIndex, bDefaultProfile, bAllServices, iOutlookVersion, ulConnectMode), L"Calling HrPromoteDelegatesInProfile");
+		EC_HRES_MSG(HrSetCachedModeOneProfile((LPWSTR)profileInfo->wszProfileName.c_str(), profileInfo, iServiceIndex, bDefaultProfile, bAllServices, bCachedModeOwner, bCachedModeShared, bCachedModePublicFolders, iCachedModeMonths), L"Calling HrPromoteDelegatesInProfile");
 
 	}
 	else if (bAllProfiles)
@@ -3871,7 +3893,7 @@ HRESULT HrPromoteDelegates(LPWSTR lpwszProfileName, BOOL bDefaultProfile, BOOL b
 		hRes = HrGetProfiles(ulProfileCount, profileInfo);
 		for (int i = 0; i <= ulProfileCount; i++)
 		{
-			HrPromoteDelegatesInProfile((LPWSTR)profileInfo[i].wszProfileName.c_str(), &profileInfo[i], iServiceIndex, bDefaultProfile, bAllServices, iOutlookVersion, ulConnectMode);
+			EC_HRES_MSG(HrSetCachedModeOneProfile((LPWSTR)profileInfo->wszProfileName.c_str(), profileInfo, iServiceIndex, bDefaultProfile, bAllServices, bCachedModeOwner, bCachedModeShared, bCachedModePublicFolders, iCachedModeMonths), L"Calling HrPromoteDelegatesInProfile");
 		}
 	}
 	else
@@ -3880,11 +3902,88 @@ HRESULT HrPromoteDelegates(LPWSTR lpwszProfileName, BOOL bDefaultProfile, BOOL b
 		{
 			ProfileInfo * profileInfo = new ProfileInfo();
 			hRes = HrGetProfile(lpwszProfileName, profileInfo);
-			HrPromoteDelegatesInProfile((LPWSTR)profileInfo->wszProfileName.c_str(), profileInfo, iServiceIndex, bDefaultProfile, bAllServices, iOutlookVersion, ulConnectMode);
-
+			EC_HRES_MSG(HrSetCachedModeOneProfile((LPWSTR)profileInfo->wszProfileName.c_str(), profileInfo, iServiceIndex, bDefaultProfile, bAllServices, bCachedModeOwner, bCachedModeShared, bCachedModePublicFolders, iCachedModeMonths), L"Calling HrPromoteDelegatesInProfile");
 		}
 		else
 			wprintf(L"The specified profile name is invalid or no profile name was specified.\n");
+	}
+
+Error:
+Cleanup:
+	return hRes;
+}
+
+HRESULT HrSetCachedModeOneProfile(LPWSTR lpwszProfileName, ProfileInfo * pProfileInfo, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, bool bCachedModeOwner, bool bCachedModeShared, bool bCachedModePublicFolders, int iCachedModeMonths)
+{
+	HRESULT hRes = S_OK;
+
+	for (int i = 0; i <= pProfileInfo->ulServiceCount; i++)
+	{
+		if (bDefaultService)
+		{
+			if (pProfileInfo->profileServices[i].bDefaultStore)
+			{
+				if (pProfileInfo->profileServices[i].ulServiceType == SERVICETYPE_MAILBOX)
+				{
+					EC_HRES_MSG(HrSetCachedModeOneService(ConvertWideCharToMultiByte(lpwszProfileName), &pProfileInfo->profileServices[i].muidServiceUid, bCachedModeOwner, bCachedModeShared, bCachedModePublicFolders, iCachedModeMonths), L"Calling HrSetCachedModeOneService on service");
+				}
+			}
+		}
+		else if (iServiceIndex != -1)
+		{
+			if (pProfileInfo->profileServices[iServiceIndex].ulServiceType == SERVICETYPE_MAILBOX)
+			{
+				EC_HRES_MSG(HrSetCachedModeOneService(ConvertWideCharToMultiByte(lpwszProfileName), &pProfileInfo->profileServices[iServiceIndex].muidServiceUid, bCachedModeOwner, bCachedModeShared, bCachedModePublicFolders, iCachedModeMonths), L"Calling HrSetCachedModeOneService on service");
+
+			}
+		}
+		else if (bAllServices)
+		{
+			if (pProfileInfo->profileServices[i].ulServiceType == SERVICETYPE_MAILBOX)
+			{
+				EC_HRES_MSG(HrSetCachedModeOneService(ConvertWideCharToMultiByte(lpwszProfileName), &pProfileInfo->profileServices[i].muidServiceUid, bCachedModeOwner, bCachedModeShared, bCachedModePublicFolders, iCachedModeMonths), L"Calling HrSetCachedModeOneService on service");
+			}
+		}
+	}
+Error:
+Cleanup:
+
+	return hRes;
+}
+
+
+HRESULT HrPromoteDelegates(LPWSTR lpwszProfileName, BOOL bDefaultProfile, BOOL bAllProfiles, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, int iOutlookVersion, ULONG ulConnectMode)
+{
+	HRESULT hRes = S_OK;
+
+	if (bDefaultProfile)
+	{
+		ProfileInfo * profileInfo = new ProfileInfo();
+		EC_HRES_MSG(HrGetProfile((LPWSTR)GetDefaultProfileName().c_str(), profileInfo), L"Calling GetProfile");
+		EC_HRES_MSG(HrPromoteDelegatesOneProfile((LPWSTR)profileInfo->wszProfileName.c_str(), profileInfo, iServiceIndex, bDefaultService, bAllServices, iOutlookVersion, ulConnectMode), L"Calling HrPromoteDelegatesOneProfile");
+
+	}
+	else if (bAllProfiles)
+	{
+		ULONG ulProfileCount = GetProfileCount();
+		ProfileInfo * profileInfo = new ProfileInfo[ulProfileCount];
+		hRes = HrGetProfiles(ulProfileCount, profileInfo);
+		for (int i = 0; i <= ulProfileCount; i++)
+		{
+			EC_HRES_MSG(HrPromoteDelegatesOneProfile((LPWSTR)profileInfo[i].wszProfileName.c_str(), &profileInfo[i], iServiceIndex, bDefaultService, bAllServices, iOutlookVersion, ulConnectMode), L"Calling HrPromoteDelegatesOneProfile");
+		}
+	}
+	else
+	{
+		if (lpwszProfileName)
+		{
+			ProfileInfo * profileInfo = new ProfileInfo();
+			hRes = HrGetProfile(lpwszProfileName, profileInfo);
+			EC_HRES_MSG(HrPromoteDelegatesOneProfile((LPWSTR)profileInfo->wszProfileName.c_str(), profileInfo, iServiceIndex, bDefaultService, bAllServices, iOutlookVersion, ulConnectMode), L"Calling HrPromoteDelegatesOneProfile");
+
+		}
+		else
+			Logger::Write(logLevelError, L"The specified profile name is invalid or no profile name was specified.\n");
 	}
 
 Error:
@@ -3892,7 +3991,7 @@ Error:
 	return hRes;
 }
 
-HRESULT HrPromoteDelegatesInProfile(LPWSTR lpwszProfileName, ProfileInfo * pProfileInfo, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, int iOutlookVersion, ULONG ulConnectMode)
+HRESULT HrPromoteDelegatesOneProfile(LPWSTR lpwszProfileName, ProfileInfo * pProfileInfo, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, int iOutlookVersion, ULONG ulConnectMode)
 {
 	HRESULT hRes = S_OK;
 
@@ -3908,7 +4007,7 @@ HRESULT HrPromoteDelegatesInProfile(LPWSTR lpwszProfileName, ProfileInfo * pProf
 					{
 						if (pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulProfileType == PROFILE_DELEGATE)
 						{
-							EC_HRES_MSG(HrPromoteDelegate(lpwszProfileName, iOutlookVersion, ulConnectMode, pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j]), L"Calling HrPromoteDelegate");
+							EC_HRES_MSG(HrPromoteOneDelegate(lpwszProfileName, iOutlookVersion, ulConnectMode, pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j]), L"Calling HrPromoteDelegate");
 						}
 					}
 				}
@@ -3922,20 +4021,20 @@ HRESULT HrPromoteDelegatesInProfile(LPWSTR lpwszProfileName, ProfileInfo * pProf
 				{
 					if (pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->accountMailboxes[j].ulProfileType == PROFILE_DELEGATE)
 					{
-						EC_HRES_MSG(HrPromoteDelegate(lpwszProfileName, iOutlookVersion, ulConnectMode, pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->accountMailboxes[j]), L"Calling HrPromoteDelegate");
+						EC_HRES_MSG(HrPromoteOneDelegate(lpwszProfileName, iOutlookVersion, ulConnectMode, pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->accountMailboxes[j]), L"Calling HrPromoteDelegate");
 					}
 				}
 			}
 		}
 		else if (bAllServices)
 		{
-			if (pProfileInfo->profileServices[iServiceIndex].ulServiceType == SERVICETYPE_MAILBOX)
+			if (pProfileInfo->profileServices[i].ulServiceType == SERVICETYPE_MAILBOX)
 			{
-				for (int j = 0; j <= pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->ulMailboxCount; j++)
+				for (int j = 0; j <= pProfileInfo->profileServices[i].exchangeAccountInfo->ulMailboxCount; j++)
 				{
-					if (pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->accountMailboxes[j].ulProfileType == PROFILE_DELEGATE)
+					if (pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulProfileType == PROFILE_DELEGATE)
 					{
-						EC_HRES_MSG(HrPromoteDelegate(lpwszProfileName, iOutlookVersion, ulConnectMode, pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j]), L"Calling HrPromoteDelegate");
+						EC_HRES_MSG(HrPromoteOneDelegate(lpwszProfileName, iOutlookVersion, ulConnectMode, pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j]), L"Calling HrPromoteDelegate");
 					}
 				}
 			}
@@ -3949,7 +4048,7 @@ Cleanup:
 	return hRes;
 }
 
-HRESULT HrPromoteDelegate(LPWSTR lpwszProfileName, int iOutlookVersion, ULONG ulConnectMode, MailboxInfo mailboxInfo)
+HRESULT HrPromoteOneDelegate(LPWSTR lpwszProfileName, int iOutlookVersion, ULONG ulConnectMode, MailboxInfo mailboxInfo)
 {
 	HRESULT hRes = S_OK;
 	switch (iOutlookVersion)

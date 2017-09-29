@@ -38,7 +38,7 @@ std::wstring GetDefaultProfileName();
 ULONG GetProfileCount();
 HRESULT HrGetProfiles(ULONG ulProfileCount, ProfileInfo * profileInfo);
 //HRESULT GetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo);
-HRESULT UpdateCachedModeConfig(LPSTR lpszProfileName, ULONG ulSectionIndex, ULONG ulCachedModeOwner, ULONG ulCachedModeShared, ULONG ulCachedModePublicFolders, int iCachedModeMonths);
+HRESULT HrSetCachedModeOneService(LPSTR lpszProfileName, LPMAPIUID lpServiceUid, bool bCachedModeOwner, bool bCachedModeShared, bool bCachedModePublicFolders, int iCachedModeMonths);
 HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszOldPath, LPWSTR lpszNewPath, bool bMoveFiles);
 HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszNewPath, bool bMoveFiles);
 HRESULT HrCreateProfile(LPWSTR lpszProfileName);
@@ -48,18 +48,15 @@ HRESULT HrCloneProfile(ProfileInfo * profileInfo);
 VOID PrintProfile(ProfileInfo * profileInfo);
 HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo);
 HRESULT HrPromoteDelegates(LPWSTR lpwszProfileName, BOOL bDefaultProfile, BOOL bAllProfiles, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, int iOutlookVersion, ULONG ulConnectMode);
-HRESULT HrPromoteDelegatesInProfile(LPWSTR profileName, ProfileInfo * pProfileInfo, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, int iOutlookVersion, ULONG ulConnectMode);
+HRESULT HrPromoteDelegatesOneProfile(LPWSTR profileName, ProfileInfo * pProfileInfo, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, int iOutlookVersion, ULONG ulConnectMode);
 HRESULT HrDeleteProvider(LPWSTR lpwszProfileName, LPMAPIUID lpServiceUid, LPMAPIUID lpProviderUid);
 HRESULT HrCreatePstService(LPSERVICEADMIN2 lpServiceAdmin2, LPMAPIUID * lppServiceUid, LPWSTR lpszServiceName, ULONG ulResourceFlags, ULONG ulPstConfigFlag, LPWSTR lpszPstPathW, LPWSTR lpszDisplayName);
 HRESULT HrGetDefaultMsemsServiceAdminProviderPtr(LPWSTR lpwszProfileName, LPPROVIDERADMIN * lppProvAdmin, LPMAPIUID * lppServiceUid);
+
+HRESULT HrGetSections(LPSERVICEADMIN lpSvcAdmin, LPMAPIUID lpServiceUid, LPPROFSECT * lppEmsMdbSection, LPPROFSECT * lppStoreProviderSection);
 HRESULT HrGetSections(LPSERVICEADMIN2 lpSvcAdmin, LPMAPIUID lpServiceUid, LPPROFSECT * lppEmsMdbSection, LPPROFSECT * lppStoreProviderSection);
-HRESULT HrCreateMsemsServiceModernExt(BOOL bDefaultProfile,
-	LPWSTR lpwszProfileName,
-	ULONG ulResourceFlags,
-	ULONG ulProfileConfigFlags,
-	ULONG ulCachedModeMonths,
-	LPWSTR lpszSmtpAddress,
-	LPWSTR lpszDisplayName);
+
+HRESULT HrCreateMsemsServiceModernExt(BOOL bDefaultProfile, LPWSTR lpwszProfileName, ULONG ulResourceFlags,	ULONG ulProfileConfigFlags,	ULONG ulCachedModeMonths, LPWSTR lpszSmtpAddress, LPWSTR lpszDisplayName);
 HRESULT HrCreateMsemsServiceModern(BOOL bDefaultProfile,
 	LPWSTR lpwszProfileName,
 	LPWSTR lpszSmtpAddress,
@@ -115,4 +112,5 @@ HRESULT HrAddDelegateMailboxLegacy(BOOL bDefaultProfile,
 	LPWSTR lpszwMailboxDN,
 	LPWSTR lpszwServer,
 	LPWSTR lpszwServerDN);
-HRESULT HrPromoteDelegate(LPWSTR lpwszProfileName, int iOutlookVersion, ULONG ulConnectMode, MailboxInfo mailboxInfo);
+HRESULT HrPromoteOneDelegate(LPWSTR lpwszProfileName, int iOutlookVersion, ULONG ulConnectMode, MailboxInfo mailboxInfo);
+HRESULT HrSetCachedModeOneProfile(LPWSTR lpwszProfileName, ProfileInfo * pProfileInfo, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, bool bCachedModeOwner, bool bCachedModeShared, bool bCachedModePublicFolders, int iCachedModeMonths);

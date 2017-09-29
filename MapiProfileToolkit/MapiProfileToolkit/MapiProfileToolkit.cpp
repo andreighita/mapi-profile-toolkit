@@ -833,6 +833,66 @@ BOOL ValidateScenario2(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 
 			}
 		}
+		else if ((wsArg == L"-cachedmodeowner") || (wsArg == L"-cmo"))
+		{
+			if (i + 1 < argc)
+			{
+				std::wstring wszValue = argv[i + 1];
+				std::transform(wszValue.begin(), wszValue.end(), wszValue.begin(), ::tolower);
+				if (wszValue == L"enable")
+				{
+					pRunOpts->serviceOptions->ulCachedModeOwner = CACHEDMODE_ENABLED;
+					i++;
+
+				}
+				if (wszValue == L"disable")
+				{
+					pRunOpts->serviceOptions->ulCachedModeOwner = CACHEDMODE_DISABLED;
+					i++;
+
+				}
+			}
+		}
+		else if ((wsArg == L"-cachedmodeshared") || (wsArg == L"-cms"))
+		{
+			if (i + 1 < argc)
+			{
+				std::wstring wszValue = argv[i + 1];
+				std::transform(wszValue.begin(), wszValue.end(), wszValue.begin(), ::tolower);
+				if (wszValue == L"enable")
+				{
+					pRunOpts->serviceOptions->ulCachedModeShared = CACHEDMODE_ENABLED;
+					i++;
+
+				}
+				if (wszValue == L"disable")
+				{
+					pRunOpts->serviceOptions->ulCachedModeShared = CACHEDMODE_DISABLED;
+					i++;
+
+				}
+			}
+		}
+		else if ((wsArg == L"-cachedmodepublicfolders") || (wsArg == L"-cmpf"))
+		{
+			if (i + 1 < argc)
+			{
+				std::wstring wszValue = argv[i + 1];
+				std::transform(wszValue.begin(), wszValue.end(), wszValue.begin(), ::tolower);
+				if (wszValue == L"enable")
+				{
+					pRunOpts->serviceOptions->ulCachedModePublicFolder = CACHEDMODE_ENABLED;
+					i++;
+
+				}
+				if (wszValue == L"disable")
+				{
+					pRunOpts->serviceOptions->ulCachedModePublicFolder = CACHEDMODE_DISABLED;
+					i++;
+
+				}
+			}
+		}
 		else return false;
 	}
 	return true;
@@ -1563,6 +1623,7 @@ void _tmain(int argc, _TCHAR* argv[])
 			switch (tkOptions->serviceOptions->ulServiceAction)
 			{
 			case ACTION_ADD:
+
 			case ACTION_EDIT:
 
 				switch (tkOptions->mailboxOptions->ulMailboxAction)
@@ -1580,15 +1641,20 @@ void _tmain(int argc, _TCHAR* argv[])
 						tkOptions->serviceOptions->ulServiceMode == SERVICEMODE_ALL,
 						tkOptions->iOutlookVersion,
 						tkOptions->serviceOptions->ulConnectMode);
+					// If Caching options were specified then update the cached mode configuration accordingly
+					if ((tkOptions->serviceOptions->ulCachedModeOwner > 0) || (tkOptions->serviceOptions->ulCachedModeShared > 0) || (tkOptions->serviceOptions->ulCachedModePublicFolder > 0))
+					{
+
+					}
 					break;
 				case ACTION_LIST:
 					break;
 				};
-
 			case ACTION_REMOVE:
 			case ACTION_UPDATE:
 			case ACTION_LIST:
 				break;
+
 			};
 			break;
 		};
