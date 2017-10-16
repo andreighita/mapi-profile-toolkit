@@ -40,6 +40,7 @@
 #define PR_PROFILE_MAPIHTTP_ADDRESSBOOK_INTERNAL_URL PROP_TAG(PT_UNICODE, pidProfileMin+0x54)
 #define PR_PROFILE_MAPIHTTP_ADDRESSBOOK_EXTERNAL_URL PROP_TAG(PT_UNICODE, pidProfileMin+0x55)
 
+#define PR_PROFILE_ALTERNATE_STORE_TYPE PROP_TAG(PT_UNICODE, 0x65D0)
 #ifndef CONFIG_OST_CACHE_PRIVATE
 #define CONFIG_OST_CACHE_PRIVATE			((ULONG)0x00000180)
 #endif
@@ -1351,13 +1352,19 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo)
 			profileInfo->ulServiceCount = lpSvcRows->cRows;
 			profileInfo->profileServices = new ServiceInfo[lpSvcRows->cRows];
 
+
 			// Start loop services
 			for (unsigned int i = 0; i < lpSvcRows->cRows; i++)
 			{
+				ZeroMemory(&profileInfo->profileServices[i], sizeof(ServiceInfo));
 				profileInfo->profileServices[i].wszServiceName = ConvertWideCharToStdWstring(ConvertMultiByteToWideChar(lpSvcRows->aRow[i].lpProps[iServiceName].Value.lpszA));
 				profileInfo->profileServices[i].ulResourceFlags = lpSvcRows->aRow[i].lpProps[iServiceResFlags].Value.l;
 				profileInfo->profileServices[i].wszDisplayName = lpSvcRows->aRow[i].lpProps[iDisplayNameW].Value.lpszW;
 				profileInfo->profileServices[i].ulServiceType = SERVICETYPE_OTHER;;
+				if (profileInfo->profileServices[i].ulResourceFlags & SERVICE_DEFAULT_STORE)
+				{
+					profileInfo->profileServices[i].bDefaultStore = true;
+				}
 				// Exchange account
 				if (0 == strcmp(lpSvcRows->aRow[i].lpProps[iServiceName].Value.lpszA, "MSEMS"))
 				{
@@ -1502,16 +1509,16 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo)
 						lpProvRes->res.resAnd.lpRes = lpProvResLvl1;
 
 						lpProvResLvl1[0].rt = RES_EXIST;
-						lpProvResLvl1[0].res.resExist.ulPropTag = PR_PROVIDER_DISPLAY_A;
+						lpProvResLvl1[0].res.resExist.ulPropTag = PR_RESOURCE_TYPE;
 						lpProvResLvl1[0].res.resExist.ulReserved1 = 0x00000000;
 						lpProvResLvl1[0].res.resExist.ulReserved2 = 0x00000000;
-						lpProvResLvl1[1].rt = RES_CONTENT;
-						lpProvResLvl1[1].res.resContent.ulFuzzyLevel = FL_FULLSTRING;
-						lpProvResLvl1[1].res.resContent.ulPropTag = PR_PROVIDER_DISPLAY_A;
-						lpProvResLvl1[1].res.resContent.lpProp = lpProvPropVal;
+						lpProvResLvl1[1].rt = RES_PROPERTY;
+						lpProvResLvl1[1].res.resProperty.ulPropTag = PR_RESOURCE_TYPE;
+						lpProvResLvl1[1].res.resProperty.lpProp = lpProvPropVal;
+						lpProvResLvl1[1].res.resProperty.relop = RELOP_EQ;
 
-						lpProvPropVal->ulPropTag = PR_PROVIDER_DISPLAY_A;
-						lpProvPropVal->Value.lpszA = "Microsoft Exchange Message Store";
+						lpProvPropVal->ulPropTag = PR_RESOURCE_TYPE;
+						lpProvPropVal->Value.l = MAPI_STORE_PROVIDER;
 
 						lpProvAdmin->GetProviderTable(0,
 							&lpProvTable);
@@ -1722,7 +1729,6 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo)
 											}
 										}
 
-
 										// PR_SERVICE_UID
 										LPSPropValue serviceUid = NULL;
 										if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_SERVICE_UID, &serviceUid)))
@@ -1733,6 +1739,24 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo)
 												lpMuidServiceUid = &profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].muidServiceUid;
 												memcpy(lpMuidServiceUid, (LPMAPIUID)serviceUid->Value.bin.lpb, sizeof(MAPIUID));
 												if (serviceUid) MAPIFreeBuffer(serviceUid);
+											}
+										}
+										
+										// PR_PROFILE_ALTERNATE_STORE_TYPE
+										LPSPropValue alternateStoreType = NULL;
+										if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_PROFILE_ALTERNATE_STORE_TYPE, &alternateStoreType)))
+										{
+											if (alternateStoreType)
+											{
+												if (ConvertWideCharToStdWstring(alternateStoreType->Value.lpszW) == L"Archive")
+												{
+													profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].bIsOnlineArchive = true;
+												}
+												else
+												{
+													profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].bIsOnlineArchive = false;
+												}
+												if (alternateStoreType) MAPIFreeBuffer(alternateStoreType);
 											}
 										}
 
@@ -2754,7 +2778,7 @@ HRESULT HrGetSections(LPSERVICEADMIN2 lpSvcAdmin, LPMAPIUID lpServiceUid, LPPROF
 			EC_HRES_MSG(lpProps[1].Value.err, L"Cheking Value.err");
 	}
 
-	if (NULL != lpStoreProvProfSect)
+	if (NULL != lppStoreProviderSection)
 	{
 		EC_HRES_MSG(lpSvcAdmin->OpenProfileSection(
 			(LPMAPIUID)lpProps[0].Value.bin.lpb,
@@ -3110,7 +3134,7 @@ HRESULT HrCreateMsemsServiceModern(BOOL bDefaultProfile,
 		ZeroMemory(lpEmsMdbProfSect, sizeof(LPPROFSECT));
 		ZeroMemory(lpStoreProviderSect, sizeof(LPPROFSECT));
 
-		EC_HRES_MSG(HrGetSections(lpServiceAdmin2, lpServiceUid, &lpEmsMdbProfSect, &lpStoreProviderSect), L"Calling HrGetSections.");
+		EC_HRES_MSG(HrGetSections(lpServiceAdmin2, &uidService, &lpEmsMdbProfSect, &lpStoreProviderSect), L"Calling HrGetSections.");
 
 		// Set up a SPropValue array for the properties you need to configure.
 		/*
@@ -4005,7 +4029,7 @@ HRESULT HrPromoteDelegatesOneProfile(LPWSTR lpwszProfileName, ProfileInfo * pPro
 				{
 					for (int j = 0; j <= pProfileInfo->profileServices[i].exchangeAccountInfo->ulMailboxCount; j++)
 					{
-						if (pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulProfileType == PROFILE_DELEGATE)
+						if ((pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulProfileType == PROFILE_DELEGATE) && (pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].bIsOnlineArchive == false))
 						{
 							EC_HRES_MSG(HrPromoteOneDelegate(lpwszProfileName, iOutlookVersion, ulConnectMode, pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j]), L"Calling HrPromoteDelegate");
 						}
@@ -4019,7 +4043,7 @@ HRESULT HrPromoteDelegatesOneProfile(LPWSTR lpwszProfileName, ProfileInfo * pPro
 			{
 				for (int j = 0; j <= pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->ulMailboxCount; j++)
 				{
-					if (pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->accountMailboxes[j].ulProfileType == PROFILE_DELEGATE)
+					if ((pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->accountMailboxes[j].ulProfileType == PROFILE_DELEGATE) && (pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->accountMailboxes[j].bIsOnlineArchive == false))
 					{
 						EC_HRES_MSG(HrPromoteOneDelegate(lpwszProfileName, iOutlookVersion, ulConnectMode, pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->accountMailboxes[j]), L"Calling HrPromoteDelegate");
 					}
@@ -4032,7 +4056,7 @@ HRESULT HrPromoteDelegatesOneProfile(LPWSTR lpwszProfileName, ProfileInfo * pPro
 			{
 				for (int j = 0; j <= pProfileInfo->profileServices[i].exchangeAccountInfo->ulMailboxCount; j++)
 				{
-					if (pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulProfileType == PROFILE_DELEGATE)
+					if ((pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulProfileType == PROFILE_DELEGATE) && (pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].bIsOnlineArchive == false))
 					{
 						EC_HRES_MSG(HrPromoteOneDelegate(lpwszProfileName, iOutlookVersion, ulConnectMode, pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j]), L"Calling HrPromoteDelegate");
 					}

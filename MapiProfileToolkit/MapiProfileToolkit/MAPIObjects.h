@@ -41,6 +41,7 @@ struct MailboxInfo
 	ULONG ulProfileType; // PR_PROFILE_TYPE
 	MAPIUID muidProviderUid;
 	MAPIUID muidServiceUid;
+	BOOL bIsOnlineArchive;
 };
 
 struct PstInfo
