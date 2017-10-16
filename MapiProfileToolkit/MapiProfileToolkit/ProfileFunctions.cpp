@@ -1537,6 +1537,7 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo)
 
 							for (unsigned int j = 0; j < lpProvRows->cRows; j++)
 							{
+								ZeroMemory(&profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j], sizeof(MailboxInfo));
 								profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszDisplayName = std::wstring(L" ");
 								LPPROFSECT lpProfSection = NULL;
 								if (SUCCEEDED(lpServiceAdmin->OpenProfileSection((LPMAPIUID)lpProvRows->aRow[j].lpProps[iProvInstanceKey].Value.bin.lpb, NULL, MAPI_MODIFY | MAPI_FORCE_ACCESS, &lpProfSection)))
