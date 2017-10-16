@@ -40,6 +40,9 @@
 #define PR_PROFILE_MAPIHTTP_ADDRESSBOOK_INTERNAL_URL PROP_TAG(PT_UNICODE, pidProfileMin+0x54)
 #define PR_PROFILE_MAPIHTTP_ADDRESSBOOK_EXTERNAL_URL PROP_TAG(PT_UNICODE, pidProfileMin+0x55)
 
+#define	PR_PROFILE_HOME_SERVER_FQDN_W			PROP_TAG( PT_UNICODE, pidProfileMin+0x2a)
+#define	PR_PROFILE_SERVER_FQDN_W				PROP_TAG( PT_UNICODE, pidProfileMin+0x2b)
+
 #define PR_PROFILE_ALTERNATE_STORE_TYPE PROP_TAG(PT_UNICODE, 0x65D0)
 #ifndef CONFIG_OST_CACHE_PRIVATE
 #define CONFIG_OST_CACHE_PRIVATE			((ULONG)0x00000180)
@@ -1682,6 +1685,21 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo)
 											else
 											{
 												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszMailStoreInternalUrl = std::wstring(L" ");
+											}
+										}
+
+										// PR_PROFILE_MAPIHTTP_MAILSTORE_EXTERNAL_URL
+										LPSPropValue profileMailStoreExternalUrl = NULL;
+										if (SUCCEEDED(HrGetOneProp(lpMAPIProp, PR_PROFILE_MAPIHTTP_MAILSTORE_EXTERNAL_URL, &profileMailStoreExternalUrl)))
+										{
+											if (profileMailStoreExternalUrl)
+											{
+												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszMailStoreExternalUrl = ConvertWideCharToStdWstring(profileMailStoreExternalUrl->Value.lpszW);
+												if (profileMailStoreExternalUrl) MAPIFreeBuffer(profileMailStoreExternalUrl);
+											}
+											else
+											{
+												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszMailStoreExternalUrl = std::wstring(L" ");
 											}
 										}
 
@@ -3659,6 +3677,8 @@ HRESULT HrCreateMsemsServiceMOH(BOOL bDefaultProfile,
 	LPWSTR lpwszProfileName,
 	LPWSTR lpszSmtpAddress,
 	LPWSTR lpszMailboxDn,
+	LPWSTR lpszServerDn,
+	LPWSTR lpszServerName,
 	LPWSTR lpszMailStoreInternalUrl,
 	LPWSTR lpszMailStoreExternalUrl,
 	LPWSTR lpszAddressBookInternalUrl,
@@ -3729,93 +3749,7 @@ HRESULT HrCreateMsemsServiceMOH(BOOL bDefaultProfile,
 		std::vector<SPropValue> rgvalVector;
 		SPropValue sPropValue;
 		
-	
-		//Updating emsmdb section 
-		if (lpEmsMdbProfSect)
-		{
 
-			rgvalVector.resize(0);
-
-			ZeroMemory(&sPropValue, sizeof(SPropValue));
-			sPropValue.ulPropTag = PR_PROFILE_USER_SMTP_EMAIL_ADDRESS_W;
-			sPropValue.Value.lpszW = (LPWSTR)wszSmtpAddress.c_str();
-			rgvalVector.push_back(sPropValue);
-			paramC++;
-
-			if (lpszAddressBookInternalUrl)
-			{
-				ZeroMemory(&sPropValue, sizeof(SPropValue));
-				sPropValue.ulPropTag = PR_PROFILE_MAPIHTTP_ADDRESSBOOK_INTERNAL_URL;
-				sPropValue.Value.lpszW = lpszAddressBookInternalUrl;
-				rgvalVector.push_back(sPropValue);
-				paramC++;
-			}
-
-			if (lpszAddressBookInternalUrl)
-			{
-				ZeroMemory(&sPropValue, sizeof(SPropValue));
-				sPropValue.ulPropTag = PR_PROFILE_MAPIHTTP_ADDRESSBOOK_EXTERNAL_URL;
-				sPropValue.Value.lpszW = lpszAddressBookExternalUrl;
-				rgvalVector.push_back(sPropValue);
-				paramC++;
-			}
-
-			if (lpszSmtpAddress)
-			{
-				ZeroMemory(&sPropValue, sizeof(SPropValue));
-				sPropValue.ulPropTag = PR_DISPLAY_NAME_W;
-				sPropValue.Value.lpszW = lpszSmtpAddress;
-				rgvalVector.push_back(sPropValue);
-				paramC++;
-			}
-
-			if (lpszSmtpAddress)
-			{
-				ZeroMemory(&sPropValue, sizeof(SPropValue));
-				sPropValue.ulPropTag = PR_PROFILE_UNRESOLVED_NAME;
-				sPropValue.Value.lpszA = ConvertWideCharToMultiByte(lpszSmtpAddress);
-				rgvalVector.push_back(sPropValue);
-				paramC++;
-			}
-
-			if (lpszSmtpAddress)
-			{
-				ZeroMemory(&sPropValue, sizeof(SPropValue));
-				sPropValue.ulPropTag = PR_PROFILE_MAILBOX;
-				sPropValue.Value.lpszA = ConvertWideCharToMultiByte(lpszMailboxDn);
-				rgvalVector.push_back(sPropValue);
-				paramC++;
-			}
-
-			if (lpszRohProxyServer)
-			{
-				ZeroMemory(&sPropValue, sizeof(SPropValue));
-				sPropValue.ulPropTag = PR_ROH_PROXY_SERVER;
-				sPropValue.Value.lpszW = lpszRohProxyServer;
-				rgvalVector.push_back(sPropValue);
-				paramC++;
-			}
-			
-			
-			hRes = lpEmsMdbProfSect->SetProps(
-				rgvalVector.size(),
-				rgvalVector.data(),
-				nullptr);
-
-			if (FAILED(hRes))
-			{
-				goto Error;
-			}
-
-			printf("Saving changes.\n");
-			hRes = lpEmsMdbProfSect->SaveChanges(KEEP_OPEN_READWRITE);
-
-			if (FAILED(hRes))
-			{
-				goto Error;
-			}
-
-		}
 
 		//Updating store provider 
 		if (lpStoreProviderSect)
@@ -3829,7 +3763,7 @@ HRESULT HrCreateMsemsServiceMOH(BOOL bDefaultProfile,
 			rgvalVector.push_back(sPropValue);
 			paramC++;
 
-			if (lpszAddressBookExternalUrl)
+			if (lpszMailStoreExternalUrl && (lpszMailStoreExternalUrl != L""))
 			{
 				ZeroMemory(&sPropValue, sizeof(SPropValue));
 				sPropValue.ulPropTag = PR_PROFILE_MAPIHTTP_MAILSTORE_EXTERNAL_URL;
@@ -3837,6 +3771,17 @@ HRESULT HrCreateMsemsServiceMOH(BOOL bDefaultProfile,
 				rgvalVector.push_back(sPropValue);
 				paramC++;
 			}
+
+
+			if (lpszMailStoreInternalUrl && (lpszMailStoreInternalUrl != L""))
+			{
+				ZeroMemory(&sPropValue, sizeof(SPropValue));
+				sPropValue.ulPropTag = PR_PROFILE_MAPIHTTP_MAILSTORE_INTERNAL_URL;
+				sPropValue.Value.lpszW = lpszMailStoreInternalUrl;
+				rgvalVector.push_back(sPropValue);
+				paramC++;
+			}
+
 
 			if (lpszSmtpAddress)
 			{
@@ -3847,18 +3792,17 @@ HRESULT HrCreateMsemsServiceMOH(BOOL bDefaultProfile,
 				paramC++;
 			}
 
-			if (lpszMailStoreInternalUrl)
-			{
-				ZeroMemory(&sPropValue, sizeof(SPropValue));
-				sPropValue.ulPropTag = PR_PROFILE_MAPIHTTP_MAILSTORE_INTERNAL_URL;
-				sPropValue.Value.lpszW = lpszMailStoreInternalUrl;
-				rgvalVector.push_back(sPropValue);
-				paramC++;
-			}
+			ZeroMemory(&sPropValue, sizeof(SPropValue));
+			sPropValue.ulPropTag = PR_PROFILE_USER;
+			sPropValue.Value.lpszA = ConvertWideCharToMultiByte(lpszMailboxDn);
+			rgvalVector.push_back(sPropValue);
+			paramC++;
 
-			//ZeroMemory(&rgvalStoreProvider[4], sizeof(SPropValue));
-			//rgvalStoreProvider[4].ulPropTag = PR_PROFILE_USER;
-			//rgvalStoreProvider[4].Value.lpszA = ConvertWideCharToMultiByte(lpszMailboxDn);;
+			ZeroMemory(&sPropValue, sizeof(SPropValue));
+			sPropValue.ulPropTag = PR_PROFILE_SERVER_DN;
+			sPropValue.Value.lpszA = ConvertWideCharToMultiByte(lpszServerDn);
+			rgvalVector.push_back(sPropValue);
+			paramC++;
 
 			hRes = lpStoreProviderSect->SetProps(
 				rgvalVector.size(),
@@ -3878,6 +3822,90 @@ HRESULT HrCreateMsemsServiceMOH(BOOL bDefaultProfile,
 				goto Error;
 			}
 
+
+			//Updating emsmdb section 
+			if (lpEmsMdbProfSect)
+			{
+
+				if (lpszAddressBookInternalUrl && (lpszAddressBookInternalUrl != L""))
+				{
+					ZeroMemory(&sPropValue, sizeof(SPropValue));
+					sPropValue.ulPropTag = PR_PROFILE_MAPIHTTP_ADDRESSBOOK_INTERNAL_URL;
+					sPropValue.Value.lpszW = lpszAddressBookInternalUrl;
+					rgvalVector.push_back(sPropValue);
+					paramC++;
+				}
+
+				if (lpszAddressBookExternalUrl && (lpszAddressBookExternalUrl != L""))
+				{
+					ZeroMemory(&sPropValue, sizeof(SPropValue));
+					sPropValue.ulPropTag = PR_PROFILE_MAPIHTTP_ADDRESSBOOK_EXTERNAL_URL;
+					sPropValue.Value.lpszW = lpszAddressBookExternalUrl;
+					rgvalVector.push_back(sPropValue);
+					paramC++;
+				}
+
+				if (lpszSmtpAddress)
+				{
+					ZeroMemory(&sPropValue, sizeof(SPropValue));
+					sPropValue.ulPropTag = PR_DISPLAY_NAME_W;
+					sPropValue.Value.lpszW = lpszSmtpAddress;
+					rgvalVector.push_back(sPropValue);
+					paramC++;
+				}
+
+
+				if (lpszMailStoreExternalUrl)
+				{
+					ZeroMemory(&sPropValue, sizeof(SPropValue));
+					sPropValue.ulPropTag = PR_PROFILE_MAPIHTTP_MAILSTORE_EXTERNAL_URL;
+					sPropValue.Value.lpszW = lpszMailStoreExternalUrl;
+					rgvalVector.push_back(sPropValue);
+					paramC++;
+				}
+
+
+				if (lpszMailStoreInternalUrl)
+				{
+					ZeroMemory(&sPropValue, sizeof(SPropValue));
+					sPropValue.ulPropTag = PR_PROFILE_MAPIHTTP_MAILSTORE_INTERNAL_URL;
+					sPropValue.Value.lpszW = lpszMailStoreInternalUrl;
+					rgvalVector.push_back(sPropValue);
+					paramC++;
+				}
+
+				ZeroMemory(&sPropValue, sizeof(SPropValue));
+				sPropValue.ulPropTag = PR_PROFILE_SERVER_DN;
+				sPropValue.Value.lpszA = ConvertWideCharToMultiByte(lpszServerDn);
+				rgvalVector.push_back(sPropValue);
+				paramC++;
+
+				ZeroMemory(&sPropValue, sizeof(SPropValue));
+				sPropValue.ulPropTag = PR_PROFILE_MAILBOX;
+				sPropValue.Value.lpszA = ConvertWideCharToMultiByte(lpszMailboxDn);
+				rgvalVector.push_back(sPropValue);
+				paramC++;
+
+				hRes = lpServiceAdmin2->ConfigureMsgService(&uidService, 
+					NULL, 
+					0,
+					rgvalVector.size(),
+					rgvalVector.data());
+
+				if (FAILED(hRes))
+				{
+					goto Error;
+				}
+
+				printf("Saving changes.\n");
+				hRes = lpEmsMdbProfSect->SaveChanges(KEEP_OPEN_READWRITE);
+
+				if (FAILED(hRes))
+				{
+					goto Error;
+				}
+
+			}
 		}
 	}
 	goto cleanup;
@@ -4097,10 +4125,15 @@ HRESULT HrPromoteOneDelegate(LPWSTR lpwszProfileName, int iOutlookVersion, ULONG
 			// This id a bit of a hack since delegate mailboxes don't need to have the personalised server name in the delegate provider
 			// I'm just creating these based on the legacyDN and the MailStore so best check that those have value
 			Logger::Write(logLevelError, L"Validating delegate information.");
-			if ((mailboxInfo.wszMailStoreInternalUrl != L"") && (mailboxInfo.wszProfileMailbox != L""))
+			if (((mailboxInfo.wszMailStoreInternalUrl != L"") || (mailboxInfo.wszMailStoreExternalUrl != L"")) && (mailboxInfo.wszProfileMailbox != L""))
 			{
 				std::wstring wszParsedSmtpAddress = SubstringToEnd(L"smtp:", mailboxInfo.wszSmtpAddress);
-				std::wstring wszPersonalisedServerName = SubstringToEnd(L"MailboxId=", mailboxInfo.wszMailStoreInternalUrl);
+				std::wstring wszPersonalisedServerName;
+				if ((mailboxInfo.wszMailStoreInternalUrl != L""))
+					wszPersonalisedServerName = SubstringToEnd(L"MailboxId=", mailboxInfo.wszMailStoreInternalUrl);
+				else
+					wszPersonalisedServerName = SubstringToEnd(L"MailboxId=", mailboxInfo.wszMailStoreExternalUrl);
+
 				std::wstring wszServerDN = SubstringFromStart(L"cn=Recipients", mailboxInfo.wszProfileMailbox) + L"/cn=Configuration/cn=Servers/cn=" + wszPersonalisedServerName;
 
 				Logger::Write(logLevelInfo, L"Creating and configuring new ROH service.");
@@ -4122,20 +4155,43 @@ HRESULT HrPromoteOneDelegate(LPWSTR lpwszProfileName, int iOutlookVersion, ULONG
 		// best not be used for now as I haven't sorted it out
 		else if (ulConnectMode == CONNECT_MOH)
 		{
-			Logger::Write(logLevelError, L"MOH logic is not currently available.");
-			//if (SUCCEEDED(HrCreateMsemsServiceMOH(FALSE,
-			//	profileName,
-			//	(LPWSTR)SubstringToEnd(L"smtp:", mailboxInfo.wszSmtpAddress).c_str(),
-			//	(LPWSTR)mailboxInfo.wszProfileMailbox.c_str(),
-			//	(LPWSTR)mailboxInfo.wszMailStoreInternalUrl.c_str(),
-			//	NULL,
-			//	NULL,
-			//	NULL,
-			//	(LPWSTR)mailboxInfo.wszRohProxyServer.c_str(),
-			//	loggingMode)))
-			//{
-			//	EC_HRES_MSG(HrDeleteProvider(profileName, &pProfileInfo->profileServices[i].muidServiceUid, &mailboxInfo.muidProviderUid, loggingMode), L"Calling HrDeleteProvider");
-			//}
+			Logger::Write(logLevelError, L"Validating delegate information.");
+			if (((mailboxInfo.wszMailStoreInternalUrl != L"") || (mailboxInfo.wszMailStoreExternalUrl != L"")) && (mailboxInfo.wszProfileMailbox != L""))
+			{
+				//Logger::Write(logLevelError, L"MOH logic is not currently available.");
+				std::wstring wszParsedSmtpAddress = SubstringToEnd(L"smtp:", mailboxInfo.wszSmtpAddress);
+				std::wstring wszPersonalisedServerName;
+				if (mailboxInfo.wszMailStoreInternalUrl != L"")
+					wszPersonalisedServerName = SubstringToEnd(L"MailboxId=", mailboxInfo.wszMailStoreInternalUrl);
+				else
+					wszPersonalisedServerName = SubstringToEnd(L"MailboxId=", mailboxInfo.wszMailStoreExternalUrl);
+
+				if ((mailboxInfo.wszAddressBookInternalUrl == L"") && (mailboxInfo.wszMailStoreInternalUrl != L""))
+				{
+					mailboxInfo.wszAddressBookInternalUrl = SubstringFromStart(L"emsmdb", mailboxInfo.wszMailStoreInternalUrl) + L"/nspi" + SubstringToEnd(L"emsmdb", mailboxInfo.wszMailStoreInternalUrl);
+				}
+				if ((mailboxInfo.wszAddressBookExternalUrl == L"") && (mailboxInfo.wszMailStoreExternalUrl != L""))
+				{
+					mailboxInfo.wszAddressBookExternalUrl = SubstringFromStart(L"emsmdb", mailboxInfo.wszMailStoreExternalUrl) + L"/nspi" + SubstringToEnd(L"emsmdb", mailboxInfo.wszMailStoreExternalUrl);
+				}
+				std::wstring wszServerDN = SubstringFromStart(L"cn=Recipients", mailboxInfo.wszProfileMailbox) + L"/cn=Configuration/cn=Servers/cn=" + wszPersonalisedServerName;
+
+
+				if (SUCCEEDED(HrCreateMsemsServiceMOH(FALSE,
+					lpwszProfileName,
+					(LPWSTR)wszParsedSmtpAddress.c_str(),
+					(LPWSTR)mailboxInfo.wszProfileMailbox.c_str(),
+					(LPWSTR)wszServerDN.c_str(),
+					(LPWSTR)wszPersonalisedServerName.c_str(),
+					(LPWSTR)mailboxInfo.wszMailStoreInternalUrl.c_str(),
+					(LPWSTR)mailboxInfo.wszMailStoreExternalUrl.c_str(),
+					(LPWSTR)mailboxInfo.wszAddressBookInternalUrl.c_str(),
+					(LPWSTR)mailboxInfo.wszAddressBookExternalUrl.c_str(),
+					(LPWSTR)mailboxInfo.wszRohProxyServer.c_str())))
+				{
+					EC_HRES_MSG(HrDeleteProvider(lpwszProfileName, &mailboxInfo.muidServiceUid, &mailboxInfo.muidProviderUid), L"Calling HrDeleteProvider");
+				}
+			}
 		}
 
 		break;

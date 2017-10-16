@@ -34,6 +34,9 @@ struct MailboxInfo
 	std::wstring wszProfileServerFqdnW; // PR_PROFILE_SERVER_FQDN_W
 	std::wstring wszAutodiscoverUrl; // PR_PROFILE_LKG_AUTODISCOVER_URL
 	std::wstring wszMailStoreInternalUrl; // PR_PROFILE_MAPIHTTP_MAILSTORE_INTERNAL_URL
+	std::wstring wszMailStoreExternalUrl; // PR_PROFILE_MAPIHTTP_MAILSTORE_INTERNAL_URL
+	std::wstring wszAddressBookInternalUrl; // PR_PROFILE_MAPIHTTP_ADDRESSBOOK_INTERNAL_URL
+	std::wstring wszAddressBookExternalUrl; // PR_PROFILE_MAPIHTTP_ADDRESSBOOK_INTERNAL_URL
 	BOOL bPrimaryMailbox; 
 	ULONG ulResourceFlags; // PR_RESOURCE_FLAGS
 	ULONG ulRohProxyAuthScheme; // PR_PROFILE_RPC_PROXY_SERVER_AUTH_PACKAGE

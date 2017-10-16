@@ -398,7 +398,7 @@ BOOL ValidateScenario2(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 	pRunOpts->profileOptions->ulProfileMode = PROFILEMODE_DEFAULT;
 	pRunOpts->serviceOptions = new ServiceOptions();
 	pRunOpts->serviceOptions->ulServiceMode = SERVICEMODE_DEFAULT;
-	pRunOpts->serviceOptions->ulConnectMode = CONNECT_ROH;
+	pRunOpts->serviceOptions->ulConnectMode = CONNECT_MOH;
 	pRunOpts->mailboxOptions = new MailboxOptions();
 
 	for (int i = 1; i < argc; i++)
@@ -1608,7 +1608,7 @@ void _tmain(int argc, _TCHAR* argv[])
 	{
 		ULONG ulProfileCount = GetProfileCount();
 		ProfileInfo * profileInfo = new ProfileInfo[ulProfileCount];
-		HrGetProfiles(ulProfileCount, profileInfo);
+		//HrGetProfiles(ulProfileCount, profileInfo);
 
 		switch (tkOptions->profileOptions->ulProfileAction)
 		{
@@ -1767,6 +1767,8 @@ void _tmain(int argc, _TCHAR* argv[])
 								(LPWSTR)tkOptions->serviceOptions->wszProfileName.c_str(),
 								(LPWSTR)tkOptions->serviceOptions->wszSmtpAddress.c_str(),
 								(LPWSTR)tkOptions->serviceOptions->wszMailboxLegacyDN.c_str(),
+								(LPWSTR)tkOptions->serviceOptions->wszServerLegacyDN.c_str(),
+								(LPWSTR)tkOptions->serviceOptions->wszServerDisplayName.c_str(),
 								(LPWSTR)tkOptions->serviceOptions->wszMailStoreInternalUrl.c_str(),
 								(LPWSTR)tkOptions->serviceOptions->wszMailStoreExternalUrl.c_str(),
 								(LPWSTR)tkOptions->serviceOptions->wszAddressBookInternalUrl.c_str(),
