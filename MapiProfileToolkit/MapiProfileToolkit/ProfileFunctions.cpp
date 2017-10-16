@@ -1634,7 +1634,7 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo)
 										{
 											if (profileServer)
 											{
-												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszProfileServer = ConvertWideCharToStdWstring(ConvertMultiByteToWideChar(profileServerDN->Value.lpszA));
+												profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszProfileServer = ConvertWideCharToStdWstring(ConvertMultiByteToWideChar(profileServer->Value.lpszA));
 												if (profileServer) MAPIFreeBuffer(profileServer);
 											}
 											else
