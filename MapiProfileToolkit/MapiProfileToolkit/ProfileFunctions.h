@@ -32,6 +32,7 @@
 #include <iostream>
 #include <algorithm> 
 #include <vector>
+#include "ToolkitObjects.h"
 
 LPWSTR GetDefaultProfileNameLP();
 std::wstring GetDefaultProfileName();
@@ -78,12 +79,10 @@ HRESULT HrCreateMsemsServiceMOH(BOOL bDefaultProfile,
 	LPWSTR lpszSmtpAddress,
 	LPWSTR lpszMailboxDn,
 	LPWSTR lpszServerDn,
-	LPWSTR lpszServerName,
 	LPWSTR lpszMailStoreInternalUrl,
 	LPWSTR lpszMailStoreExternalUrl,
 	LPWSTR lpszAddressBookInternalUrl,
-	LPWSTR lpszAddressBookExternalUrl,
-	LPWSTR lpszRohProxyServer);
+	LPWSTR lpszAddressBookExternalUrl);
 
 HRESULT HrAddDelegateMailboxModern(
 	BOOL bDefaultProfile,
@@ -116,3 +115,6 @@ HRESULT HrAddDelegateMailboxLegacy(BOOL bDefaultProfile,
 	LPWSTR lpszwServerDN);
 HRESULT HrPromoteOneDelegate(LPWSTR lpwszProfileName, int iOutlookVersion, ULONG ulConnectMode, MailboxInfo mailboxInfo);
 HRESULT HrSetCachedModeOneProfile(LPWSTR lpwszProfileName, ProfileInfo * pProfileInfo, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, bool bCachedModeOwner, bool bCachedModeShared, bool bCachedModePublicFolders, int iCachedModeMonths);
+
+HRESULT HrCreateMsemsService(ULONG ulProifileMode, LPWSTR lpwszProfileName, int iOutlookVersion, ServiceOptions * pServiceOptions);
+HRESULT HrCreateMsemsServiceOneProfile(LPWSTR lpwszProfileName, int iOutlookVersion, ServiceOptions * pServiceOptions);

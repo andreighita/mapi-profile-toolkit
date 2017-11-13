@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "ToolkitObjects.h"
 #include "CBaseScenario.h"
 

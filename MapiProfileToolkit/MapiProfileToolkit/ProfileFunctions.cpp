@@ -2913,6 +2913,122 @@ Cleanup:
 	return hRes;
 }
 
+HRESULT HrCreateMsemsService(ULONG ulProifileMode, LPWSTR lpwszProfileName, int iOutlookVersion, ServiceOptions * pServiceOptions)
+{
+	HRESULT hRes = S_OK;
+
+	if (ulProifileMode == PROFILEMODE_DEFAULT)
+	{
+		EC_HRES_MSG(HrCreateMsemsServiceOneProfile((LPWSTR)GetDefaultProfileName().c_str(), iOutlookVersion, pServiceOptions), L"Calling HrCreateMsemsServiceOneProfile");
+
+	}
+	else if (ulProifileMode == PROFILEMODE_ALL)
+	{
+		ULONG ulProfileCount = GetProfileCount();
+		ProfileInfo * profileInfo = new ProfileInfo[ulProfileCount];
+		hRes = HrGetProfiles(ulProfileCount, profileInfo);
+		for (int i = 0; i <= ulProfileCount; i++)
+		{
+			EC_HRES_MSG(HrCreateMsemsServiceOneProfile((LPWSTR)profileInfo[i].wszProfileName.c_str(), iOutlookVersion, pServiceOptions), L"Calling HrCreateMsemsServiceOneProfile");
+		}
+	}
+	else
+	{
+		if (ulProifileMode == PROFILEMODE_ONE)
+		{
+			EC_HRES_MSG(HrCreateMsemsServiceOneProfile(lpwszProfileName, iOutlookVersion, pServiceOptions), L"Calling HrCreateMsemsServiceOneProfile");
+		}
+		else
+			Logger::Write(logLevelError, L"The specified profile name is invalid or no profile name was specified.\n");
+	}
+
+Error:
+Cleanup:
+	return hRes;
+}
+
+
+HRESULT HrCreateMsemsServiceOneProfile(LPWSTR lpwszProfileName, int iOutlookVersion, ServiceOptions * pServiceOptions)
+{
+	HRESULT hRes = S_OK;
+	switch (iOutlookVersion)
+	{
+	case 2007:
+		Logger::Write(logLevelError, L"This client version is not currently supported.");
+		break;
+	case 2010:
+	case 2013:
+		if (pServiceOptions->ulConnectMode == CONNECT_ROH)
+		{
+			// This id a bit of a hack since delegate mailboxes don't need to have the personalised server name in the delegate provider
+			// I'm just creating these based on the legacyDN and the MailStore so best check that those have value
+			Logger::Write(logLevelError, L"Validating delegate information.");
+
+				Logger::Write(logLevelInfo, L"Creating and configuring new ROH service.");
+				EC_HRES_MSG(HrCreateMsemsServiceROH(FALSE,
+					lpwszProfileName,
+					(LPWSTR)pServiceOptions->wszSmtpAddress.c_str(),
+					(LPWSTR)pServiceOptions->wszMailboxLegacyDN.c_str(),
+					(LPWSTR)pServiceOptions->wszServerDisplayName.c_str(),
+					(LPWSTR)pServiceOptions->wszRohProxyServer.c_str(),
+					(LPWSTR)pServiceOptions->wszServerLegacyDN.c_str(),
+					(LPWSTR)pServiceOptions->wszAutodiscoverUrl.c_str()), L"Calling HrCreateMsemsServiceROH");
+		}
+		// best not be used for now as I haven't sorted it out
+		else if (pServiceOptions->ulConnectMode == CONNECT_MOH)
+		{
+			Logger::Write(logLevelError, L"Validating delegate information.");
+			if (((pServiceOptions->wszMailStoreInternalUrl != L"") || (pServiceOptions->wszMailStoreExternalUrl != L"")) && (pServiceOptions->wszMailboxLegacyDN != L""))
+			{
+				//Logger::Write(logLevelError, L"MOH logic is not currently available.");
+				std::wstring wszParsedSmtpAddress = SubstringToEnd(L"smtp:", pServiceOptions->wszSmtpAddress);
+				std::wstring wszPersonalisedServerName;
+				if (pServiceOptions->wszMailStoreInternalUrl != L"")
+					wszPersonalisedServerName = SubstringToEnd(L"MailboxId=", pServiceOptions->wszMailStoreInternalUrl);
+				else
+					wszPersonalisedServerName = SubstringToEnd(L"MailboxId=", pServiceOptions->wszMailStoreExternalUrl);
+
+				if ((pServiceOptions->wszAddressBookInternalUrl == L"") && (pServiceOptions->wszMailStoreInternalUrl != L""))
+				{
+					pServiceOptions->wszAddressBookInternalUrl = SubstringFromStart(L"emsmdb", pServiceOptions->wszMailStoreInternalUrl) + L"/nspi" + SubstringToEnd(L"emsmdb", pServiceOptions->wszMailStoreInternalUrl);
+				}
+				if ((pServiceOptions->wszAddressBookExternalUrl == L"") && (pServiceOptions->wszMailStoreExternalUrl != L""))
+				{
+					pServiceOptions->wszAddressBookExternalUrl = SubstringFromStart(L"emsmdb", pServiceOptions->wszMailStoreExternalUrl) + L"/nspi" + SubstringToEnd(L"emsmdb", pServiceOptions->wszMailStoreExternalUrl);
+				}
+				std::wstring wszServerDN = SubstringFromStart(L"cn=Recipients", pServiceOptions->wszMailboxLegacyDN) + L"/cn=Configuration/cn=Servers/cn=" + wszPersonalisedServerName;
+
+
+				EC_HRES_MSG(HrCreateMsemsServiceMOH(FALSE,
+					lpwszProfileName,
+					(LPWSTR)pServiceOptions->wszSmtpAddress.c_str(),
+					(LPWSTR)pServiceOptions->wszMailboxLegacyDN.c_str(),
+					(LPWSTR)pServiceOptions->wszServerLegacyDN.c_str(),
+					(LPWSTR)pServiceOptions->wszMailStoreInternalUrl.c_str(),
+					(LPWSTR)pServiceOptions->wszMailStoreExternalUrl.c_str(),
+					(LPWSTR)pServiceOptions->wszAddressBookInternalUrl.c_str(),
+					(LPWSTR)pServiceOptions->wszAddressBookExternalUrl.c_str()), L"Calling HrCreateMsemsServiceMOH");
+			}
+		}
+
+		break;
+	case 2016:
+		Logger::Write(logLevelInfo, L"Creating and configuring new service.");
+		EC_HRES_MSG(HrCreateMsemsServiceModern(FALSE,
+			lpwszProfileName,
+			(LPWSTR)pServiceOptions->wszSmtpAddress.c_str(),
+			(LPWSTR)pServiceOptions->wszSmtpAddress.c_str()), L"Calling HrCreateMsemsServiceModern");
+
+		break;
+	}
+
+Error:
+Cleanup:
+	return hRes;
+}
+
+
+
 // HrCrateMsemsServiceModernExt
 // Crates a new message store service and configures the following properties:
 // - PR_PROFILE_CONFIG_FLAGS
@@ -3678,12 +3794,10 @@ HRESULT HrCreateMsemsServiceMOH(BOOL bDefaultProfile,
 	LPWSTR lpszSmtpAddress,
 	LPWSTR lpszMailboxDn,
 	LPWSTR lpszServerDn,
-	LPWSTR lpszServerName,
 	LPWSTR lpszMailStoreInternalUrl,
 	LPWSTR lpszMailStoreExternalUrl,
 	LPWSTR lpszAddressBookInternalUrl,
-	LPWSTR lpszAddressBookExternalUrl,
-	LPWSTR lpszRohProxyServer)
+	LPWSTR lpszAddressBookExternalUrl)
 {
 	HRESULT hRes = S_OK; // Result code returned from MAPI calls.
 	SPropValue rgvalSvc[5];
@@ -3772,7 +3886,6 @@ HRESULT HrCreateMsemsServiceMOH(BOOL bDefaultProfile,
 				paramC++;
 			}
 
-
 			if (lpszMailStoreInternalUrl && (lpszMailStoreInternalUrl != L""))
 			{
 				ZeroMemory(&sPropValue, sizeof(SPropValue));
@@ -3781,7 +3894,6 @@ HRESULT HrCreateMsemsServiceMOH(BOOL bDefaultProfile,
 				rgvalVector.push_back(sPropValue);
 				paramC++;
 			}
-
 
 			if (lpszSmtpAddress)
 			{
@@ -3845,41 +3957,6 @@ HRESULT HrCreateMsemsServiceMOH(BOOL bDefaultProfile,
 					paramC++;
 				}
 
-				if (lpszSmtpAddress)
-				{
-					ZeroMemory(&sPropValue, sizeof(SPropValue));
-					sPropValue.ulPropTag = PR_DISPLAY_NAME_W;
-					sPropValue.Value.lpszW = lpszSmtpAddress;
-					rgvalVector.push_back(sPropValue);
-					paramC++;
-				}
-
-
-				if (lpszMailStoreExternalUrl)
-				{
-					ZeroMemory(&sPropValue, sizeof(SPropValue));
-					sPropValue.ulPropTag = PR_PROFILE_MAPIHTTP_MAILSTORE_EXTERNAL_URL;
-					sPropValue.Value.lpszW = lpszMailStoreExternalUrl;
-					rgvalVector.push_back(sPropValue);
-					paramC++;
-				}
-
-
-				if (lpszMailStoreInternalUrl)
-				{
-					ZeroMemory(&sPropValue, sizeof(SPropValue));
-					sPropValue.ulPropTag = PR_PROFILE_MAPIHTTP_MAILSTORE_INTERNAL_URL;
-					sPropValue.Value.lpszW = lpszMailStoreInternalUrl;
-					rgvalVector.push_back(sPropValue);
-					paramC++;
-				}
-
-				ZeroMemory(&sPropValue, sizeof(SPropValue));
-				sPropValue.ulPropTag = PR_PROFILE_SERVER_DN;
-				sPropValue.Value.lpszA = ConvertWideCharToMultiByte(lpszServerDn);
-				rgvalVector.push_back(sPropValue);
-				paramC++;
-
 				ZeroMemory(&sPropValue, sizeof(SPropValue));
 				sPropValue.ulPropTag = PR_PROFILE_MAILBOX;
 				sPropValue.Value.lpszA = ConvertWideCharToMultiByte(lpszMailboxDn);
@@ -3896,9 +3973,6 @@ HRESULT HrCreateMsemsServiceMOH(BOOL bDefaultProfile,
 				{
 					goto Error;
 				}
-
-				printf("Saving changes.\n");
-				hRes = lpEmsMdbProfSect->SaveChanges(KEEP_OPEN_READWRITE);
 
 				if (FAILED(hRes))
 				{
@@ -4182,12 +4256,10 @@ HRESULT HrPromoteOneDelegate(LPWSTR lpwszProfileName, int iOutlookVersion, ULONG
 					(LPWSTR)wszParsedSmtpAddress.c_str(),
 					(LPWSTR)mailboxInfo.wszProfileMailbox.c_str(),
 					(LPWSTR)wszServerDN.c_str(),
-					(LPWSTR)wszPersonalisedServerName.c_str(),
 					(LPWSTR)mailboxInfo.wszMailStoreInternalUrl.c_str(),
 					(LPWSTR)mailboxInfo.wszMailStoreExternalUrl.c_str(),
 					(LPWSTR)mailboxInfo.wszAddressBookInternalUrl.c_str(),
-					(LPWSTR)mailboxInfo.wszAddressBookExternalUrl.c_str(),
-					(LPWSTR)mailboxInfo.wszRohProxyServer.c_str())))
+					(LPWSTR)mailboxInfo.wszAddressBookExternalUrl.c_str())))
 				{
 					EC_HRES_MSG(HrDeleteProvider(lpwszProfileName, &mailboxInfo.muidServiceUid, &mailboxInfo.muidProviderUid), L"Calling HrDeleteProvider");
 				}

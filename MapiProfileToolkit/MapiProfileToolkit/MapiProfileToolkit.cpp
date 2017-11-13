@@ -806,7 +806,7 @@ BOOL ValidateScenario2(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 		}
 		else if ((wsArg == L"-connectmode") || (wsArg == L"-cm"))
 		{
-			if (i + 1 < argc)
+			if (i + 1 < argc)	
 			{
 				std::wstring wszValue = argv[i + 1];
 				std::transform(wszValue.begin(), wszValue.end(), wszValue.begin(), ::tolower);
@@ -1613,7 +1613,12 @@ void _tmain(int argc, _TCHAR* argv[])
 		switch (tkOptions->profileOptions->ulProfileAction)
 		{
 		case ACTION_ADD:
-			HrCreateProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str());
+			EC_HRES_MSG(HrCreateProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str()), L"Calling HrCreateProfile");
+			if (tkOptions->serviceOptions->ulServiceAction == ACTION_ADD)
+			EC_HRES_LOG(HrCreateMsemsService(PROFILEMODE_ONE,
+				(LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(),
+				tkOptions->iOutlookVersion,
+				tkOptions->serviceOptions), L"Calling HrCreateMsemsService");
 			break;
 		case ACTION_EDIT:
 			if (tkOptions->profileOptions->bSetDefaultProfile)
@@ -1623,7 +1628,10 @@ void _tmain(int argc, _TCHAR* argv[])
 			switch (tkOptions->serviceOptions->ulServiceAction)
 			{
 			case ACTION_ADD:
-
+				EC_HRES_LOG(HrCreateMsemsService(tkOptions->profileOptions->ulProfileMode == PROFILEMODE_DEFAULT, 
+					(LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(), 
+					tkOptions->iOutlookVersion, 
+					tkOptions->serviceOptions), L"Calling HrCreateMsemsService");
 			case ACTION_EDIT:
 
 				switch (tkOptions->mailboxOptions->ulMailboxAction)
@@ -1768,12 +1776,10 @@ void _tmain(int argc, _TCHAR* argv[])
 								(LPWSTR)tkOptions->serviceOptions->wszSmtpAddress.c_str(),
 								(LPWSTR)tkOptions->serviceOptions->wszMailboxLegacyDN.c_str(),
 								(LPWSTR)tkOptions->serviceOptions->wszServerLegacyDN.c_str(),
-								(LPWSTR)tkOptions->serviceOptions->wszServerDisplayName.c_str(),
 								(LPWSTR)tkOptions->serviceOptions->wszMailStoreInternalUrl.c_str(),
 								(LPWSTR)tkOptions->serviceOptions->wszMailStoreExternalUrl.c_str(),
 								(LPWSTR)tkOptions->serviceOptions->wszAddressBookInternalUrl.c_str(),
-								(LPWSTR)tkOptions->serviceOptions->wszAddressBookExternalUrl.c_str(),
-								(LPWSTR)tkOptions->serviceOptions->wszRohProxyServer.c_str());
+								(LPWSTR)tkOptions->serviceOptions->wszAddressBookExternalUrl.c_str());
 						}
 						else
 						{
