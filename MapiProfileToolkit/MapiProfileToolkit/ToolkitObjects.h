@@ -134,8 +134,13 @@ struct MailboxOptions
 	std::wstring wszMailboxDisplayName;		// mmdn
 	std::wstring wszServerLegacyDN;			// msldn
 	std::wstring wszServerDisplayName;		// msdn
-	ULONG ulMailboxType;
-	ULONG ulMailboxAction;
+	std::wstring wszRohProxyServer;			// mrps
+	std::wstring wszMailStoreExternalUrl;	// mmse
+	std::wstring wszMailStoreInternalUrl;	// mmsi
+	ULONG ulMailboxType;					
+	ULONG ulMailboxAction;					
+	ULONG ulRohProxyServerFlags;			// mrpsf
+	ULONG ulRohProxyServerAuthPackage;		// mrpsap
 };
 
 struct LdapOptions

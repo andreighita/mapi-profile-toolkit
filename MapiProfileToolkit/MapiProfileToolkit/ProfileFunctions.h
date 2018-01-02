@@ -53,10 +53,8 @@ HRESULT HrPromoteDelegatesOneProfile(LPWSTR profileName, ProfileInfo * pProfileI
 HRESULT HrDeleteProvider(LPWSTR lpwszProfileName, LPMAPIUID lpServiceUid, LPMAPIUID lpProviderUid);
 HRESULT HrCreatePstService(LPSERVICEADMIN2 lpServiceAdmin2, LPMAPIUID * lppServiceUid, LPWSTR lpszServiceName, ULONG ulResourceFlags, ULONG ulPstConfigFlag, LPWSTR lpszPstPathW, LPWSTR lpszDisplayName);
 HRESULT HrGetDefaultMsemsServiceAdminProviderPtr(LPWSTR lpwszProfileName, LPPROVIDERADMIN * lppProvAdmin, LPMAPIUID * lppServiceUid);
-
 HRESULT HrGetSections(LPSERVICEADMIN lpSvcAdmin, LPMAPIUID lpServiceUid, LPPROFSECT * lppEmsMdbSection, LPPROFSECT * lppStoreProviderSection);
 HRESULT HrGetSections(LPSERVICEADMIN2 lpSvcAdmin, LPMAPIUID lpServiceUid, LPPROFSECT * lppEmsMdbSection, LPPROFSECT * lppStoreProviderSection);
-
 HRESULT HrCreateMsemsServiceModernExt(BOOL bDefaultProfile, LPWSTR lpwszProfileName, ULONG ulResourceFlags,	ULONG ulProfileConfigFlags,	ULONG ulCachedModeMonths, LPWSTR lpszSmtpAddress, LPWSTR lpszDisplayName);
 HRESULT HrCreateMsemsServiceModern(BOOL bDefaultProfile,
 	LPWSTR lpwszProfileName,
@@ -83,7 +81,6 @@ HRESULT HrCreateMsemsServiceMOH(BOOL bDefaultProfile,
 	LPWSTR lpszMailStoreExternalUrl,
 	LPWSTR lpszAddressBookInternalUrl,
 	LPWSTR lpszAddressBookExternalUrl);
-
 HRESULT HrAddDelegateMailboxModern(
 	BOOL bDefaultProfile,
 	LPWSTR lpwszProfileName,
@@ -91,7 +88,6 @@ HRESULT HrAddDelegateMailboxModern(
 	int iServiceIndex,
 	LPWSTR lpszwDisplayName,
 	LPWSTR lpszwSMTPAddress);
-
 HRESULT HrAddDelegateMailbox(BOOL bDefaultProfile,
 	LPWSTR lpwszProfileName,
 	BOOL bDefaultService,
@@ -115,6 +111,7 @@ HRESULT HrAddDelegateMailboxLegacy(BOOL bDefaultProfile,
 	LPWSTR lpszwServerDN);
 HRESULT HrPromoteOneDelegate(LPWSTR lpwszProfileName, int iOutlookVersion, ULONG ulConnectMode, MailboxInfo mailboxInfo);
 HRESULT HrSetCachedModeOneProfile(LPWSTR lpwszProfileName, ProfileInfo * pProfileInfo, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, bool bCachedModeOwner, bool bCachedModeShared, bool bCachedModePublicFolders, int iCachedModeMonths);
-
 HRESULT HrCreateMsemsService(ULONG ulProifileMode, LPWSTR lpwszProfileName, int iOutlookVersion, ServiceOptions * pServiceOptions);
 HRESULT HrCreateMsemsServiceOneProfile(LPWSTR lpwszProfileName, int iOutlookVersion, ServiceOptions * pServiceOptions);
+HRESULT HrAddDelegateMailboxOneProfile(LPWSTR lpwszProfileName, int iOutlookVersion, ULONG ulServiceMode, int iServiceIndex, MailboxOptions * pMailboxOptions);
+HRESULT HrAddDelegateMailbox(ULONG ulProifileMode, LPWSTR lpwszProfileName, ULONG ulServiceMode, int iServiceIndex, int iOutlookVersion, MailboxOptions * pMailboxOptions);

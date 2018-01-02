@@ -710,6 +710,7 @@ BOOL ValidateScenario2(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 			if (i + 1 < argc)
 			{
 				pRunOpts->serviceOptions->wszMailStoreExternalUrl = argv[i + 1];
+				pRunOpts->mailboxOptions->wszMailStoreExternalUrl = argv[i + 1];
 				i++;
 
 			}
@@ -719,6 +720,7 @@ BOOL ValidateScenario2(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 			if (i + 1 < argc)
 			{
 				pRunOpts->serviceOptions->wszMailStoreInternalUrl = argv[i + 1];
+				pRunOpts->mailboxOptions->wszMailStoreExternalUrl = argv[i + 1];
 				i++;
 
 			}
@@ -728,8 +730,24 @@ BOOL ValidateScenario2(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 			if (i + 1 < argc)
 			{
 				pRunOpts->serviceOptions->wszRohProxyServer = argv[i + 1];
+				pRunOpts->mailboxOptions->wszRohProxyServer = argv[i + 1];
 				i++;
-
+			}
+		}
+		else if ((wsArg == L"-rohproxyserverflags") || (wsArg == L"-rpsf"))
+		{
+			if (i + 1 < argc)
+			{
+				pRunOpts->mailboxOptions->ulRohProxyServerFlags = _wtoi(argv[i + 1]);
+				i++;
+			}
+		}
+		else if ((wsArg == L"-rohproxyserverauthpackage") || (wsArg == L"-mrpsap"))
+		{
+			if (i + 1 < argc)
+			{
+				pRunOpts->mailboxOptions->ulRohProxyServerAuthPackage = _wtoi(argv[i + 1]);
+				i++;
 			}
 		}
 		else if ((wsArg == L"-serverdisplayname") || (wsArg == L"-sdn"))
@@ -1590,7 +1608,7 @@ void _tmain(int argc, _TCHAR* argv[])
 
 	// Using the toolkip options to manage the runtime options
 	RuntimeOptions * tkOptions = new RuntimeOptions();
-	Logger::SetLoggingMode((LoggingMode)tkOptions->ulLoggingMode);
+
 	// Parse the command line arguments
 	if (!ValidateScenario2(argc, argv, tkOptions))
 	{
@@ -1600,6 +1618,7 @@ void _tmain(int argc, _TCHAR* argv[])
 		}
 		return;
 	}
+	Logger::SetLoggingMode((LoggingMode)tkOptions->ulLoggingMode);
 
 	loggingMode = (LoggingMode)tkOptions->ulLoggingMode;
 
@@ -1637,6 +1656,13 @@ void _tmain(int argc, _TCHAR* argv[])
 				switch (tkOptions->mailboxOptions->ulMailboxAction)
 				{
 				case ACTION_ADD:
+					HrAddDelegateMailbox(tkOptions->profileOptions->ulProfileMode == PROFILEMODE_DEFAULT,
+						(LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(),
+						tkOptions->serviceOptions->ulServiceMode == SERVICEMODE_DEFAULT,
+						tkOptions->serviceOptions->iServiceIndex,
+						tkOptions->iOutlookVersion,
+						tkOptions->mailboxOptions);
+					break;
 				case ACTION_EDIT:
 				case ACTION_REMOVE:
 					break;
@@ -1652,18 +1678,24 @@ void _tmain(int argc, _TCHAR* argv[])
 					// If Caching options were specified then update the cached mode configuration accordingly
 					if ((tkOptions->serviceOptions->ulCachedModeOwner > 0) || (tkOptions->serviceOptions->ulCachedModeShared > 0) || (tkOptions->serviceOptions->ulCachedModePublicFolder > 0))
 					{
-
+						// This is not yet implemented
 					}
 					break;
 				case ACTION_LIST:
+
 					break;
 				};
 			case ACTION_REMOVE:
+				break;
 			case ACTION_UPDATE:
+				break;
 			case ACTION_LIST:
 				break;
 
 			};
+			break;
+		case ACTION_LIST:
+			HrListProfiles(tkOptions->profileOptions, tkOptions->wszExportPath);
 			break;
 		};
 
@@ -1958,4 +1990,72 @@ Cleanup:
 	// Free up memory
 
 	return;
+}
+
+
+HRESULT HrListProfiles(ProfileOptions * pProfileOptions, std::wstring wszExportPath)
+{
+	HRESULT hRes = S_OK;
+	if (pProfileOptions->ulProfileMode == PROFILEMODE_ALL)
+	{
+		ULONG ulProfileCount = GetProfileCount();
+		ProfileInfo * profileInfo = new ProfileInfo[ulProfileCount];
+		ZeroMemory(profileInfo, sizeof(ProfileInfo) * ulProfileCount);
+		Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for all profiles");
+		EC_HRES_MSG(HrGetProfiles(ulProfileCount, profileInfo), L"Calling HrGetProfiles");
+		if (wszExportPath != L"")
+		{
+			Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for all profiles");
+			ExportXML(ulProfileCount, profileInfo, wszExportPath);
+		}
+		else
+		{
+			Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for all profiles");
+			ExportXML(ulProfileCount, profileInfo, L"");
+		}
+
+	}
+	if (pProfileOptions->ulProfileMode == PROFILEMODE_ONE)
+	{
+		ProfileInfo * pProfileInfo = new ProfileInfo();
+		Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for profile: " + pProfileOptions->wszProfileName);
+		EC_HRES_MSG(HrGetProfile((LPWSTR)pProfileOptions->wszProfileName.c_str(), pProfileInfo), L"Calling HrGetProfile");
+		if (wszExportPath != L"")
+		{
+			Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for profile");
+			ExportXML(1, pProfileInfo, wszExportPath);
+		}
+		else
+		{
+			Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for profile");
+			ExportXML(1, pProfileInfo, L"");
+		}
+
+	}
+	if (pProfileOptions->ulProfileMode == PROFILEMODE_DEFAULT)
+	{
+		std::wstring szDefaultProfileName = GetDefaultProfileName();
+		if (!szDefaultProfileName.empty())
+		{
+			pProfileOptions->wszProfileName = szDefaultProfileName;
+		}
+
+		ProfileInfo * pProfileInfo = new ProfileInfo();
+		Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for default profile: " + pProfileOptions->wszProfileName);
+		EC_HRES_MSG(HrGetProfile((LPWSTR)pProfileOptions->wszProfileName.c_str(), pProfileInfo), L"Calling HrGetProfile");
+		if (wszExportPath != L"")
+		{
+			Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for default profile");
+			ExportXML(1, pProfileInfo, wszExportPath);
+		}
+		else
+		{
+			Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for default profile");
+			ExportXML(1, pProfileInfo, L"");
+		}
+	}
+
+Error:
+Cleanup:
+	return hRes;
 }

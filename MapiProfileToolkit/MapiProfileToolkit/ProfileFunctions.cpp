@@ -1881,7 +1881,7 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo)
 							lpProvRes,
 							NULL,
 							0,
-							&lpProvRows), L"HrGetProfile", L"0044");
+							&lpProvRows), L"HrGetProfile");
 
 						if (lpProvRows->cRows > 0)
 						{
@@ -2233,6 +2233,88 @@ Cleanup:
 	if (lpProfAdmin) lpProfAdmin->Release();
 	return hRes;
 }
+
+HRESULT HrAddDelegateMailbox(ULONG ulProifileMode, LPWSTR lpwszProfileName, ULONG ulServiceMode, int iServiceIndex, int iOutlookVersion, MailboxOptions * pMailboxOptions)
+{
+	HRESULT hRes = S_OK;
+
+	if (ulProifileMode == PROFILEMODE_DEFAULT)
+	{
+		EC_HRES_MSG(HrAddDelegateMailboxOneProfile((LPWSTR)GetDefaultProfileName().c_str(), iOutlookVersion, ulServiceMode, iServiceIndex, pMailboxOptions), L"Calling HrAddDelegateMailboxOneProfile");
+
+	}
+	else if (ulProifileMode == PROFILEMODE_ALL)
+	{
+		ULONG ulProfileCount = GetProfileCount();
+		ProfileInfo * profileInfo = new ProfileInfo[ulProfileCount];
+		hRes = HrGetProfiles(ulProfileCount, profileInfo);
+		for (int i = 0; i <= ulProfileCount; i++)
+		{
+			EC_HRES_MSG(HrAddDelegateMailboxOneProfile((LPWSTR)profileInfo[i].wszProfileName.c_str(), iOutlookVersion, ulServiceMode, iServiceIndex, pMailboxOptions), L"Calling HrAddDelegateMailboxOneProfile");
+		}
+	}
+	else
+	{
+		if (ulProifileMode == PROFILEMODE_ONE)
+		{
+			EC_HRES_MSG(HrAddDelegateMailboxOneProfile(lpwszProfileName, iOutlookVersion, ulServiceMode, iServiceIndex, pMailboxOptions), L"Calling HrAddDelegateMailboxOneProfile");
+		}
+		else
+			Logger::Write(logLevelError, L"The specified profile name is invalid or no profile name was specified.\n");
+	}
+
+Error:
+Cleanup:
+	return hRes;
+}
+
+HRESULT HrAddDelegateMailboxOneProfile(LPWSTR lpwszProfileName, int iOutlookVersion, ULONG ulServiceMode, int iServiceIndex, MailboxOptions * pMailboxOptions)
+{
+	HRESULT hRes = S_OK;
+	switch (iOutlookVersion)
+	{
+	case 2007:
+		EC_HRES_MSG(HrAddDelegateMailboxLegacy(FALSE, 
+			lpwszProfileName, 
+			ulServiceMode, 
+			iServiceIndex, 
+			(LPWSTR)pMailboxOptions->wszMailboxDisplayName.c_str(), 
+			(LPWSTR)pMailboxOptions->wszMailboxLegacyDN.c_str(), 
+			(LPWSTR)pMailboxOptions->wszServerDisplayName.c_str(), 
+			(LPWSTR)pMailboxOptions->wszServerLegacyDN.c_str()), L"Calling HrAddDelegateMailboxLegacy");
+		break;
+	case 2010:
+	case 2013:
+		EC_HRES_MSG(HrAddDelegateMailbox(FALSE,
+			lpwszProfileName,
+			ulServiceMode == SERVICEMODE_DEFAULT,
+			iServiceIndex,
+			(LPWSTR)pMailboxOptions->wszMailboxDisplayName.c_str(),
+			(LPWSTR)pMailboxOptions->wszMailboxLegacyDN.c_str(),
+			(LPWSTR)pMailboxOptions->wszServerDisplayName.c_str(),
+			(LPWSTR)pMailboxOptions->wszServerLegacyDN.c_str(),
+			(LPWSTR)pMailboxOptions->wszSmtpAddress.c_str(),
+			(LPWSTR)pMailboxOptions->wszRohProxyServer.c_str(),
+			pMailboxOptions->ulRohProxyServerFlags,
+			pMailboxOptions->ulRohProxyServerAuthPackage,
+			(LPWSTR)pMailboxOptions->wszMailStoreInternalUrl.c_str() ), L"Calling HrAddDelegateMailbox");
+		break;
+	case 2016:
+		EC_HRES_MSG(HrAddDelegateMailboxModern(FALSE,
+			lpwszProfileName,
+			ulServiceMode == SERVICEMODE_DEFAULT,
+			iServiceIndex,
+			(LPWSTR)pMailboxOptions->wszMailboxDisplayName.c_str(), 
+			(LPWSTR)pMailboxOptions->wszSmtpAddress.c_str()), L"Calling HrCreateMsemsServiceModern");
+		break;
+	}
+
+Error:
+Cleanup:
+	return hRes;
+}
+
+
 
 // HrAddDelegateMailbox
 // Adds a delegate mailbox to a given service. The property set is one for Outlook 2010 and 2013 where all is needed is:
