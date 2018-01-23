@@ -2161,7 +2161,7 @@ HRESULT HrAddDelegateMailboxModern(
 
 						ZeroMemory(&rgval[0], sizeof(SPropValue));
 						rgval[0].ulPropTag = PR_PROFILE_USER_SMTP_EMAIL_ADDRESS_W;
-						rgval[0].Value.lpszA = ConvertWideCharToMultiByte((LPWSTR)wszSmtpAddress.c_str());;
+						rgval[0].Value.lpszW = (LPWSTR)wszSmtpAddress.c_str();
 
 						ZeroMemory(&rgval[1], sizeof(SPropValue));
 						rgval[1].ulPropTag = PR_DISPLAY_NAME_W;
@@ -2196,7 +2196,7 @@ HRESULT HrAddDelegateMailboxModern(
 
 				ZeroMemory(&rgval[0], sizeof(SPropValue));
 				rgval[0].ulPropTag = PR_PROFILE_USER_SMTP_EMAIL_ADDRESS_W;
-				rgval[0].Value.lpszA = ConvertWideCharToMultiByte((LPWSTR)wszSmtpAddress.c_str());;
+				rgval[0].Value.lpszW = (LPWSTR)wszSmtpAddress.c_str();
 
 				ZeroMemory(&rgval[1], sizeof(SPropValue));
 				rgval[1].ulPropTag = PR_DISPLAY_NAME_W;
@@ -2276,7 +2276,7 @@ HRESULT HrAddDelegateMailboxOneProfile(LPWSTR lpwszProfileName, int iOutlookVers
 	case 2007:
 		EC_HRES_MSG(HrAddDelegateMailboxLegacy(FALSE, 
 			lpwszProfileName, 
-			ulServiceMode, 
+			SERVICEMODE_DEFAULT,
 			iServiceIndex, 
 			(LPWSTR)pMailboxOptions->wszMailboxDisplayName.c_str(), 
 			(LPWSTR)pMailboxOptions->wszMailboxLegacyDN.c_str(), 
@@ -2445,7 +2445,7 @@ HRESULT HrAddDelegateMailbox(BOOL bDefaultProfile,
 
 						ZeroMemory(&rgval[4], sizeof(SPropValue));
 						rgval[4].ulPropTag = PR_PROFILE_USER_SMTP_EMAIL_ADDRESS_W;
-						rgval[4].Value.lpszA = ConvertWideCharToMultiByte((LPWSTR)wszSmtpAddress.c_str());
+						rgval[4].Value.lpszW = (LPWSTR)wszSmtpAddress.c_str();
 
 						printf("Creating EMSDelegate provider.\n");
 						// Create the message service with the above properties.
@@ -2491,7 +2491,7 @@ HRESULT HrAddDelegateMailbox(BOOL bDefaultProfile,
 
 				ZeroMemory(&rgval[4], sizeof(SPropValue));
 				rgval[4].ulPropTag = PR_PROFILE_USER_SMTP_EMAIL_ADDRESS_W;
-				rgval[4].Value.lpszA = ConvertWideCharToMultiByte((LPWSTR)wszSmtpAddress.c_str());
+				rgval[4].Value.lpszW = (LPWSTR)wszSmtpAddress.c_str();
 
 				printf("Creating EMSDelegate provider.\n");
 				// Create the message service with the above properties.
