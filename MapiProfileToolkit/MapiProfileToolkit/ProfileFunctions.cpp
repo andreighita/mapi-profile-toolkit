@@ -1146,8 +1146,8 @@ HRESULT HrCloneProfile(ProfileInfo * profileInfo)
 		if (profileInfo->profileServices[i].ulServiceType == SERVICETYPE_MAILBOX)
 		{
 			Logger::Write(logLevelInfo, L"Adding exchange mailbox: " + profileInfo->profileServices[i].exchangeAccountInfo->wszEmailAddress);
-			EC_HRES_MSG(HrCreateMsemsServiceModernExt(TRUE,
-				(LPWSTR)GetDefaultProfileName().c_str(),
+			EC_HRES_MSG(HrCreateMsemsServiceModernExt(false, // sort this out later
+				(LPWSTR)profileInfo->wszProfileName.c_str(),
 				profileInfo->profileServices[i].ulResourceFlags,
 				profileInfo->profileServices[i].exchangeAccountInfo->ulProfileConfigFlags,
 				profileInfo->profileServices[i].exchangeAccountInfo->iCachedModeMonths,
@@ -1161,12 +1161,14 @@ HRESULT HrCloneProfile(ProfileInfo * profileInfo)
 				if (profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulProfileType == PROFILE_DELEGATE)
 				{
 					Logger::Write(logLevelInfo, L"Adding additional mailbox: " + profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress);
-					EC_HRES_MSG(HrAddDelegateMailboxModern(TRUE,
-						(LPWSTR)GetDefaultProfileName().c_str(),
-						FALSE,
-						uiServiceIndex,
-						(LPWSTR)profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszDisplayName.c_str(),
-						(LPWSTR)profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress.c_str()), L"Calling HrAddDelegateMailboxModern.");
+					// this should not add online archives
+					if (true != profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].bIsOnlineArchive)
+						EC_HRES_MSG(HrAddDelegateMailboxModern(false,
+						(LPWSTR)profileInfo->wszProfileName.c_str(),
+							FALSE,
+							uiServiceIndex,
+							(LPWSTR)profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszDisplayName.c_str(),
+							(LPWSTR)profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress.c_str()), L"Calling HrAddDelegateMailboxModern.");
 				}
 			}
 			uiServiceIndex++;

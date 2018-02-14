@@ -432,6 +432,11 @@ BOOL ValidateScenario2(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 					pRunOpts->profileOptions->ulProfileAction = ACTION_LIST;
 					i++;
 				}
+				else if (wszValue == L"clone")
+				{
+					pRunOpts->profileOptions->ulProfileAction = ACTION_CLONE;
+					i++;
+				}
 				else
 				{
 					return false;
@@ -1656,25 +1661,25 @@ void _tmain(int argc, _TCHAR* argv[])
 				switch (tkOptions->mailboxOptions->ulMailboxAction)
 				{
 				case ACTION_ADD:
-					HrAddDelegateMailbox(tkOptions->profileOptions->ulProfileMode == PROFILEMODE_DEFAULT,
+					EC_HRES_LOG(HrAddDelegateMailbox(tkOptions->profileOptions->ulProfileMode == PROFILEMODE_DEFAULT,
 						(LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(),
 						tkOptions->serviceOptions->ulServiceMode == SERVICEMODE_DEFAULT,
 						tkOptions->serviceOptions->iServiceIndex,
 						tkOptions->iOutlookVersion,
-						tkOptions->mailboxOptions);
+						tkOptions->mailboxOptions), L"Calling HrAddDelegateMailbox");
 					break;
 				case ACTION_EDIT:
 				case ACTION_REMOVE:
 					break;
 				case ACTION_PROMOTEDELEGATE:
-					HrPromoteDelegates((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(),
+					EC_HRES_LOG(HrPromoteDelegates((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(),
 						tkOptions->profileOptions->ulProfileMode == PROFILEMODE_DEFAULT,
 						tkOptions->profileOptions->ulProfileMode == PROFILEMODE_ALL,
 						tkOptions->serviceOptions->iServiceIndex,
 						tkOptions->serviceOptions->ulServiceMode == SERVICEMODE_DEFAULT,
 						tkOptions->serviceOptions->ulServiceMode == SERVICEMODE_ALL,
 						tkOptions->iOutlookVersion,
-						tkOptions->serviceOptions->ulConnectMode);
+						tkOptions->serviceOptions->ulConnectMode), L"Calling HrPromoteDelegates");
 					// If Caching options were specified then update the cached mode configuration accordingly
 					if ((tkOptions->serviceOptions->ulCachedModeOwner > 0) || (tkOptions->serviceOptions->ulCachedModeShared > 0) || (tkOptions->serviceOptions->ulCachedModePublicFolder > 0))
 					{
@@ -1695,7 +1700,24 @@ void _tmain(int argc, _TCHAR* argv[])
 			};
 			break;
 		case ACTION_LIST:
-			HrListProfiles(tkOptions->profileOptions, tkOptions->wszExportPath);
+			EC_HRES_LOG(HrListProfiles(tkOptions->profileOptions, tkOptions->wszExportPath), L"Calling HrListProfiles");
+			break;
+		case ACTION_CLONE:
+			ProfileInfo profInfo;
+			ProfileInfo * lpProfInfo = &profInfo;
+			MAPIAllocateBuffer(sizeof(ProfileInfo), (LPVOID*)lpProfInfo);
+			ZeroMemory(lpProfInfo, sizeof(ProfileInfo));
+
+			if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_DEFAULT)
+			{
+				EC_HRES_LOG(HrGetProfile((LPWSTR)GetDefaultProfileName().c_str(), &profInfo), L"Calling HrGetProfile");
+			}
+			else if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_ONE)
+			{
+				EC_HRES_LOG(HrGetProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(), &profInfo), L"Calling HrGetProfile");
+
+			}
+			EC_HRES_LOG(HrCloneProfile(&profInfo), L"Calling HrCloneProfile");
 			break;
 		};
 
