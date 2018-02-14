@@ -1139,57 +1139,60 @@ HRESULT HrCloneProfile(ProfileInfo * profileInfo)
 	profileInfo->wszProfileName = profileInfo->wszProfileName + L"_Clone";
 	Logger::Write(logLevelInfo, L"Creating new profile named: " + profileInfo->wszProfileName);
 	EC_HRES_MSG(HrCreateProfile((LPWSTR)profileInfo->wszProfileName.c_str(), &lpServiceAdmin), L"Calling HrCreateProfile.");
-	for (unsigned int i = 0; i < profileInfo->ulServiceCount; i++)
+	if (lpServiceAdmin)
 	{
-		MAPIUID uidService = { 0 };
-		LPMAPIUID lpServiceUid = &uidService;
-		if (profileInfo->profileServices[i].ulServiceType == SERVICETYPE_MAILBOX)
+		for (unsigned int i = 0; i < profileInfo->ulServiceCount; i++)
 		{
-			Logger::Write(logLevelInfo, L"Adding exchange mailbox: " + profileInfo->profileServices[i].exchangeAccountInfo->wszEmailAddress);
-			EC_HRES_MSG(HrCreateMsemsServiceModernExt(false, // sort this out later
-				(LPWSTR)profileInfo->wszProfileName.c_str(),
-				profileInfo->profileServices[i].ulResourceFlags,
-				profileInfo->profileServices[i].exchangeAccountInfo->ulProfileConfigFlags,
-				profileInfo->profileServices[i].exchangeAccountInfo->iCachedModeMonths,
-				(LPWSTR)profileInfo->profileServices[i].exchangeAccountInfo->wszEmailAddress.c_str(),
-				(LPWSTR)profileInfo->profileServices[i].exchangeAccountInfo->wszDisplayName.c_str()), L"Calling HrCreateMsemsServiceModernExt.");
-
 			MAPIUID uidService = { 0 };
-			memcpy((LPVOID)&uidService, lpServiceUid, sizeof(MAPIUID));
-			for (unsigned int j = 0; j < profileInfo->profileServices[i].exchangeAccountInfo->ulMailboxCount; j++)
+			LPMAPIUID lpServiceUid = &uidService;
+			if (profileInfo->profileServices[i].ulServiceType == SERVICETYPE_MAILBOX)
 			{
-				if (profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulProfileType == PROFILE_DELEGATE)
+				Logger::Write(logLevelInfo, L"Adding exchange mailbox: " + profileInfo->profileServices[i].exchangeAccountInfo->wszEmailAddress);
+				EC_HRES_MSG(HrCreateMsemsServiceModernExt(false, // sort this out later
+					(LPWSTR)profileInfo->wszProfileName.c_str(),
+					profileInfo->profileServices[i].ulResourceFlags,
+					profileInfo->profileServices[i].exchangeAccountInfo->ulProfileConfigFlags,
+					profileInfo->profileServices[i].exchangeAccountInfo->iCachedModeMonths,
+					(LPWSTR)profileInfo->profileServices[i].exchangeAccountInfo->wszEmailAddress.c_str(),
+					(LPWSTR)profileInfo->profileServices[i].exchangeAccountInfo->wszDisplayName.c_str()), L"Calling HrCreateMsemsServiceModernExt.");
+
+				MAPIUID uidService = { 0 };
+				memcpy((LPVOID)&uidService, lpServiceUid, sizeof(MAPIUID));
+				for (unsigned int j = 0; j < profileInfo->profileServices[i].exchangeAccountInfo->ulMailboxCount; j++)
 				{
-					Logger::Write(logLevelInfo, L"Adding additional mailbox: " + profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress);
-					// this should not add online archives
-					if (true != profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].bIsOnlineArchive)
-						EC_HRES_MSG(HrAddDelegateMailboxModern(false,
-						(LPWSTR)profileInfo->wszProfileName.c_str(),
-							FALSE,
-							uiServiceIndex,
-							(LPWSTR)profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszDisplayName.c_str(),
-							(LPWSTR)profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress.c_str()), L"Calling HrAddDelegateMailboxModern.");
+					if (profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulProfileType == PROFILE_DELEGATE)
+					{
+						Logger::Write(logLevelInfo, L"Adding additional mailbox: " + profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress);
+						// this should not add online archives
+						if (true != profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].bIsOnlineArchive)
+							EC_HRES_MSG(HrAddDelegateMailboxModern(false,
+							(LPWSTR)profileInfo->wszProfileName.c_str(),
+								FALSE,
+								uiServiceIndex,
+								(LPWSTR)profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszDisplayName.c_str(),
+								(LPWSTR)profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress.c_str()), L"Calling HrAddDelegateMailboxModern.");
+					}
 				}
+				uiServiceIndex++;
 			}
-			uiServiceIndex++;
-		}
-		else if (profileInfo->profileServices[i].ulServiceType == SERVICETYPE_PST)
-		{
-			Logger::Write(logLevelInfo, L"Adding PST file: " + profileInfo->profileServices[i].pstInfo->wszPstPath);
-			EC_HRES_MSG(HrCreatePstService(lpServiceAdmin,
-				&lpServiceUid,
-				(LPWSTR)profileInfo->profileServices[i].wszServiceName.c_str(),
-				profileInfo->profileServices[i].ulResourceFlags,
-				profileInfo->profileServices[i].pstInfo->ulPstConfigFlags,
-				(LPWSTR)profileInfo->profileServices[i].pstInfo->wszPstPath.c_str(),
-				(LPWSTR)profileInfo->profileServices[i].pstInfo->wszDisplayName.c_str()), L"Calling HrCreatePstService.");
-			uiServiceIndex++;
+			else if (profileInfo->profileServices[i].ulServiceType == SERVICETYPE_PST)
+			{
+				Logger::Write(logLevelInfo, L"Adding PST file: " + profileInfo->profileServices[i].pstInfo->wszPstPath);
+				EC_HRES_MSG(HrCreatePstService(lpServiceAdmin,
+					&lpServiceUid,
+					(LPWSTR)profileInfo->profileServices[i].wszServiceName.c_str(),
+					profileInfo->profileServices[i].ulResourceFlags,
+					profileInfo->profileServices[i].pstInfo->ulPstConfigFlags,
+					(LPWSTR)profileInfo->profileServices[i].pstInfo->wszPstPath.c_str(),
+					(LPWSTR)profileInfo->profileServices[i].pstInfo->wszDisplayName.c_str()), L"Calling HrCreatePstService.");
+				uiServiceIndex++;
+			}
+
 		}
 
+		Logger::Write(logLevelInfo, L"Setting profile as default.");
+		EC_HRES_MSG(HrSetDefaultProfile((LPWSTR)profileInfo->wszProfileName.c_str()), L"Calling HrSetDefaultProfile.");
 	}
-
-	Logger::Write(logLevelInfo, L"Setting profile as default.");
-	EC_HRES_MSG(HrSetDefaultProfile((LPWSTR)profileInfo->wszProfileName.c_str()), L"Calling HrSetDefaultProfile.");
 	goto Cleanup;
 
 Error:
