@@ -437,6 +437,11 @@ BOOL ValidateScenario2(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 					pRunOpts->profileOptions->ulProfileAction = ACTION_CLONE;
 					i++;
 				}
+				else if (wszValue == L"simpleclone")
+				{
+					pRunOpts->profileOptions->ulProfileAction = ACTION_SIMPLECLONE;
+					i++;
+				}
 				else
 				{
 					return false;
@@ -516,6 +521,12 @@ BOOL ValidateScenario2(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 					pRunOpts->serviceOptions->ulServiceAction = ACTION_UPDATE;
 					i++;
 				}
+				else if (wszValue == L"enablecachedmode")
+				{
+					pRunOpts->serviceOptions->ulServiceAction = ACTION_ENABLECACHEDMODE;
+					i++;
+				}
+
 				else
 				{
 					return false;
@@ -1626,6 +1637,8 @@ void _tmain(int argc, _TCHAR* argv[])
 	Logger::SetLoggingMode((LoggingMode)tkOptions->ulLoggingMode);
 
 	loggingMode = (LoggingMode)tkOptions->ulLoggingMode;
+	ProfileInfo profInfo;
+	ProfileInfo * lpProfInfo = &profInfo; 
 
 	MAPIINIT_0  MAPIINIT = { 0, MAPI_MULTITHREAD_NOTIFICATIONS };
 	if (SUCCEEDED(MAPIInitialize(&MAPIINIT)))
@@ -1690,21 +1703,29 @@ void _tmain(int argc, _TCHAR* argv[])
 
 					break;
 				};
-			case ACTION_REMOVE:
-				break;
+
 			case ACTION_UPDATE:
 				break;
 			case ACTION_LIST:
 				break;
-
+			case ACTION_ENABLECACHEDMODE:
+				if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_DEFAULT)
+				{
+					EC_HRES_LOG(HrSetCachedMode((LPWSTR)GetDefaultProfileName().c_str(), true, false, -1, true, false, tkOptions->serviceOptions->ulCachedModeOwner == 1, tkOptions->serviceOptions->ulCachedModeShared == 1, tkOptions->serviceOptions->ulCachedModePublicFolder == 1, tkOptions->serviceOptions->iCachedModeMonths), L"HrSetCachedMode");
+				}
+				else if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_ONE)
+				{
+					EC_HRES_LOG(HrSetCachedMode((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(), false, false, -1, true, false, tkOptions->serviceOptions->ulCachedModeOwner == 1, tkOptions->serviceOptions->ulCachedModeShared == 1, tkOptions->serviceOptions->ulCachedModePublicFolder == 1, tkOptions->serviceOptions->iCachedModeMonths), L"HrSetCachedMode");
+				}
+				
+				break;
 			};
 			break;
 		case ACTION_LIST:
 			EC_HRES_LOG(HrListProfiles(tkOptions->profileOptions, tkOptions->wszExportPath), L"Calling HrListProfiles");
 			break;
 		case ACTION_CLONE:
-			ProfileInfo profInfo;
-			ProfileInfo * lpProfInfo = &profInfo;
+
 			MAPIAllocateBuffer(sizeof(ProfileInfo), (LPVOID*)lpProfInfo);
 			ZeroMemory(lpProfInfo, sizeof(ProfileInfo));
 
@@ -1719,186 +1740,214 @@ void _tmain(int argc, _TCHAR* argv[])
 			}
 			EC_HRES_LOG(HrCloneProfile(&profInfo), L"Calling HrCloneProfile");
 			break;
+		case ACTION_SIMPLECLONE:
+
+			MAPIAllocateBuffer(sizeof(ProfileInfo), (LPVOID*)lpProfInfo);
+			ZeroMemory(lpProfInfo, sizeof(ProfileInfo));
+
+			if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_DEFAULT)
+			{
+				EC_HRES_LOG(HrGetProfile((LPWSTR)GetDefaultProfileName().c_str(), &profInfo), L"Calling HrGetProfile");
+			}
+			else if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_ONE)
+			{
+				EC_HRES_LOG(HrGetProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(), &profInfo), L"Calling HrGetProfile");
+
+			}
+			EC_HRES_LOG(HrSimpleCloneProfile(&profInfo, tkOptions->profileOptions->bSetDefaultProfile), L"Calling HrCloneProfile");
+			break;
+		case ACTION_REMOVE:
+			if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_DEFAULT)
+			{
+				EC_HRES_LOG(HrDeleteProfile((LPWSTR)GetDefaultProfileName().c_str()), L"HrDeleteProfile");
+			}
+			else if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_ONE)
+			{
+				EC_HRES_LOG(HrDeleteProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str()), L"HrDeleteProfile");
+			}
+
+
+			break;
 		};
 
-		switch (tkOptions->ulScenario)
-		{
-		case SCENARIO_PROFILE:
-			if (tkOptions->ulActionType == ACTIONTYPE_STANDARD)
-			{
-				if (tkOptions->ulAction == STANDARDACTION_ADD)
-				{
-					// this only works with the default profile for now
-					HrCreateProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str());
+		//switch (tkOptions->ulScenario)
+		//{
+		//case SCENARIO_PROFILE:
+		//	if (tkOptions->ulActionType == ACTIONTYPE_STANDARD)
+		//	{
+		//		if (tkOptions->ulAction == STANDARDACTION_ADD)
+		//		{
+		//			// this only works with the default profile for now
+		//			HrCreateProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str());
 
-				}
+		//		}
 
-				else if (tkOptions->ulAction == STANDARDACTION_LIST)
-				{
+		//		else if (tkOptions->ulAction == STANDARDACTION_LIST)
+		//		{
 
-					if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_ALL)
-					{
-						ULONG ulProfileCount = GetProfileCount();
-						ProfileInfo * profileInfo = new ProfileInfo[ulProfileCount];
-						ZeroMemory(profileInfo, sizeof(ProfileInfo) * ulProfileCount);
-						Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for all profiles");
-						EC_HRES_MSG(HrGetProfiles(ulProfileCount, profileInfo), L"Calling HrGetProfiles");
-						if (tkOptions->wszExportPath != L"")
-						{
-							Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for all profiles");
-							ExportXML(ulProfileCount, profileInfo, tkOptions->wszExportPath);
-						}
-						else
-						{
-							Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for all profiles");
-							ExportXML(ulProfileCount, profileInfo, L"");
-						}
+		//			if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_ALL)
+		//			{
+		//				ULONG ulProfileCount = GetProfileCount();
+		//				ProfileInfo * profileInfo = new ProfileInfo[ulProfileCount];
+		//				ZeroMemory(profileInfo, sizeof(ProfileInfo) * ulProfileCount);
+		//				Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for all profiles");
+		//				EC_HRES_MSG(HrGetProfiles(ulProfileCount, profileInfo), L"Calling HrGetProfiles");
+		//				if (tkOptions->wszExportPath != L"")
+		//				{
+		//					Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for all profiles");
+		//					ExportXML(ulProfileCount, profileInfo, tkOptions->wszExportPath);
+		//				}
+		//				else
+		//				{
+		//					Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for all profiles");
+		//					ExportXML(ulProfileCount, profileInfo, L"");
+		//				}
 
-					}
-					if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_ONE)
-					{
-						ProfileInfo * pProfileInfo = new ProfileInfo();
-						Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for profile: " + tkOptions->profileOptions->wszProfileName);
-						EC_HRES_MSG(HrGetProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(), pProfileInfo), L"Calling HrGetProfile");
-						if (tkOptions->wszExportPath != L"")
-						{
-							Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for profile");
-							ExportXML(1, pProfileInfo, tkOptions->wszExportPath);
-						}
-						else
-						{
-							Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for profile");
-							ExportXML(1, pProfileInfo, L"");
-						}
+		//			}
+		//			if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_ONE)
+		//			{
+		//				ProfileInfo * pProfileInfo = new ProfileInfo();
+		//				Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for profile: " + tkOptions->profileOptions->wszProfileName);
+		//				EC_HRES_MSG(HrGetProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(), pProfileInfo), L"Calling HrGetProfile");
+		//				if (tkOptions->wszExportPath != L"")
+		//				{
+		//					Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for profile");
+		//					ExportXML(1, pProfileInfo, tkOptions->wszExportPath);
+		//				}
+		//				else
+		//				{
+		//					Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for profile");
+		//					ExportXML(1, pProfileInfo, L"");
+		//				}
 
-					}
-					if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_DEFAULT)
-					{
-						std::wstring szDefaultProfileName = GetDefaultProfileName();
-						if (!szDefaultProfileName.empty())
-						{
-							tkOptions->profileOptions->wszProfileName = szDefaultProfileName;
-						}
+		//			}
+		//			if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_DEFAULT)
+		//			{
+		//				std::wstring szDefaultProfileName = GetDefaultProfileName();
+		//				if (!szDefaultProfileName.empty())
+		//				{
+		//					tkOptions->profileOptions->wszProfileName = szDefaultProfileName;
+		//				}
 
-						ProfileInfo * pProfileInfo = new ProfileInfo();
-						Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for default profile: " + tkOptions->profileOptions->wszProfileName);
-						EC_HRES_MSG(HrGetProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(), pProfileInfo), L"Calling HrGetProfile");
-						if (tkOptions->wszExportPath != L"")
-						{
-							Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for default profile");
-							ExportXML(1, pProfileInfo, tkOptions->wszExportPath);
-						}
-						else
-						{
-							Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for default profile");
-							ExportXML(1, pProfileInfo, L"");
-						}
-					}
-				}
-			}
-			break;
-		case SCENARIO_SERVICE:
-			if (tkOptions->ulActionType == ACTIONTYPE_STANDARD)
-			{
-				if (tkOptions->ulAction == STANDARDACTION_ADD)
-				{
-					if (tkOptions->iOutlookVersion == 2007)
-					{
-						HrCreateMsemsServiceLegacyUnresolved((tkOptions->serviceOptions->ulProfileMode == PROFILEMODE_DEFAULT),
-							(LPWSTR)tkOptions->serviceOptions->wszProfileName.c_str(),
-							(LPWSTR)tkOptions->serviceOptions->wszMailboxLegacyDN.c_str(),
-							(LPWSTR)tkOptions->serviceOptions->wszServerDisplayName.c_str());
-					}
-					else if ((tkOptions->iOutlookVersion == 2010) || (tkOptions->iOutlookVersion == 2013))
-					{
-						// this only works with the default profile for now
-						if (tkOptions->serviceOptions->ulConnectMode == CONNECT_ROH)
-						{
-							HrCreateMsemsServiceROH((tkOptions->serviceOptions->ulProfileMode == PROFILEMODE_DEFAULT),
-								(LPWSTR)tkOptions->serviceOptions->wszProfileName.c_str(),
-								(LPWSTR)tkOptions->serviceOptions->wszSmtpAddress.c_str(),
-								(LPWSTR)tkOptions->serviceOptions->wszMailboxLegacyDN.c_str(),
-								(LPWSTR)tkOptions->serviceOptions->wszUnresolvedServer.c_str(),
-								(LPWSTR)tkOptions->serviceOptions->wszRohProxyServer.c_str(),
-								(LPWSTR)tkOptions->serviceOptions->wszServerLegacyDN.c_str(),
-								(LPWSTR)tkOptions->serviceOptions->wszAutodiscoverUrl.c_str());
-						}
-						else if (tkOptions->serviceOptions->ulConnectMode == CONNECT_MOH)
-						{
-							HrCreateMsemsServiceMOH((tkOptions->serviceOptions->ulProfileMode == PROFILEMODE_DEFAULT),
-								(LPWSTR)tkOptions->serviceOptions->wszProfileName.c_str(),
-								(LPWSTR)tkOptions->serviceOptions->wszSmtpAddress.c_str(),
-								(LPWSTR)tkOptions->serviceOptions->wszMailboxLegacyDN.c_str(),
-								(LPWSTR)tkOptions->serviceOptions->wszServerLegacyDN.c_str(),
-								(LPWSTR)tkOptions->serviceOptions->wszMailStoreInternalUrl.c_str(),
-								(LPWSTR)tkOptions->serviceOptions->wszMailStoreExternalUrl.c_str(),
-								(LPWSTR)tkOptions->serviceOptions->wszAddressBookInternalUrl.c_str(),
-								(LPWSTR)tkOptions->serviceOptions->wszAddressBookExternalUrl.c_str());
-						}
-						else
-						{
+		//				ProfileInfo * pProfileInfo = new ProfileInfo();
+		//				Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for default profile: " + tkOptions->profileOptions->wszProfileName);
+		//				EC_HRES_MSG(HrGetProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(), pProfileInfo), L"Calling HrGetProfile");
+		//				if (tkOptions->wszExportPath != L"")
+		//				{
+		//					Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for default profile");
+		//					ExportXML(1, pProfileInfo, tkOptions->wszExportPath);
+		//				}
+		//				else
+		//				{
+		//					Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for default profile");
+		//					ExportXML(1, pProfileInfo, L"");
+		//				}
+		//			}
+		//		}
+		//	}
+		//	break;
+		//case SCENARIO_SERVICE:
+		//	if (tkOptions->ulActionType == ACTIONTYPE_STANDARD)
+		//	{
+		//		if (tkOptions->ulAction == STANDARDACTION_ADD)
+		//		{
+		//			if (tkOptions->iOutlookVersion == 2007)
+		//			{
+		//				HrCreateMsemsServiceLegacyUnresolved((tkOptions->serviceOptions->ulProfileMode == PROFILEMODE_DEFAULT),
+		//					(LPWSTR)tkOptions->serviceOptions->wszProfileName.c_str(),
+		//					(LPWSTR)tkOptions->serviceOptions->wszMailboxLegacyDN.c_str(),
+		//					(LPWSTR)tkOptions->serviceOptions->wszServerDisplayName.c_str());
+		//			}
+		//			else if ((tkOptions->iOutlookVersion == 2010) || (tkOptions->iOutlookVersion == 2013))
+		//			{
+		//				// this only works with the default profile for now
+		//				if (tkOptions->serviceOptions->ulConnectMode == CONNECT_ROH)
+		//				{
+		//					HrCreateMsemsServiceROH((tkOptions->serviceOptions->ulProfileMode == PROFILEMODE_DEFAULT),
+		//						(LPWSTR)tkOptions->serviceOptions->wszProfileName.c_str(),
+		//						(LPWSTR)tkOptions->serviceOptions->wszSmtpAddress.c_str(),
+		//						(LPWSTR)tkOptions->serviceOptions->wszMailboxLegacyDN.c_str(),
+		//						(LPWSTR)tkOptions->serviceOptions->wszUnresolvedServer.c_str(),
+		//						(LPWSTR)tkOptions->serviceOptions->wszRohProxyServer.c_str(),
+		//						(LPWSTR)tkOptions->serviceOptions->wszServerLegacyDN.c_str(),
+		//						(LPWSTR)tkOptions->serviceOptions->wszAutodiscoverUrl.c_str());
+		//				}
+		//				else if (tkOptions->serviceOptions->ulConnectMode == CONNECT_MOH)
+		//				{
+		//					HrCreateMsemsServiceMOH((tkOptions->serviceOptions->ulProfileMode == PROFILEMODE_DEFAULT),
+		//						(LPWSTR)tkOptions->serviceOptions->wszProfileName.c_str(),
+		//						(LPWSTR)tkOptions->serviceOptions->wszSmtpAddress.c_str(),
+		//						(LPWSTR)tkOptions->serviceOptions->wszMailboxLegacyDN.c_str(),
+		//						(LPWSTR)tkOptions->serviceOptions->wszServerLegacyDN.c_str(),
+		//						(LPWSTR)tkOptions->serviceOptions->wszMailStoreInternalUrl.c_str(),
+		//						(LPWSTR)tkOptions->serviceOptions->wszMailStoreExternalUrl.c_str(),
+		//						(LPWSTR)tkOptions->serviceOptions->wszAddressBookInternalUrl.c_str(),
+		//						(LPWSTR)tkOptions->serviceOptions->wszAddressBookExternalUrl.c_str());
+		//				}
+		//				else
+		//				{
 
-						}
-					}
-					else // default to the 2016 logic
-					{
-						// this only works with the default profile for now
-						HrCreateMsemsServiceModern((tkOptions->serviceOptions->ulProfileMode == PROFILEMODE_DEFAULT),
-							(LPWSTR)tkOptions->serviceOptions->wszProfileName.c_str(),
-							(LPWSTR)tkOptions->serviceOptions->wszSmtpAddress.c_str(),
-							(LPWSTR)tkOptions->serviceOptions->wszMailboxDisplayName.c_str());
-					}
-				}
-			}
-			break;
-		case SCENARIO_MAILBOX:
-			if (tkOptions->ulActionType == ACTIONTYPE_STANDARD)
-			{
-				if (tkOptions->ulAction == STANDARDACTION_ADD)
-				{
-					if (tkOptions->iOutlookVersion == 2007)
-					{
-						// this only works with the default profile for now
-						HrAddDelegateMailboxLegacy((tkOptions->mailboxOptions->ulProfileMode == PROFILEMODE_DEFAULT),
-							(LPWSTR)tkOptions->mailboxOptions->wszProfileName.c_str(),
-							tkOptions->mailboxOptions->bDefaultService,
-							tkOptions->mailboxOptions->ulServiceIndex,
-							(LPWSTR)tkOptions->mailboxOptions->wszMailboxDisplayName.c_str(),
-							(LPWSTR)tkOptions->mailboxOptions->wszMailboxLegacyDN.c_str(),
-							(LPWSTR)tkOptions->mailboxOptions->wszServerDisplayName.c_str(),
-							(LPWSTR)tkOptions->mailboxOptions->wszServerLegacyDN.c_str());
-					}
-					else if ((tkOptions->iOutlookVersion == 2010) || (tkOptions->iOutlookVersion == 2013))
-					{
-						// this only works with the default profile for now
-						HrAddDelegateMailbox((tkOptions->mailboxOptions->ulProfileMode == PROFILEMODE_DEFAULT),
-							(LPWSTR)tkOptions->mailboxOptions->wszProfileName.c_str(),
-							tkOptions->mailboxOptions->bDefaultService,
-							tkOptions->mailboxOptions->ulServiceIndex,
-							(LPWSTR)tkOptions->mailboxOptions->wszMailboxDisplayName.c_str(),
-							(LPWSTR)tkOptions->mailboxOptions->wszMailboxLegacyDN.c_str(),
-							(LPWSTR)tkOptions->mailboxOptions->wszServerDisplayName.c_str(),
-							(LPWSTR)tkOptions->mailboxOptions->wszServerLegacyDN.c_str(),
-							(LPWSTR)tkOptions->mailboxOptions->wszSmtpAddress.c_str(),
-							NULL,
-							0,
-							0,
-							NULL);
-					}
-					else // default to the 2016 logic
-					{
-						// this only works with the default profile for now
-						HrAddDelegateMailboxModern((tkOptions->mailboxOptions->ulProfileMode == PROFILEMODE_DEFAULT),
-							(LPWSTR)tkOptions->mailboxOptions->wszProfileName.c_str(),
-							tkOptions->mailboxOptions->bDefaultService,
-							tkOptions->mailboxOptions->ulServiceIndex,
-							(LPWSTR)tkOptions->mailboxOptions->wszMailboxDisplayName.c_str(),
-							(LPWSTR)tkOptions->mailboxOptions->wszSmtpAddress.c_str());
-					}
-				}
-			}
-			break;
-		}
+		//				}
+		//			}
+		//			else // default to the 2016 logic
+		//			{
+		//				// this only works with the default profile for now
+		//				HrCreateMsemsServiceModern((tkOptions->serviceOptions->ulProfileMode == PROFILEMODE_DEFAULT),
+		//					(LPWSTR)tkOptions->serviceOptions->wszProfileName.c_str(),
+		//					(LPWSTR)tkOptions->serviceOptions->wszSmtpAddress.c_str(),
+		//					(LPWSTR)tkOptions->serviceOptions->wszMailboxDisplayName.c_str());
+		//			}
+		//		}
+		//	}
+		//	break;
+		//case SCENARIO_MAILBOX:
+		//	if (tkOptions->ulActionType == ACTIONTYPE_STANDARD)
+		//	{
+		//		if (tkOptions->ulAction == STANDARDACTION_ADD)
+		//		{
+		//			if (tkOptions->iOutlookVersion == 2007)
+		//			{
+		//				// this only works with the default profile for now
+		//				HrAddDelegateMailboxLegacy((tkOptions->mailboxOptions->ulProfileMode == PROFILEMODE_DEFAULT),
+		//					(LPWSTR)tkOptions->mailboxOptions->wszProfileName.c_str(),
+		//					tkOptions->mailboxOptions->bDefaultService,
+		//					tkOptions->mailboxOptions->ulServiceIndex,
+		//					(LPWSTR)tkOptions->mailboxOptions->wszMailboxDisplayName.c_str(),
+		//					(LPWSTR)tkOptions->mailboxOptions->wszMailboxLegacyDN.c_str(),
+		//					(LPWSTR)tkOptions->mailboxOptions->wszServerDisplayName.c_str(),
+		//					(LPWSTR)tkOptions->mailboxOptions->wszServerLegacyDN.c_str());
+		//			}
+		//			else if ((tkOptions->iOutlookVersion == 2010) || (tkOptions->iOutlookVersion == 2013))
+		//			{
+		//				// this only works with the default profile for now
+		//				HrAddDelegateMailbox((tkOptions->mailboxOptions->ulProfileMode == PROFILEMODE_DEFAULT),
+		//					(LPWSTR)tkOptions->mailboxOptions->wszProfileName.c_str(),
+		//					tkOptions->mailboxOptions->bDefaultService,
+		//					tkOptions->mailboxOptions->ulServiceIndex,
+		//					(LPWSTR)tkOptions->mailboxOptions->wszMailboxDisplayName.c_str(),
+		//					(LPWSTR)tkOptions->mailboxOptions->wszMailboxLegacyDN.c_str(),
+		//					(LPWSTR)tkOptions->mailboxOptions->wszServerDisplayName.c_str(),
+		//					(LPWSTR)tkOptions->mailboxOptions->wszServerLegacyDN.c_str(),
+		//					(LPWSTR)tkOptions->mailboxOptions->wszSmtpAddress.c_str(),
+		//					NULL,
+		//					0,
+		//					0,
+		//					NULL);
+		//			}
+		//			else // default to the 2016 logic
+		//			{
+		//				// this only works with the default profile for now
+		//				HrAddDelegateMailboxModern((tkOptions->mailboxOptions->ulProfileMode == PROFILEMODE_DEFAULT),
+		//					(LPWSTR)tkOptions->mailboxOptions->wszProfileName.c_str(),
+		//					tkOptions->mailboxOptions->bDefaultService,
+		//					tkOptions->mailboxOptions->ulServiceIndex,
+		//					(LPWSTR)tkOptions->mailboxOptions->wszMailboxDisplayName.c_str(),
+		//					(LPWSTR)tkOptions->mailboxOptions->wszSmtpAddress.c_str());
+		//			}
+		//		}
+		//	}
+		//	break;
+		//}
 		MAPIUninitialize();
 	}
 	//loggingMode = LoggingMode(tkOptions.ulLoggingMode);

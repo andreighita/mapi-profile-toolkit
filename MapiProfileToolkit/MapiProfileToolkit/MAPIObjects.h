@@ -83,8 +83,13 @@ struct ExchangeAccountInfo
 	std::wstring wszUnresolvedServer;
 	std::wstring wszHomeServerName;
 	std::wstring wszHomeServerDN;
+	std::wstring wszMailboxDN;
 	MailboxInfo * accountMailboxes;
 	ULONG ulProfileConfigFlags;
+	std::wstring wszMailStoreInternalUrl; // PR_PROFILE_MAPIHTTP_MAILSTORE_INTERNAL_URL
+	std::wstring wszMailStoreExternalUrl; // PR_PROFILE_MAPIHTTP_MAILSTORE_EXTERNAL_URL
+	std::wstring wszAddressBookInternalUrl; // PR_PROFILE_MAPIHTTP_ADDRESSBOOK_INTERNAL_URL
+	std::wstring wszAddressBookExternalUrl; // PR_PROFILE_MAPIHTTP_ADDRESSBOOK_EXTERNAL_URL
 
 };
 
