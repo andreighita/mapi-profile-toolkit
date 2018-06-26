@@ -1674,7 +1674,7 @@ void _tmain(int argc, _TCHAR* argv[])
 				switch (tkOptions->mailboxOptions->ulMailboxAction)
 				{
 				case ACTION_ADD:
-					EC_HRES_LOG(HrAddDelegateMailbox(tkOptions->profileOptions->ulProfileMode == PROFILEMODE_DEFAULT,
+					EC_HRES_LOG(HrAddDelegateMailbox(tkOptions->profileOptions->ulProfileMode,
 						(LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(),
 						tkOptions->serviceOptions->ulServiceMode == SERVICEMODE_DEFAULT,
 						tkOptions->serviceOptions->iServiceIndex,
@@ -1699,6 +1699,8 @@ void _tmain(int argc, _TCHAR* argv[])
 						// This is not yet implemented
 					}
 					break;
+				case ACTION_ADDDELEGATE:
+
 				case ACTION_LIST:
 
 					break;

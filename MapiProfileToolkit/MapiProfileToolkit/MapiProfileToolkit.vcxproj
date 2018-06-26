@@ -75,12 +75,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\Intermediate\$(Platform)\</IntDir>
-    <IncludePath>C:\Users\catagh\Desktop\toolkit\include;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Users\anixi\source\repos\mapi-profile-toolkit2\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\Intermediate\$(Platform)\</IntDir>
-    <IncludePath>C:\Users\catagh\source\repos\mapi-profile-toolkit\include;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Users\anixi\source\repos\mapi-profile-toolkit2\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>
