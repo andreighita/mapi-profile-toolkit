@@ -2264,6 +2264,8 @@ HRESULT HrAddDelegateMailboxModern(
 		LPSRestriction lpsvcResLvl1 = NULL;
 		LPSPropValue lpSvcPropVal = NULL;
 		LPSRowSet lpSvcRows = NULL;
+		MAPIUID muidProviderUid = { 0 };
+		LPMAPIUID lpProviderUid = &muidProviderUid;
 
 		// Setting up an enum and a prop tag array with the props we'll use
 		enum { iServiceUid, iServiceResFlags, cptaSvcProps };
@@ -2337,7 +2339,10 @@ HRESULT HrAddDelegateMailboxModern(
 							rgval,
 							0,
 							0,
-							(LPMAPIUID)lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb), L"Calling CreateProvider");
+							lpProviderUid), L"Calling CreateProvider");
+
+						EC_HRES_MSG(HrUpdatePrStoreProviders(lpServiceAdmin, (LPMAPIUID)lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb, &muidProviderUid), L"Calling HrComputePrStoreProviders");
+
 						if (FAILED(hRes)) goto Error;
 						if (lpProvAdmin) lpProvAdmin->Release();
 						break;
@@ -2395,6 +2400,82 @@ Cleanup:
 	// Clean up.
 	// Free up memory
 	if (lpProfAdmin) lpProfAdmin->Release();
+	return hRes;
+}
+
+HRESULT HrUpdatePrStoreProviders(LPSERVICEADMIN lpServiceAdmin, LPMAPIUID lpServiceUid, LPMAPIUID lpProviderUid)
+{
+	HRESULT hRes = S_OK;
+
+	SizedSPropTagArray(1, sptGlobal) = { 1, PR_STORE_PROVIDERS };
+	LPPROFSECT lpEmsMdbSection = NULL;
+	LPPROFSECT lpStoreProvSection = NULL;
+	LPSPropValue lpGlobalVals = NULL; // Property value struct pointer for global profile section.
+	ULONG ulProps = 0; // Count of props.
+	ULONG cbNewBuffer = 0;
+	SPropValue NewVals;
+
+	EC_HRES_MSG(HrGetSections(lpServiceAdmin, lpServiceUid, &lpEmsMdbSection, &lpStoreProvSection), L"Calling HrGetSections");
+
+	if (lpEmsMdbSection)
+	{
+		LPSPropValue lpPrStoreProviders = NULL;
+
+		// Get the list of store providers in PR_STORE_PROVIDERS.
+		EC_HRES_MSG(lpEmsMdbSection->GetProps((LPSPropTagArray)&sptGlobal,
+			0,
+			&ulProps,
+			&lpGlobalVals), L"Calling GetProps");
+
+		printf("Got the list of mailboxes being opened.\n");
+
+		// Now we set up an SPropValue structure with the original
+		// list + the UID of the new service.
+
+		// Compute the new byte count
+		cbNewBuffer = sizeof(MAPIUID) + lpGlobalVals->Value.bin.cb;
+
+		// Allocate space for the new list of UIDs.
+		hRes = MAPIAllocateBuffer(cbNewBuffer,
+			(LPVOID *)&NewVals.Value.bin.lpb);
+
+		printf("Allocated buffer to hold new list of mailboxes to be opened.\n");
+
+		// Copy the bits into the list.
+		// First, copy the existing list.
+		memcpy(NewVals.Value.bin.lpb,
+			lpGlobalVals->Value.bin.lpb,
+			lpGlobalVals->Value.bin.cb);
+
+		// Next, copy the new UID onto the end of the list.
+		memcpy(NewVals.Value.bin.lpb + lpGlobalVals->Value.bin.cb,
+			lpProviderUid,
+			sizeof(MAPIUID));
+		printf("Concatenated list of mailboxes and new mailbox.\n");
+
+		// Set the count of bytes on the SPropValue variable.
+		NewVals.Value.bin.cb = cbNewBuffer;
+		// Initialize dwAlignPad.
+		NewVals.dwAlignPad = 0;
+		// Set the prop tag.
+		NewVals.ulPropTag = PR_STORE_PROVIDERS;
+
+		// Set the property on the global profile section.
+		hRes = lpEmsMdbSection->SetProps(ulProps,
+			&NewVals,
+			NULL);
+	}
+
+
+Error:
+	goto Cleanup;
+
+Cleanup:
+	// Clean up.
+	// Free up memory
+	// To do: free up memory here
+	if (lpEmsMdbSection) lpEmsMdbSection->Release();
+	if (lpStoreProvSection) lpStoreProvSection->Release();
 	return hRes;
 }
 
@@ -2741,7 +2822,8 @@ HRESULT HrAddDelegateMailboxLegacy(BOOL bDefaultProfile,
 		LPSRestriction lpsvcResLvl1 = NULL;
 		LPSPropValue lpSvcPropVal = NULL;
 		LPSRowSet lpSvcRows = NULL;
-
+		MAPIUID muidProviderUid = { 0 };
+		LPMAPIUID lpProviderUid = &muidProviderUid;
 		// Setting up an enum and a prop tag array with the props we'll use
 		enum { iServiceUid, iServiceResFlags, cptaSvcProps };
 		SizedSPropTagArray(cptaSvcProps, sptaSvcProps) = { cptaSvcProps, PR_SERVICE_UID, PR_RESOURCE_FLAGS };
@@ -2814,13 +2896,15 @@ HRESULT HrAddDelegateMailboxLegacy(BOOL bDefaultProfile,
 
 						printf("Creating EMSDelegate provider.\n");
 						// Create the message service with the above properties.
-						hRes = lpProvAdmin->CreateProvider(LPWSTR("EMSDelegate"),
+						EC_HRES_MSG(lpProvAdmin->CreateProvider(LPWSTR("EMSDelegate"),
 							4,
 							rgval,
 							0,
 							0,
-							(LPMAPIUID)lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb);
+							lpProviderUid), L"Calling CreateProvider");
 						if (FAILED(hRes)) goto Error;
+
+						EC_HRES_MSG(HrUpdatePrStoreProviders(lpServiceAdmin, (LPMAPIUID)lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb, &muidProviderUid), L"Calling HrComputePrStoreProviders");
 					}
 				}
 			}

@@ -119,3 +119,4 @@ HRESULT HrAddDelegateMailboxOneProfile(LPWSTR lpwszProfileName, int iOutlookVers
 HRESULT HrAddDelegateMailbox(ULONG ulProifileMode, LPWSTR lpwszProfileName, ULONG ulServiceMode, int iServiceIndex, int iOutlookVersion, MailboxOptions * pMailboxOptions);
 HRESULT HrSimpleCloneProfile(ProfileInfo * profileInfo, bool bSetDefaultProfile);
 HRESULT HrDeleteProfile(LPWSTR lpszProfileName);
+HRESULT HrUpdatePrStoreProviders(LPSERVICEADMIN lpServiceAdmin, LPMAPIUID lpServiceUid, LPMAPIUID lpProviderUid);
