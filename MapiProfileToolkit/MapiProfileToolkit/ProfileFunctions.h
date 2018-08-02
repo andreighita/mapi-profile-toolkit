@@ -37,10 +37,10 @@
 LPWSTR GetDefaultProfileNameLP();
 std::wstring GetDefaultProfileName();
 ULONG GetProfileCount();
-HRESULT HrSetCachedMode(LPWSTR lpwszProfileName, BOOL bDefaultProfile, BOOL bAllProfiles, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, bool bCachedModeOwner, bool bCachedModeShared, bool bCachedModePublicFolders, int iCachedModeMonths);
+HRESULT HrSetCachedMode(LPWSTR lpwszProfileName, BOOL bDefaultProfile, BOOL bAllProfiles, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, bool bCachedModeOwner, bool bCachedModeShared, bool bCachedModePublicFolders, int iCachedModeMonths, int iOutlookVersion);
 HRESULT HrGetProfiles(ULONG ulProfileCount, ProfileInfo * profileInfo);
 //HRESULT GetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo);
-HRESULT HrSetCachedModeOneService(LPSTR lpszProfileName, LPMAPIUID lpServiceUid, bool bCachedModeOwner, bool bCachedModeShared, bool bCachedModePublicFolders, int iCachedModeMonths);
+HRESULT HrSetCachedModeOneService(LPSTR lpszProfileName, LPMAPIUID lpServiceUid, bool bCachedModeOwner, bool bCachedModeShared, bool bCachedModePublicFolders, int iCachedModeMonths, int iOutlookVersion);
 HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszOldPath, LPWSTR lpszNewPath, bool bMoveFiles);
 HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszNewPath, bool bMoveFiles);
 HRESULT HrCreateProfile(LPWSTR lpszProfileName);
@@ -112,7 +112,7 @@ HRESULT HrAddDelegateMailboxLegacy(BOOL bDefaultProfile,
 	LPWSTR lpszwServer,
 	LPWSTR lpszwServerDN);
 HRESULT HrPromoteOneDelegate(LPWSTR lpwszProfileName, int iOutlookVersion, ULONG ulConnectMode, MailboxInfo mailboxInfo);
-HRESULT HrSetCachedModeOneProfile(LPWSTR lpwszProfileName, ProfileInfo * pProfileInfo, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, bool bCachedModeOwner, bool bCachedModeShared, bool bCachedModePublicFolders, int iCachedModeMonths);
+HRESULT HrSetCachedModeOneProfile(LPWSTR lpwszProfileName, ProfileInfo * pProfileInfo, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, bool bCachedModeOwner, bool bCachedModeShared, bool bCachedModePublicFolders, int iCachedModeMonths, int iOutlookVersion);
 HRESULT HrCreateMsemsService(ULONG ulProifileMode, LPWSTR lpwszProfileName, int iOutlookVersion, ServiceOptions * pServiceOptions);
 HRESULT HrCreateMsemsServiceOneProfile(LPWSTR lpwszProfileName, int iOutlookVersion, ServiceOptions * pServiceOptions);
 HRESULT HrAddDelegateMailboxOneProfile(LPWSTR lpwszProfileName, int iOutlookVersion, ULONG ulServiceMode, int iServiceIndex, MailboxOptions * pMailboxOptions);

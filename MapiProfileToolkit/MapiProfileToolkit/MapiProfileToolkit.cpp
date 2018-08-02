@@ -1713,11 +1713,11 @@ void _tmain(int argc, _TCHAR* argv[])
 			case ACTION_ENABLECACHEDMODE:
 				if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_DEFAULT)
 				{
-					EC_HRES_LOG(HrSetCachedMode((LPWSTR)GetDefaultProfileName().c_str(), true, false, -1, true, false, tkOptions->serviceOptions->ulCachedModeOwner == 1, tkOptions->serviceOptions->ulCachedModeShared == 1, tkOptions->serviceOptions->ulCachedModePublicFolder == 1, tkOptions->serviceOptions->iCachedModeMonths), L"HrSetCachedMode");
+					EC_HRES_LOG(HrSetCachedMode((LPWSTR)GetDefaultProfileName().c_str(), true, false, -1, tkOptions->serviceOptions->ulServiceMode == SERVICEMODE_DEFAULT, tkOptions->serviceOptions->ulServiceMode == SERVICEMODE_ALL, tkOptions->serviceOptions->ulCachedModeOwner == 1, tkOptions->serviceOptions->ulCachedModeShared == 1, tkOptions->serviceOptions->ulCachedModePublicFolder == 1, tkOptions->serviceOptions->iCachedModeMonths, tkOptions->iOutlookVersion), L"HrSetCachedMode");
 				}
 				else if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_ONE)
 				{
-					EC_HRES_LOG(HrSetCachedMode((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(), false, false, -1, true, false, tkOptions->serviceOptions->ulCachedModeOwner == 1, tkOptions->serviceOptions->ulCachedModeShared == 1, tkOptions->serviceOptions->ulCachedModePublicFolder == 1, tkOptions->serviceOptions->iCachedModeMonths), L"HrSetCachedMode");
+					EC_HRES_LOG(HrSetCachedMode((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(), false, false, -1, tkOptions->serviceOptions->ulServiceMode == SERVICEMODE_DEFAULT, tkOptions->serviceOptions->ulServiceMode == SERVICEMODE_ALL,  tkOptions->serviceOptions->ulCachedModeOwner == 1, tkOptions->serviceOptions->ulCachedModeShared == 1, tkOptions->serviceOptions->ulCachedModePublicFolder == 1, tkOptions->serviceOptions->iCachedModeMonths, tkOptions->iOutlookVersion), L"HrSetCachedMode");
 				}
 				
 				break;

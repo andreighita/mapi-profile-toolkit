@@ -216,7 +216,7 @@ Cleanup:
 
 
 
-HRESULT HrSetCachedModeOneService(LPSTR lpszProfileName, LPMAPIUID lpServiceUid, bool bCachedModeOwner, bool bCachedModeShared, bool bCachedModePublicFolders, int iCachedModeMonths)
+HRESULT HrSetCachedModeOneService(LPSTR lpszProfileName, LPMAPIUID lpServiceUid, bool bCachedModeOwner, bool bCachedModeShared, bool bCachedModePublicFolders, int iCachedModeMonths, int iOutlookVersion)
 {
 	HRESULT hRes = S_OK;
 	LPPROFADMIN lpProfAdmin = NULL;     // Profile Admin pointer
@@ -343,20 +343,29 @@ HRESULT HrSetCachedModeOneService(LPSTR lpszProfileName, LPMAPIUID lpServiceUid,
 							if (profileConfigFlags) MAPIFreeBuffer(profileConfigFlags);
 						}
 					}
-					// bind to the PR_RULE_ACTION_TYPE property for setting the amout of mail to cache
-					LPSPropValue profileRuleActionType = NULL;
-					if (SUCCEEDED(HrGetOneProp(pMAPIProp, PR_RULE_ACTION_TYPE, &profileRuleActionType)))
+					
+					// We require split logic for 2010 or older, where all e-mail is cached, vs 2013 and newer. 
+
+					switch (iOutlookVersion)
 					{
-						if (profileRuleActionType)
+					case 2013:
+					case 2016:
+						// bind to the PR_RULE_ACTION_TYPE property for setting the amout of mail to cache
+						LPSPropValue profileRuleActionType = NULL;
+						if (SUCCEEDED(HrGetOneProp(pMAPIProp, PR_RULE_ACTION_TYPE, &profileRuleActionType)))
 						{
+							if (profileRuleActionType)
+							{
 
-							profileRuleActionType[0].Value.i = iCachedModeMonths;
-							EC_HRES_MSG(lpEmsMdbProfSect->SetProps(1, profileRuleActionType, NULL), L"Calling SetProps");
-							printf("Cached mode amount to sync set.\n");
+								profileRuleActionType[0].Value.i = iCachedModeMonths;
+								EC_HRES_MSG(lpEmsMdbProfSect->SetProps(1, profileRuleActionType, NULL), L"Calling SetProps");
+								printf("Cached mode amount to sync set.\n");
 
-							EC_HRES_MSG(lpEmsMdbProfSect->SaveChanges(0), L"Calling SaveChanges");
-							if (profileRuleActionType) MAPIFreeBuffer(profileRuleActionType);
+								EC_HRES_MSG(lpEmsMdbProfSect->SaveChanges(0), L"Calling SaveChanges");
+								if (profileRuleActionType) MAPIFreeBuffer(profileRuleActionType);
+							}
 						}
+						break;
 					}
 				}
 				if (lpEmsMdbProfSect) lpEmsMdbProfSect->Release();
@@ -4358,7 +4367,7 @@ cleanup:
 
 #pragma endregion
 
-HRESULT HrSetCachedMode(LPWSTR lpwszProfileName, BOOL bDefaultProfile, BOOL bAllProfiles, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, bool bCachedModeOwner, bool bCachedModeShared, bool bCachedModePublicFolders, int iCachedModeMonths)
+HRESULT HrSetCachedMode(LPWSTR lpwszProfileName, BOOL bDefaultProfile, BOOL bAllProfiles, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, bool bCachedModeOwner, bool bCachedModeShared, bool bCachedModePublicFolders, int iCachedModeMonths, int iOutlookVersion)
 {
 	HRESULT hRes = S_OK;
 
@@ -4366,7 +4375,7 @@ HRESULT HrSetCachedMode(LPWSTR lpwszProfileName, BOOL bDefaultProfile, BOOL bAll
 	{
 		ProfileInfo * profileInfo = new ProfileInfo();
 		EC_HRES_MSG(HrGetProfile((LPWSTR)GetDefaultProfileName().c_str(), profileInfo), L"Calling GetProfile");
-		EC_HRES_MSG(HrSetCachedModeOneProfile((LPWSTR)profileInfo->wszProfileName.c_str(), profileInfo, iServiceIndex, bDefaultService, bAllServices, bCachedModeOwner, bCachedModeShared, bCachedModePublicFolders, iCachedModeMonths), L"Calling HrSetCachedModeOneProfile");
+		EC_HRES_MSG(HrSetCachedModeOneProfile((LPWSTR)profileInfo->wszProfileName.c_str(), profileInfo, iServiceIndex, bDefaultService, bAllServices, bCachedModeOwner, bCachedModeShared, bCachedModePublicFolders, iCachedModeMonths, iOutlookVersion), L"Calling HrSetCachedModeOneProfile");
 
 	}
 	else if (bAllProfiles)
@@ -4376,7 +4385,7 @@ HRESULT HrSetCachedMode(LPWSTR lpwszProfileName, BOOL bDefaultProfile, BOOL bAll
 		hRes = HrGetProfiles(ulProfileCount, profileInfo);
 		for (int i = 0; i <= ulProfileCount; i++)
 		{
-			EC_HRES_MSG(HrSetCachedModeOneProfile((LPWSTR)profileInfo->wszProfileName.c_str(), profileInfo, iServiceIndex, bDefaultService, bAllServices, bCachedModeOwner, bCachedModeShared, bCachedModePublicFolders, iCachedModeMonths), L"Calling HrSetCachedModeOneProfile");
+			EC_HRES_MSG(HrSetCachedModeOneProfile((LPWSTR)profileInfo->wszProfileName.c_str(), profileInfo, iServiceIndex, bDefaultService, bAllServices, bCachedModeOwner, bCachedModeShared, bCachedModePublicFolders, iCachedModeMonths, iOutlookVersion), L"Calling HrSetCachedModeOneProfile");
 		}
 	}
 	else
@@ -4385,7 +4394,7 @@ HRESULT HrSetCachedMode(LPWSTR lpwszProfileName, BOOL bDefaultProfile, BOOL bAll
 		{
 			ProfileInfo * profileInfo = new ProfileInfo();
 			hRes = HrGetProfile(lpwszProfileName, profileInfo);
-			EC_HRES_MSG(HrSetCachedModeOneProfile((LPWSTR)profileInfo->wszProfileName.c_str(), profileInfo, iServiceIndex, bDefaultService, bAllServices, bCachedModeOwner, bCachedModeShared, bCachedModePublicFolders, iCachedModeMonths), L"Calling HrSetCachedModeOneProfile");
+			EC_HRES_MSG(HrSetCachedModeOneProfile((LPWSTR)profileInfo->wszProfileName.c_str(), profileInfo, iServiceIndex, bDefaultService, bAllServices, bCachedModeOwner, bCachedModeShared, bCachedModePublicFolders, iCachedModeMonths, iOutlookVersion), L"Calling HrSetCachedModeOneProfile");
 		}
 		else
 			wprintf(L"The specified profile name is invalid or no profile name was specified.\n");
@@ -4396,7 +4405,7 @@ Cleanup:
 	return hRes;
 }
 
-HRESULT HrSetCachedModeOneProfile(LPWSTR lpwszProfileName, ProfileInfo * pProfileInfo, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, bool bCachedModeOwner, bool bCachedModeShared, bool bCachedModePublicFolders, int iCachedModeMonths)
+HRESULT HrSetCachedModeOneProfile(LPWSTR lpwszProfileName, ProfileInfo * pProfileInfo, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, bool bCachedModeOwner, bool bCachedModeShared, bool bCachedModePublicFolders, int iCachedModeMonths, int iOutlookVersion)
 {
 	HRESULT hRes = S_OK;
 
@@ -4408,7 +4417,7 @@ HRESULT HrSetCachedModeOneProfile(LPWSTR lpwszProfileName, ProfileInfo * pProfil
 			{
 				if (pProfileInfo->profileServices[i].ulServiceType == SERVICETYPE_MAILBOX)
 				{
-					EC_HRES_MSG(HrSetCachedModeOneService(ConvertWideCharToMultiByte(lpwszProfileName), &pProfileInfo->profileServices[i].muidServiceUid, bCachedModeOwner, bCachedModeShared, bCachedModePublicFolders, iCachedModeMonths), L"Calling HrSetCachedModeOneService on service");
+					EC_HRES_MSG(HrSetCachedModeOneService(ConvertWideCharToMultiByte(lpwszProfileName), &pProfileInfo->profileServices[i].muidServiceUid, bCachedModeOwner, bCachedModeShared, bCachedModePublicFolders, iCachedModeMonths, iOutlookVersion), L"Calling HrSetCachedModeOneService on service");
 				}
 			}
 		}
@@ -4416,7 +4425,7 @@ HRESULT HrSetCachedModeOneProfile(LPWSTR lpwszProfileName, ProfileInfo * pProfil
 		{
 			if (pProfileInfo->profileServices[iServiceIndex].ulServiceType == SERVICETYPE_MAILBOX)
 			{
-				EC_HRES_MSG(HrSetCachedModeOneService(ConvertWideCharToMultiByte(lpwszProfileName), &pProfileInfo->profileServices[iServiceIndex].muidServiceUid, bCachedModeOwner, bCachedModeShared, bCachedModePublicFolders, iCachedModeMonths), L"Calling HrSetCachedModeOneService on service");
+				EC_HRES_MSG(HrSetCachedModeOneService(ConvertWideCharToMultiByte(lpwszProfileName), &pProfileInfo->profileServices[iServiceIndex].muidServiceUid, bCachedModeOwner, bCachedModeShared, bCachedModePublicFolders, iCachedModeMonths, iOutlookVersion), L"Calling HrSetCachedModeOneService on service");
 
 			}
 		}
@@ -4424,7 +4433,7 @@ HRESULT HrSetCachedModeOneProfile(LPWSTR lpwszProfileName, ProfileInfo * pProfil
 		{
 			if (pProfileInfo->profileServices[i].ulServiceType == SERVICETYPE_MAILBOX)
 			{
-				EC_HRES_MSG(HrSetCachedModeOneService(ConvertWideCharToMultiByte(lpwszProfileName), &pProfileInfo->profileServices[i].muidServiceUid, bCachedModeOwner, bCachedModeShared, bCachedModePublicFolders, iCachedModeMonths), L"Calling HrSetCachedModeOneService on service");
+				EC_HRES_MSG(HrSetCachedModeOneService(ConvertWideCharToMultiByte(lpwszProfileName), &pProfileInfo->profileServices[i].muidServiceUid, bCachedModeOwner, bCachedModeShared, bCachedModePublicFolders, iCachedModeMonths, iOutlookVersion), L"Calling HrSetCachedModeOneService on service");
 			}
 		}
 	}
