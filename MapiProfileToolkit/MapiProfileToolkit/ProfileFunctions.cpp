@@ -3630,24 +3630,24 @@ HRESULT HrCreateMsemsServiceModern(BOOL bDefaultProfile,
 		rgvalEmsMdbSect[0].ulPropTag = PR_PROFILE_USER_SMTP_EMAIL_ADDRESS_W;
 		rgvalEmsMdbSect[0].Value.lpszW = (LPWSTR)wszSmtpAddress.c_str();
 
-		ZeroMemory(&rgvalEmsMdbSect[1], sizeof(SPropValue));
-		rgvalEmsMdbSect[1].ulPropTag = PR_DISPLAY_NAME_W;
-		rgvalEmsMdbSect[1].Value.lpszW = lpszDisplayName;
+		//ZeroMemory(&rgvalEmsMdbSect[1], sizeof(SPropValue));
+		//rgvalEmsMdbSect[1].ulPropTag = PR_DISPLAY_NAME_W;
+		//rgvalEmsMdbSect[1].Value.lpszW = lpszDisplayName;
 
-		ZeroMemory(&rgvalEmsMdbSect[2], sizeof(SPropValue));
-		rgvalEmsMdbSect[2].ulPropTag = PR_PROFILE_ACCT_NAME_W;
-		rgvalEmsMdbSect[2].Value.lpszW = lpszDisplayName;
+		//ZeroMemory(&rgvalEmsMdbSect[2], sizeof(SPropValue));
+		//rgvalEmsMdbSect[2].ulPropTag = PR_PROFILE_ACCT_NAME_W;
+		//rgvalEmsMdbSect[2].Value.lpszW = lpszDisplayName;
 
-		ZeroMemory(&rgvalEmsMdbSect[3], sizeof(SPropValue));
-		rgvalEmsMdbSect[3].ulPropTag = PR_PROFILE_UNRESOLVED_NAME_W;
-		rgvalEmsMdbSect[3].Value.lpszW = lpszDisplayName;
+		//ZeroMemory(&rgvalEmsMdbSect[3], sizeof(SPropValue));
+		//rgvalEmsMdbSect[3].ulPropTag = PR_PROFILE_UNRESOLVED_NAME_W;
+		//rgvalEmsMdbSect[3].Value.lpszW = lpszDisplayName;
 
-		ZeroMemory(&rgvalEmsMdbSect[4], sizeof(SPropValue));
-		rgvalEmsMdbSect[4].ulPropTag = PR_PROFILE_USER_EMAIL_W;
-		rgvalEmsMdbSect[4].Value.lpszW = lpszDisplayName;
+		//ZeroMemory(&rgvalEmsMdbSect[4], sizeof(SPropValue));
+		//rgvalEmsMdbSect[4].ulPropTag = PR_PROFILE_USER_EMAIL_W;
+		//rgvalEmsMdbSect[4].Value.lpszW = lpszDisplayName;
 
 		EC_HRES_MSG(lpEmsMdbProfSect->SetProps(
-			5,
+			1,
 			rgvalEmsMdbSect,
 			nullptr), L"Calling SetProps.");
 
