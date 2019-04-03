@@ -406,7 +406,16 @@ BOOL ValidateScenario2(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 		std::wstring wsArg = argv[i];
 		std::transform(wsArg.begin(), wsArg.end(), wsArg.begin(), ::tolower);
 
-		if ((wsArg == L"-profile") || (wsArg == L"-p"))
+
+		if ((wsArg == L"-exportpath") || (wsArg == L"-ep"))
+		{
+			std::wstring wszExportPath = argv[i + 1];
+			std::transform(wszExportPath.begin(), wszExportPath.end(), wszExportPath.begin(), ::tolower);
+			pRunOpts->wszExportPath = wszExportPath;
+			pRunOpts->bExportMode = EXPORTMODE_EXPORT;
+			i++;
+		}
+		else if ((wsArg == L"-profile") || (wsArg == L"-p"))
 		{
 			if (i + 1 < argc)
 			{
@@ -840,7 +849,7 @@ BOOL ValidateScenario2(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 		}
 		else if ((wsArg == L"-connectmode") || (wsArg == L"-cm"))
 		{
-			if (i + 1 < argc)	
+			if (i + 1 < argc)
 			{
 				std::wstring wszValue = argv[i + 1];
 				std::transform(wszValue.begin(), wszValue.end(), wszValue.begin(), ::tolower);
