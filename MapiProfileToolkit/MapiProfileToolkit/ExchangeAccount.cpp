@@ -669,9 +669,7 @@ HRESULT HrCreateMsemsServiceROH(BOOL bDefaultProfile,
 
 	if (lpServiceAdmin)
 	{
-
 		EC_HRES_MSG(lpServiceAdmin->QueryInterface(IID_IMsgServiceAdmin2, (LPVOID*)& lpServiceAdmin2), L"Calling QueryInterface.");
-
 
 		printf("Creating MsgService.\n");
 		// Adds a message service to the current profile and returns that newly added service UID.
@@ -694,7 +692,7 @@ HRESULT HrCreateMsemsServiceROH(BOOL bDefaultProfile,
 		if (lpszMailboxLegacyDn)
 		{
 			ZeroMemory(&rgvalEmsMdbSect[paramC], sizeof(SPropValue));
-			rgvalEmsMdbSect[paramC].ulPropTag = PR_PROFILE_USER;
+			rgvalEmsMdbSect[paramC].ulPropTag = PR_PROFILE_USER; // 0x6603
 			rgvalEmsMdbSect[paramC].Value.lpszA = ConvertWideCharToMultiByte(lpszMailboxLegacyDn);
 			paramC++;
 		}
@@ -702,12 +700,12 @@ HRESULT HrCreateMsemsServiceROH(BOOL bDefaultProfile,
 		if (lpszSmtpAddress)
 		{
 			ZeroMemory(&rgvalEmsMdbSect[paramC], sizeof(SPropValue));
-			rgvalEmsMdbSect[paramC].ulPropTag = PR_DISPLAY_NAME_W;
+			rgvalEmsMdbSect[paramC].ulPropTag = PR_DISPLAY_NAME_W; // 0x3001
 			rgvalEmsMdbSect[paramC].Value.lpszW = lpszSmtpAddress;
 			paramC++;
 
 			ZeroMemory(&rgvalEmsMdbSect[paramC], sizeof(SPropValue));
-			rgvalEmsMdbSect[paramC].ulPropTag = PR_PROFILE_UNRESOLVED_NAME_W;
+			rgvalEmsMdbSect[paramC].ulPropTag = PR_PROFILE_UNRESOLVED_NAME_W; // 0x66
 			rgvalEmsMdbSect[paramC].Value.lpszW = lpszSmtpAddress;
 			paramC++;
 
@@ -716,12 +714,10 @@ HRESULT HrCreateMsemsServiceROH(BOOL bDefaultProfile,
 			rgvalEmsMdbSect[paramC].Value.lpszW = lpszSmtpAddress;
 			paramC++;
 
-
 			ZeroMemory(&rgvalEmsMdbSect[paramC], sizeof(SPropValue));
 			rgvalEmsMdbSect[paramC].ulPropTag = PR_PROFILE_USER_SMTP_EMAIL_ADDRESS_W;
 			rgvalEmsMdbSect[paramC].Value.lpszW = (LPWSTR)wszSmtpAddress.c_str();
 			paramC++;
-
 		}
 
 		if (lpszUnresolvedServer)
@@ -736,15 +732,17 @@ HRESULT HrCreateMsemsServiceROH(BOOL bDefaultProfile,
 			rgvalEmsMdbSect[paramC].Value.lpszW = lpszUnresolvedServer;
 			paramC++;
 
-			LPSTR lpszHomeServerValues[2];
-
+			LPSTR * lpszHomeServerValues = NULL;
 
 			ZeroMemory(&rgvalEmsMdbSect[paramC], sizeof(SPropValue));
-			rgvalEmsMdbSect[paramC].ulPropTag = PR_PROFILE_HOME_SERVER_ADDRS;
+			rgvalEmsMdbSect[paramC].ulPropTag = PR_PROFILE_HOME_SERVER_ADDRS; // 6613
 			rgvalEmsMdbSect[paramC].Value.MVszA.cValues = 2;
-			rgvalEmsMdbSect[paramC].Value.MVszA.lppszA = lpszHomeServerValues;
+
+			MAPIAllocateBuffer(sizeof(LPSTR) * 2, (LPVOID*)&lpszHomeServerValues);
 			lpszHomeServerValues[0] = ConvertWideCharToMultiByte((LPWSTR)wszncacn_http.c_str());
 			lpszHomeServerValues[1] = ConvertWideCharToMultiByte((LPWSTR)wszncacn_ip_tcp.c_str());
+
+			rgvalEmsMdbSect[paramC].Value.MVszA.lppszA = lpszHomeServerValues;
 			paramC++;
 		}
 
@@ -755,8 +753,6 @@ HRESULT HrCreateMsemsServiceROH(BOOL bDefaultProfile,
 			rgvalEmsMdbSect[paramC].Value.lpszA = ConvertWideCharToMultiByte(lpszProfileServerDn);
 			paramC++;
 		}
-
-
 
 		if (lpszRohProxyServer)
 		{
@@ -801,7 +797,6 @@ HRESULT HrCreateMsemsServiceROH(BOOL bDefaultProfile,
 		rgvalEmsMdbSect[paramC].Value.l = CONFIG_SHOW_CONNECT_UI | CONFIG_OST_CACHE_PRIVATE | CONFIG_OST_CACHE_DELEGATE_PIM;
 		paramC++;
 
-
 		if (lpszAutodiscoverUrl)
 		{
 			ZeroMemory(&rgvalEmsMdbSect[paramC], sizeof(SPropValue));
@@ -809,7 +804,6 @@ HRESULT HrCreateMsemsServiceROH(BOOL bDefaultProfile,
 			rgvalEmsMdbSect[paramC].Value.lpszW = lpszAutodiscoverUrl;
 			paramC++;
 		}
-
 
 		hRes = lpEmsMdbProfSect->SetProps(
 			paramC,
@@ -892,7 +886,6 @@ HRESULT HrCreateMsemsServiceROH(BOOL bDefaultProfile,
 		}
 
 		goto cleanup;
-
 
 	Error:
 		printf("ERROR: hRes = %0x\n", hRes);
