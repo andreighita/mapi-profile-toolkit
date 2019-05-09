@@ -120,3 +120,11 @@ HRESULT HrAddDelegateMailbox(ULONG ulProifileMode, LPWSTR lpwszProfileName, ULON
 HRESULT HrSimpleCloneProfile(ProfileInfo * profileInfo, bool bSetDefaultProfile);
 HRESULT HrDeleteProfile(LPWSTR lpszProfileName);
 HRESULT HrUpdatePrStoreProviders(LPSERVICEADMIN lpServiceAdmin, LPMAPIUID lpServiceUid, LPMAPIUID lpProviderUid);
+HRESULT HrCreateMsemsServiceLegacy(BOOL bDefaultProfile,
+	LPWSTR lpwszProfileName,
+	LPWSTR lpszSmtpAddress,
+	LPWSTR lpszMailboxLegacyDn,
+	LPWSTR lpszUnresolvedServer,
+	LPWSTR lpszRohProxyServer,
+	LPWSTR lpszProfileServerDn,
+	LPWSTR lpszAutodiscoverUrl);
