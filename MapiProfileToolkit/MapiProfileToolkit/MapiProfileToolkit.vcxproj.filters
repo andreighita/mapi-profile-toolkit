@@ -29,6 +29,9 @@
     <Filter Include="Utility">
       <UniqueIdentifier>{9cfa2971-0b37-45fd-a8b0-1de62e460f24}</UniqueIdentifier>
     </Filter>
+    <Filter Include="MAPI\Profile">
+      <UniqueIdentifier>{8a50acd4-6c49-43f8-9463-2992be89ec94}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -56,9 +59,6 @@
     <ClInclude Include="ABProviderObjects.h">
       <Filter>Address Book</Filter>
     </ClInclude>
-    <ClInclude Include="ProfileFunctions.h">
-      <Filter>MAPI</Filter>
-    </ClInclude>
     <ClInclude Include="RegistryHelper.h">
       <Filter>Registry</Filter>
     </ClInclude>
@@ -85,6 +85,27 @@
     <ClInclude Include="CBaseScenario.h" />
     <ClInclude Include="CProfileScenario.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="CachedMode.h">
+      <Filter>MAPI\Profile</Filter>
+    </ClInclude>
+    <ClInclude Include="PST.h">
+      <Filter>MAPI\Profile</Filter>
+    </ClInclude>
+    <ClInclude Include="AdditionalMailbox.h">
+      <Filter>MAPI\Profile</Filter>
+    </ClInclude>
+    <ClInclude Include="ExchangeAccount.h">
+      <Filter>MAPI\Profile</Filter>
+    </ClInclude>
+    <ClInclude Include="LdapAb.h">
+      <Filter>MAPI\Profile</Filter>
+    </ClInclude>
+    <ClInclude Include="ExtraMAPIDefs.h">
+      <Filter>MAPI</Filter>
+    </ClInclude>
+    <ClInclude Include="Profile.h">
+      <Filter>MAPI\Profile</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MapiProfileToolkit.cpp" />
@@ -98,9 +119,6 @@
     <ClCompile Include="AccountHelper.cpp">
       <Filter>Outlook Account</Filter>
     </ClCompile>
-    <ClCompile Include="ProfileFunctions.cpp">
-      <Filter>MAPI</Filter>
-    </ClCompile>
     <ClCompile Include="RegistryHelper.cpp">
       <Filter>Registry</Filter>
     </ClCompile>
@@ -112,6 +130,24 @@
     </ClCompile>
     <ClCompile Include="CBaseScenario.cpp" />
     <ClCompile Include="CProfileScenario.cpp" />
+    <ClCompile Include="CachedMode.cpp">
+      <Filter>MAPI\Profile</Filter>
+    </ClCompile>
+    <ClCompile Include="PST.cpp">
+      <Filter>MAPI\Profile</Filter>
+    </ClCompile>
+    <ClCompile Include="AdditionalMailbox.cpp">
+      <Filter>MAPI\Profile</Filter>
+    </ClCompile>
+    <ClCompile Include="ExchangeAccount.cpp">
+      <Filter>MAPI\Profile</Filter>
+    </ClCompile>
+    <ClCompile Include="LdapAb.cpp">
+      <Filter>MAPI\Profile</Filter>
+    </ClCompile>
+    <ClCompile Include="Profile.cpp">
+      <Filter>MAPI\Profile</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="MapiProfileToolkit.rc">

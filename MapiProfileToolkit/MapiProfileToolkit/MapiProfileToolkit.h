@@ -14,6 +14,10 @@
 #pragma once
 #include "stdafx.h"
 #include "ToolkitObjects.h"
+#include "Profile.h"
+#include "ExchangeAccount.h"
+#include "CachedMode.h"
+#include "PST.h"
 
 BOOL Is64BitProcess(void);
 BOOL IsCorrectBitness();

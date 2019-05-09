@@ -154,10 +154,10 @@ struct ServiceInfo
 
 struct ProfileInfo
 {
-	std::wstring wszProfileName;
-	BOOL bDefaultProfile;
-	ULONG ulServiceCount;
-	ServiceInfo * profileServices;
+	std::wstring wszProfileName = L"";
+	BOOL bDefaultProfile = false;
+	ULONG ulServiceCount = 0;
+	ServiceInfo* profileServices = NULL;
 };
 
 

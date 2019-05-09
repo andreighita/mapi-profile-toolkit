@@ -18,7 +18,7 @@
 
 #include <MAPIX.h>
 #include <MAPIUtil.h>
-#include "ProfileFunctions.h"
+#include "Profile.h"
 #include "MapiProfileToolkit.h"
 #include "ToolkitObjects.h"
 #include <iostream>
@@ -151,240 +151,6 @@ BOOL _cdecl IsCorrectBitness()
 }
 
 BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
-{
-	if (!pRunOpts) return FALSE;
-	ZeroMemory(pRunOpts, sizeof(RuntimeOptions));
-	int iThreeParam = 0;
-	pRunOpts->iOutlookVersion = GetOutlookVersion();
-	pRunOpts->ulActionType = ACTIONTYPE_STANDARD;
-
-	for (int i = 1; i < argc; i++)
-	{
-
-		switch (argv[i][0])
-		{
-		case '#':
-			if (0 == argv[i][1])
-			{
-				// Bad argument - get out of here
-				return false;
-			}
-			switch (tolower(argv[i][1]))
-			{
-			case 'p':
-				pRunOpts->ulScenario = SCENARIO_PROFILE;
-				iThreeParam++;
-				break;
-			case 's':
-				pRunOpts->ulScenario = SCENARIO_SERVICE;
-				iThreeParam++;
-				break;
-			case 'm':
-				pRunOpts->ulScenario = SCENARIO_MAILBOX;
-				iThreeParam++;
-				break;
-			case 'd':
-				pRunOpts->ulScenario = SCENARIO_DATAFILE;
-				iThreeParam++;
-				break;
-			case 'l':
-				pRunOpts->ulScenario = SCENARIO_LDAP;
-				iThreeParam++;
-				break;
-			case 'c':
-				pRunOpts->ulScenario = SCENARIO_CUSTOM;
-				iThreeParam++;
-				break;
-			default:
-				return false;
-			}
-			break;
-		case '-':
-		case '/':
-		case '\\':
-			if (0 == argv[i][1])
-			{
-				return false;
-			}
-			switch (tolower(argv[i][1]))
-			{
-			case 't':
-				if (i + 1 < argc)
-				{
-					std::wstring wszActionType = argv[i + 1];
-					std::transform(wszActionType.begin(), wszActionType.end(), wszActionType.begin(), ::tolower);
-					if (wszActionType == L"standard")
-					{
-						pRunOpts->ulActionType = ACTIONTYPE_STANDARD;
-						iThreeParam++;
-						i++;
-						break;
-					}
-					else if (wszActionType == L"custom")
-					{
-						pRunOpts->ulActionType = ACTIONTYPE_CUSTOM;
-						iThreeParam++;
-						i++;
-						break;
-					}
-					else
-					{
-						return false;
-					}
-				}
-				break;
-			case 'a':
-				if (i + 1 < argc)
-				{
-					std::wstring wszAction = argv[i + 1];
-					std::transform(wszAction.begin(), wszAction.end(), wszAction.begin(), ::tolower);
-					if (pRunOpts->ulActionType == ACTIONTYPE_STANDARD)
-					{
-						if (wszAction == L"add")
-						{
-							pRunOpts->ulAction = STANDARDACTION_ADD;
-							iThreeParam++;
-							i++;
-						}
-						else if (wszAction == L"remove")
-						{
-							pRunOpts->ulAction = STANDARDACTION_REMOVE;
-							iThreeParam++;
-							i++;
-						}
-						else if (wszAction == L"edit")
-						{
-							pRunOpts->ulAction = STANDARDACTION_EDIT;
-							iThreeParam++;
-							i++;
-						}
-						else if (wszAction == L"list")
-						{
-							pRunOpts->ulAction = STANDARDACTION_LIST;
-							iThreeParam++;
-							i++;
-						}
-						else
-						{
-							return false;
-						}
-					}
-					else if (pRunOpts->ulActionType == ACTIONTYPE_CUSTOM)
-					{
-						if (wszAction == L"promotemailboxtoservice")
-						{
-							pRunOpts->ulAction = CUSTOMACTION_PROMOTEMAILBOXTOSERVICE;
-							iThreeParam++;
-							i++;
-						}
-						else if (wszAction == L"editcachedmodeconfiguration")
-						{
-							pRunOpts->ulAction = CUSTOMACTION_EDITCACHEDMODECONFIGURATION;
-							iThreeParam++;
-							i++;
-						}
-						else if (wszAction == L"updatesmtpaddress")
-						{
-							pRunOpts->ulAction = CUSTOMACTION_UPDATESMTPADDRESS;
-							iThreeParam++;
-							i++;
-						}
-						else if (wszAction == L"changepstlocation")
-						{
-							pRunOpts->ulAction = CUSTOMACTION_CHANGEPSTLOCATION;
-							iThreeParam++;
-							i++;
-						}
-						else if (wszAction == L"removeorphaneddatafiles")
-						{
-							pRunOpts->ulAction = CUSTOMACTION_REMOVEORPHANEDDATAFILES;
-							iThreeParam++;
-							i++;
-						}
-						else
-						{
-							return false;
-						}
-					}
-				}
-				break;
-			case 'l':
-				if (tolower(argv[i][2]) == 'm')
-				{
-					pRunOpts->ulLoggingMode = _wtoi(argv[i + 1]);
-					i++;
-				}
-				else if (tolower(argv[i][2]) == 'p')
-				{
-					pRunOpts->wszLogFilePath = argv[i + 1];
-					Logger::Initialise(pRunOpts->wszLogFilePath);
-					i++;
-				}
-				else return false;
-				break;
-			case 'e':
-				if (tolower(argv[i][2]) == 'p')
-				{
-					std::wstring wszExportPath = argv[i + 1];
-					std::transform(wszExportPath.begin(), wszExportPath.end(), wszExportPath.begin(), ::tolower);
-					pRunOpts->wszExportPath = wszExportPath;
-					pRunOpts->bExportMode = EXPORTMODE_EXPORT;
-					i++;
-				}
-				else return false;
-				break;
-			case 'v':
-				if (i + 1 < argc)
-				{
-					// scfgf	| ulConfigFlags
-					pRunOpts->iOutlookVersion = _wtoi(argv[i + 1]);
-					i++;
-				}
-				else return false;
-				break;
-			case '?':
-				return false;
-			default:
-				// display help
-				pRunOpts->ulLoggingMode = LOGGINGMODE_CONSOLE;
-			}
-		}
-	}
-	if (iThreeParam >= 3)
-	{
-		switch (pRunOpts->ulScenario)
-		{
-		case SCENARIO_PROFILE:
-			pRunOpts->profileOptions = new ProfileOptions();
-			return ParseArgsProfile(argc, argv, pRunOpts->profileOptions);
-			break;
-		case SCENARIO_SERVICE:
-			pRunOpts->serviceOptions = new ServiceOptions();
-			return ParseArgsService(argc, argv, pRunOpts->serviceOptions);
-			break;
-		case SCENARIO_MAILBOX:
-			pRunOpts->mailboxOptions = new MailboxOptions();
-			return ParseArgsMailbox(argc, argv, pRunOpts->mailboxOptions);
-			break;
-		case SCENARIO_DATAFILE:
-			pRunOpts->dataFileOptions = new DataFileOptions();
-			return FALSE;
-			break;
-		case SCENARIO_LDAP:
-			pRunOpts->ldapOptions = new LdapOptions();
-			return FALSE;
-			break;
-		case SCENARIO_CUSTOM:
-			return FALSE;
-			break;
-		default:
-			return FALSE;
-		}
-	}
-	else return false;
-}
-
-BOOL ValidateScenario2(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 {
 	std::vector<std::string> wszDiscardedArgs;
 	if (!pRunOpts) return FALSE;
@@ -1635,7 +1401,7 @@ void _tmain(int argc, _TCHAR* argv[])
 	RuntimeOptions * tkOptions = new RuntimeOptions();
 
 	// Parse the command line arguments
-	if (!ValidateScenario2(argc, argv, tkOptions))
+	if (!ValidateScenario(argc, argv, tkOptions))
 	{
 		if (tkOptions->ulLoggingMode != loggingModeNone)
 		{
@@ -2138,6 +1904,5 @@ HRESULT HrListProfiles(ProfileOptions * pProfileOptions, std::wstring wszExportP
 	}
 
 Error:
-Cleanup:
 	return hRes;
 }
