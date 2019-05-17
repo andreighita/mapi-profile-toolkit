@@ -172,7 +172,6 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 		std::wstring wsArg = argv[i];
 		std::transform(wsArg.begin(), wsArg.end(), wsArg.begin(), ::tolower);
 
-
 		if ((wsArg == L"-exportpath") || (wsArg == L"-ep"))
 		{
 			std::wstring wszExportPath = argv[i + 1];
