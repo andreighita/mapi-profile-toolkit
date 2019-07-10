@@ -18,6 +18,7 @@
 #include "ExchangeAccount.h"
 #include "CachedMode.h"
 #include "PST.h"
+#include "AddressBook/ConfigXmlParser.h"
 
 BOOL Is64BitProcess(void);
 BOOL IsCorrectBitness();

@@ -31,7 +31,7 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>Static</UseOfMfc>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -154,7 +154,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="abhelp.h" />
-    <ClInclude Include="ABProviderObjects.h" />
     <ClInclude Include="AccountFunctions.h" />
     <ClInclude Include="AccountHelper.h" />
     <ClInclude Include="AccountMgmt.h" />
@@ -162,12 +161,13 @@
     <ClInclude Include="AdditionalMailbox.h" />
     <ClInclude Include="ADHelper.h" />
     <ClInclude Include="CachedMode.h" />
-    <ClInclude Include="CBaseScenario.h" />
-    <ClInclude Include="CProfileScenario.h" />
     <ClInclude Include="EdkMdb.h" />
     <ClInclude Include="ExchangeAccount.h" />
     <ClInclude Include="ExtraMAPIDefs.h" />
     <ClInclude Include="LdapAb.h" />
+    <ClInclude Include="AddressBook\ABProviderObjects.h" />
+    <ClInclude Include="AddressBook\LdapABManager.h" />
+    <ClInclude Include="AddressBook\ConfigXmlParser.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="MAPIObjects.h" />
     <ClInclude Include="MapiProfileToolkit.h" />
@@ -189,10 +189,10 @@
     <ClCompile Include="AdditionalMailbox.cpp" />
     <ClCompile Include="ADHelper.cpp" />
     <ClCompile Include="CachedMode.cpp" />
-    <ClCompile Include="CBaseScenario.cpp" />
-    <ClCompile Include="CProfileScenario.cpp" />
     <ClCompile Include="ExchangeAccount.cpp" />
     <ClCompile Include="LdapAb.cpp" />
+    <ClCompile Include="AddressBook\LdapABManager.cpp" />
+    <ClCompile Include="AddressBook\ConfigXmlParser.cpp" />
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="MapiProfileToolkit.cpp" />
     <ClCompile Include="Profile.cpp" />

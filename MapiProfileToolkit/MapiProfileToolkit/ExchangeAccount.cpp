@@ -928,7 +928,7 @@ HRESULT HrCreateMsemsServiceMOH(BOOL bDefaultProfile,
 {
 	HRESULT hRes = S_OK; // Result code returned from MAPI calls.
 	//	SPropValue rgvalEmsMdbSect[14]; // Property value structure to hold configuration info.
-	SPropValue rgvalStoreProvider[5];
+	// SPropValue rgvalStoreProvider[5];
 	LPPROVIDERADMIN lpProvAdmin = NULL;
 	LPMAPIUID lpServiceUid = NULL;
 	LPMAPIUID lpEmsMdbSectionUid = NULL;

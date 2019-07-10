@@ -37,45 +37,66 @@
 #include "ExchangeAccount.h"
 #include "AdditionalMailbox.h"
 #include "PST.h"
+#include "AddressBook/ABProviderObjects.h"
 
-LPWSTR GetDefaultProfileNameLP();
 
-// GetDefaultProfileName
-// returns a std::wstring value with the name of the default Outlook profile
-std::wstring GetDefaultProfileName();
+#pragma region GenericProfile
+	LPWSTR GetDefaultProfileNameLP();
 
-// GetProfileCount
-// returns the number of mapi profiles for the current user
-ULONG GetProfileCount();
+	// GetDefaultProfileName
+	// returns a std::wstring value with the name of the default Outlook profile
+	std::wstring GetDefaultProfileName();
 
-HRESULT HrGetProfiles(ULONG ulProfileCount, ProfileInfo* profileInfo);
+	// GetProfileCount
+	// returns the number of mapi profiles for the current user
+	ULONG GetProfileCount();
 
-HRESULT HrDeleteProfile(LPWSTR lpszProfileName);
+	HRESULT HrGetProfiles(ULONG ulProfileCount, ProfileInfo* profileInfo);
 
-HRESULT HrCreateProfile(LPWSTR lpszProfileName);
+	HRESULT HrDeleteProfile(LPWSTR lpszProfileName);
 
-HRESULT HrCreateProfile(LPWSTR lpszProfileName, LPSERVICEADMIN2* lppSvcAdmin2);
+	HRESULT HrCreateProfile(LPWSTR lpszProfileName);
 
-HRESULT HrSetDefaultProfile(LPWSTR lpszProfileName);
+	HRESULT HrCreateProfile(LPWSTR lpszProfileName, LPSERVICEADMIN2* lppSvcAdmin2);
 
-// Outlook 2016
-HRESULT HrCloneProfile(ProfileInfo* profileInfo);
+	HRESULT HrSetDefaultProfile(LPWSTR lpszProfileName);
 
-// Outlook 2013
-HRESULT HrSimpleCloneProfile(ProfileInfo* profileInfo, bool bSetDefaultProfile);
+	// Outlook 2016
+	HRESULT HrCloneProfile(ProfileInfo* profileInfo);
 
-VOID PrintProfile(ProfileInfo* profileInfo);
+	// Outlook 2013
+	HRESULT HrSimpleCloneProfile(ProfileInfo* profileInfo, bool bSetDefaultProfile);
 
-HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo* profileInfo);
+	VOID PrintProfile(ProfileInfo* profileInfo);
 
+	HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo* profileInfo);
+
+#pragma endregion
+
+#pragma region Providers
 // HrDeleteProvider
 // Deletes the provider with the specified UID from the service with the specified UID in a given profile
 HRESULT HrDeleteProvider(LPWSTR lpwszProfileName, LPMAPIUID lpServiceUid, LPMAPIUID lpProviderUid);
 
-// HrGetSections
-// Returns the EMSMDB and StoreProvider sections of a service
-HRESULT HrGetSections(LPSERVICEADMIN2 lpSvcAdmin, LPMAPIUID lpServiceUid, LPPROFSECT* lppEmsMdbSection, LPPROFSECT* lppStoreProviderSection);
+#pragma endregion
 
-// HrGetSections
-// Returns the EMSMDB and StoreProvider sections of a service
-HRESULT HrGetSections(LPSERVICEADMIN lpSvcAdmin, LPMAPIUID lpServiceUid, LPPROFSECT* lppEmsMdbSection, LPPROFSECT* lppStoreProviderSection);
+#pragma region Sections
+	// HrGetSections
+	// Returns the EMSMDB and StoreProvider sections of a service
+	HRESULT HrGetSections(LPSERVICEADMIN2 lpSvcAdmin, LPMAPIUID lpServiceUid, LPPROFSECT* lppEmsMdbSection, LPPROFSECT* lppStoreProviderSection);
+
+	// HrGetSections
+	// Returns the EMSMDB and StoreProvider sections of a service
+	HRESULT HrGetSections(LPSERVICEADMIN lpSvcAdmin, LPMAPIUID lpServiceUid, LPPROFSECT* lppEmsMdbSection, LPPROFSECT* lppStoreProviderSection);
+#pragma endregion
+
+#pragma region AddressBook
+
+	HRESULT ListAllABServices(LPSERVICEADMIN lpSvcAdmin);
+	HRESULT CreateABService(LPSERVICEADMIN lpSvcAdmin, ABProvider* pABProvider);
+	HRESULT UpdateABService(LPSERVICEADMIN lpSvcAdmin, ABProvider* pABProvider, LPMAPIUID lpMapiUid);
+	HRESULT RemoveABService(LPSERVICEADMIN lpSvcAdmin, LPMAPIUID lpMapiUid);
+	HRESULT CheckABServiceExists(LPSERVICEADMIN lpSvcAdmin, LPTSTR lppszDisplayName, LPTSTR lppszServerName, LPMAPIUID lppMapiUid, BOOL* success);
+	HRESULT CheckABServiceExists(LPSERVICEADMIN lpSvcAdmin, LPTSTR lppszDisplayName, LPMAPIUID lppMapiUid, BOOL* success);
+
+#pragma endregion

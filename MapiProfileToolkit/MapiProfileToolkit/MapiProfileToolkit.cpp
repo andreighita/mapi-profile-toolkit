@@ -166,6 +166,7 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 	pRunOpts->serviceOptions->ulServiceMode = SERVICEMODE_DEFAULT;
 	pRunOpts->serviceOptions->ulConnectMode = CONNECT_MOH;
 	pRunOpts->mailboxOptions = new MailboxOptions();
+	pRunOpts->addressBookOptions = new AddressBookOptions();
 
 	for (int i = 1; i < argc; i++)
 	{
@@ -179,6 +180,65 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 			pRunOpts->wszExportPath = wszExportPath;
 			pRunOpts->bExportMode = EXPORTMODE_EXPORT;
 			i++;
+		}
+		else if ((wsArg == L"-addressbook") || (wsArg == L"-ab"))
+		{
+			if (i + 1 < argc)
+			{
+				std::wstring wszValue = argv[i + 1];
+				std::transform(wszValue.begin(), wszValue.end(), wszValue.begin(), ::tolower);
+				if (wszValue == L"create")
+				{
+					pRunOpts->addressBookOptions->ulRunningMode = ADDRESSBOOK_CREATE;
+					i++;
+				}
+				else if (wszValue == L"update")
+				{
+					pRunOpts->profileOptions->ulProfileAction = ADDRESSBOOK_UPDATE;
+					i++;
+				}
+				else if (wszValue == L"listone")
+				{
+					pRunOpts->profileOptions->ulProfileAction = ADDRESSBOOK_LIST_ONE;
+					i++;
+				}
+				else if (wszValue == L"listall")
+				{
+					pRunOpts->profileOptions->ulProfileAction = ADDRESSBOOK_LIST_ALL;
+					i++;
+				}
+				else
+				{
+					return false;
+				}
+			}
+		}
+		else if ((wsArg == L"-addressbookdisplayname") || (wsArg == L"-abdn"))
+		{
+			if (i + 1 < argc)
+			{
+				pRunOpts->addressBookOptions->szABDisplayName = argv[i + 1];
+				i++;
+
+			}
+		}
+		else if ((wsArg == L"-addressbookservername") || (wsArg == L"-absn"))
+		{
+			if (i + 1 < argc)
+			{
+				pRunOpts->addressBookOptions->szABServerName = argv[i + 1];
+				i++;
+
+			}
+		}
+		else if ((wsArg == L"-addressbookconfigfilepath") || (wsArg == L"-abcfp"))
+		{
+			if (i + 1 < argc)
+			{
+				pRunOpts->addressBookOptions->szConfigFilePath = argv[i + 1];
+				i++;
+
+			}
 		}
 		else if ((wsArg == L"-profile") || (wsArg == L"-p"))
 		{
@@ -703,648 +763,662 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 		}
 		else return false;
 	}
-	return true;
-}
-
-BOOL ParseArgsProfile(int argc, _TCHAR* argv[], ProfileOptions * profileOptions)
-{
-	if (!profileOptions) return FALSE;
-	profileOptions->bSetDefaultProfile = false;
-	profileOptions->ulProfileMode = PROFILEMODE_DEFAULT;
-
-	for (int i = 1; i < argc; i++)
+	if (ADDRESSBOOK_CREATE == pRunOpts->addressBookOptions->ulRunningMode)
 	{
-		switch (argv[i][0])
+		if (pRunOpts->addressBookOptions->szConfigFilePath.empty())
 		{
-		case '-':
-		case '/':
-		case '\\':
-			if (0 == argv[i][1])
-			{
-				return false;
-			}
-			switch (tolower(argv[i][1]))
-			{
-			case 'p':
-				if (tolower(argv[i][2]) == 'm')
-				{
-					if (i + 1 < argc)
-					{
-						std::wstring profileMode = argv[i + 1];
-						std::transform(profileMode.begin(), profileMode.end(), profileMode.begin(), ::tolower);
-						if (profileMode == L"all")
-						{
-							profileOptions->ulProfileMode = (ULONG)PROFILEMODE_ALL;
-							i++;
-						}
-						else if (profileMode == L"one")
-						{
-							profileOptions->ulProfileMode = (ULONG)PROFILEMODE_ONE;
-							i++;
-						}
-						else if (profileMode == L"default")
-						{
-							profileOptions->ulProfileMode = (ULONG)PROFILEMODE_DEFAULT;
-							i++;
-						}
-						else return false;
-					}
-				}
-				else if (tolower(argv[i][2]) == 'n')
-				{
-					if (i + 1 < argc)
-					{
-						profileOptions->wszProfileName = argv[i + 1];
-						profileOptions->ulProfileMode = PROFILEMODE_ONE;
-						i++;
-					}
-					else return false;
-				}
-				else if (tolower(argv[i][2]) == 'd')
-				{
-					profileOptions->bSetDefaultProfile = true;
-				}
-				else return false;
-				break;
-			}
-			break;
+			return false;
+		}
+	}
+	else if ((ADDRESSBOOK_UPDATE == pRunOpts->addressBookOptions->ulRunningMode) || (ADDRESSBOOK_LIST_ONE == pRunOpts->addressBookOptions->ulRunningMode))
+	{
+		if (pRunOpts->addressBookOptions->szABDisplayName.empty())
+		{
+			return false;
 		}
 	}
 	return true;
 }
 
-BOOL ParseArgsService(int argc, _TCHAR* argv[], ServiceOptions * serviceOptions)
-{
-	if (!serviceOptions) return FALSE;
-	serviceOptions->ulServiceMode = SERVICEMODE_DEFAULT;
-	serviceOptions->bSetDefaultservice = false;
-	serviceOptions->ulProfileMode = PROFILEMODE_DEFAULT;
-
-	for (int i = 1; i < argc; i++)
-	{
-		switch (argv[i][0])
-		{
-		case '-':
-		case '/':
-		case '\\':
-			if (0 == argv[i][1])
-			{
-				return false;
-			}
-			switch (tolower(argv[i][1]))
-			{
-			case 's':
-				if (tolower(argv[i][2]) == 'a')
-				{
-					if (tolower(argv[i][3]) == 'b')
-					{
-						if (tolower(argv[i][4]) == 'e')
-						{
-							if (i + 1 < argc)
-							{
-								// sabe		| wszAddressBookExternalUrl
-								std::wstring wszAddressBookExternalUrl = argv[i + 1];
-								std::transform(wszAddressBookExternalUrl.begin(), wszAddressBookExternalUrl.end(), wszAddressBookExternalUrl.begin(), ::tolower);
-								serviceOptions->wszAddressBookExternalUrl = wszAddressBookExternalUrl;
-								i++;
-							}
-							else return false;
-						}
-						else if (tolower(argv[i][4]) == 'i')
-						{
-							if (i + 1 < argc)
-							{
-								// sabi		| wszAddressBookExternalUrl
-								std::wstring wszAddressBookInternalUrl = argv[i + 1];
-								std::transform(wszAddressBookInternalUrl.begin(), wszAddressBookInternalUrl.end(), wszAddressBookInternalUrl.begin(), ::tolower);
-								serviceOptions->wszAddressBookInternalUrl = wszAddressBookInternalUrl;
-								i++;
-							}
-							else return false;
-						}
-						else return false;
-					}
-					else if (tolower(argv[i][3]) == 'u')
-					{
-						if (i + 1 < argc)
-						{
-							// sau		| wszAutodiscoverUrl
-							std::wstring wszAutodiscoverUrl = argv[i + 1];
-							std::transform(wszAutodiscoverUrl.begin(), wszAutodiscoverUrl.end(), wszAutodiscoverUrl.begin(), ::tolower);
-							serviceOptions->wszAutodiscoverUrl = wszAutodiscoverUrl;
-							i++;
-						}
-						else return false;
-					}
-					else return false;
-				}
-				else if (tolower(argv[i][2]) == 'c')
-				{
-					if (tolower(argv[i][3]) == 'f')
-					{
-						if (tolower(argv[i][4]) == 'g')
-						{
-							if (tolower(argv[i][5]) == 'f')
-							{
-								if (i + 1 < argc)
-								{
-									// scfgf	| ulConfigFlags
-									serviceOptions->ulConfigFlags = _wtoi(argv[i + 1]);
-									i++;
-								}
-								else return false;
-							}
-							else return false;
-						}
-						else return false;
-					}
-					else if (tolower(argv[i][3]) == 'm')
-					{
-						if (tolower(argv[i][4]) == 'm')
-						{
-							if (i + 1 < argc)
-							{
-								// scmm	| iCachedModeMonths
-								serviceOptions->iCachedModeMonths = _wtoi(argv[i + 1]);
-								i++;
-							}
-							else return false;
-						}
-						else if (tolower(argv[i][4]) == 'o')
-						{
-							if (i + 1 < argc)
-							{
-								// scmo	| ulCachedModeOwner
-								serviceOptions->ulCachedModeOwner = _wtoi(argv[i + 1]);
-								i++;
-							}
-							else return false;
-						}
-						else if (tolower(argv[i][4]) == 'p')
-						{
-							if (tolower(argv[i][5]) == 'f')
-							{
-								if (i + 1 < argc)
-								{
-									// scmpf	| ulCachedModePublicFolder
-									serviceOptions->ulCachedModePublicFolder = _wtoi(argv[i + 1]);
-									i++;
-								}
-								else return false;
-							}
-							else return false;
-						}
-						else if (tolower(argv[i][4]) == 's')
-						{
-							if (i + 1 < argc)
-							{
-								// scms	| ulCachedModeShared
-								serviceOptions->ulCachedModeShared = _wtoi(argv[i + 1]);
-								i++;
-							}
-							else return false;
-						}
-						else return false;
-					}
-					else if (tolower(argv[i][3]) == 'n')
-					{
-						if (tolower(argv[i][4]) == 'c')
-						{
-							if (tolower(argv[i][5]) == 't')
-							{
-								if (tolower(argv[i][6]) == 'm')
-								{
-									if (i + 1 < argc)
-									{
-										// scnctm	| ulConnectMode
-										serviceOptions->ulConnectMode = _wtoi(argv[i + 1]);
-										i++;
-									}
-									else return false;
-								}
-								else return false;
-							}
-							else return false;
-						}
-						else return false;
-					}
-					else return false;
-				}
-				else if (tolower(argv[i][2]) == 'd')
-				{
-					if (tolower(argv[i][3]) == 's')
-					{
-						// sds	| bDefaultservice;
-						serviceOptions->ulServiceMode = SERVICEMODE_DEFAULT;
-					}
-				}
-				else if (tolower(argv[i][2]) == 'i')
-				{
-					if (i + 1 < argc)
-					{
-						// si	| iServiceIndex
-						serviceOptions->iServiceIndex = _wtoi(argv[i + 1]);
-						i++;
-					}
-					else return false;
-				}
-				else if (tolower(argv[i][2]) == 'm')
-				{
-					if (tolower(argv[i][3]) == 'd')
-					{
-						if (tolower(argv[i][4]) == 'n')
-						{
-							if (i + 1 < argc)
-							{
-								// smdn		| wszMailboxDisplayName
-								std::wstring wszMailboxDisplayName = argv[i + 1];
-								std::transform(wszMailboxDisplayName.begin(), wszMailboxDisplayName.end(), wszMailboxDisplayName.begin(), ::tolower);
-								serviceOptions->wszMailboxDisplayName = wszMailboxDisplayName;
-								i++;
-							}
-							else return false;
-						}
-					}
-					else if (tolower(argv[i][3]) == 'l')
-					{
-						if (tolower(argv[i][4]) == 'd')
-						{
-							if (tolower(argv[i][5]) == 'n')
-							{
-								if (i + 1 < argc)
-								{
-									// smldn		| wszMailboxLegacyDN
-									std::wstring wszMailboxLegacyDN = argv[i + 1];
-									std::transform(wszMailboxLegacyDN.begin(), wszMailboxLegacyDN.end(), wszMailboxLegacyDN.begin(), ::tolower);
-									serviceOptions->wszMailboxLegacyDN = wszMailboxLegacyDN;
-									i++;
-								}
-								else return false;
-							}
-						}
-					}
-					else if (tolower(argv[i][3]) == 's')
-					{
-						if (tolower(argv[i][4]) == 'e')
-						{
-							if (i + 1 < argc)
-							{
-								// smse	| wszMailStoreExternalUrl
-								std::wstring wszMailStoreExternalUrl = argv[i + 1];
-								std::transform(wszMailStoreExternalUrl.begin(), wszMailStoreExternalUrl.end(), wszMailStoreExternalUrl.begin(), ::tolower);
-								serviceOptions->wszMailStoreExternalUrl = wszMailStoreExternalUrl;
-								i++;
-							}
-							else return false;
-						}
-						else if (tolower(argv[i][4]) == 'i')
-						{
-							if (i + 1 < argc)
-							{
-								// smsi	| wszMailStoreExternalUrl
-								std::wstring wszMailStoreInternalUrl = argv[i + 1];
-								std::transform(wszMailStoreInternalUrl.begin(), wszMailStoreInternalUrl.end(), wszMailStoreInternalUrl.begin(), ::tolower);
-								serviceOptions->wszMailStoreInternalUrl = wszMailStoreInternalUrl;
-								i++;
-							}
-							else return false;
-						}
-					}
-				}
-				else if (tolower(argv[i][2]) == 'p')
-				{
-					if (tolower(argv[i][3]) == 'm')
-					{
-						// spm		| ulProfileMode
-						if (i + 1 < argc)
-						{
-							std::wstring profileMode = argv[i + 1];
-							std::transform(profileMode.begin(), profileMode.end(), profileMode.begin(), ::tolower);
-							if (profileMode == L"all")
-							{
-								serviceOptions->ulProfileMode = (ULONG)PROFILEMODE_ALL;
-								i++;
-							}
-							else if (profileMode == L"one")
-							{
-								serviceOptions->ulProfileMode = (ULONG)PROFILEMODE_ONE;
-								i++;
-							}
-							else if (profileMode == L"default")
-							{
-								serviceOptions->ulProfileMode = (ULONG)PROFILEMODE_DEFAULT;
-								i++;
-							}
-							else return false;
-						}
-						else return false;
-					}
-					else if (tolower(argv[i][3]) == 'n')
-					{
-						if (i + 1 < argc)
-						{
-							// spn		| wszProfileName
-							std::wstring wszProfileName = argv[i + 1];
-							std::transform(wszProfileName.begin(), wszProfileName.end(), wszProfileName.begin(), ::tolower);
-							serviceOptions->wszProfileName = wszProfileName;
-							serviceOptions->ulProfileMode = PROFILEMODE_ONE;
-							i++;
-						}
-						else return false;
-					}
-				}
-				else if (tolower(argv[i][2]) == 'r')
-				{
-					if (tolower(argv[i][3]) == 'f')
-					{
-						// srf		| ulResourceFlags
-						if (i + 1 < argc)
-						{
-							// si	| iServiceIndex
-							serviceOptions->iServiceIndex = _wtoi(argv[i + 1]);
-							i++;
-						}
-						else return false;
-					}
-					else if (tolower(argv[i][3]) == 'p')
-					{
-						if (tolower(argv[i][4]) == 's')
-						{
-
-							if (i + 1 < argc)
-							{
-								// srps		| wszRohProxyServer
-								std::wstring wszRohProxyServer = argv[i + 1];
-								std::transform(wszRohProxyServer.begin(), wszRohProxyServer.end(), wszRohProxyServer.begin(), ::tolower);
-								serviceOptions->wszRohProxyServer = wszRohProxyServer;
-								i++;
-							}
-							else return false;
-						}
-						else return false;
-					}
-					else return false;
-				}
-				else if (tolower(argv[i][2]) == 's')
-				{
-					if (tolower(argv[i][3]) == 'a')
-					{
-						if (i + 1 < argc)
-						{
-							// ssa	| wszSmtpAddress
-							std::wstring wszSmtpAddress = argv[i + 1];
-							std::transform(wszSmtpAddress.begin(), wszSmtpAddress.end(), wszSmtpAddress.begin(), ::tolower);
-							serviceOptions->wszSmtpAddress = wszSmtpAddress;
-							i++;
-						}
-						else return false;
-					}
-					else if (tolower(argv[i][3]) == 'd')
-					{
-						if (tolower(argv[i][4]) == 'n')
-						{
-							if (i + 1 < argc)
-							{
-								// ssdn	| wszServerDisplayName
-								std::wstring wszServerDisplayName = argv[i + 1];
-								std::transform(wszServerDisplayName.begin(), wszServerDisplayName.end(), wszServerDisplayName.begin(), ::tolower);
-								serviceOptions->wszServerDisplayName = wszServerDisplayName;
-								i++;
-							}
-							else return false;
-						}
-						else if (tolower(argv[i][4]) == 's')
-						{
-							// ssds	| bSetDefaultservice
-							serviceOptions->bSetDefaultservice = true;
-						}
-						else return false;
-					}
-					else if (tolower(argv[i][3]) == 'l')
-					{
-						if (tolower(argv[i][4]) == 'd')
-						{
-							if (tolower(argv[i][5]) == 'n')
-							{
-								if (i + 1 < argc)
-								{
-									// ssldn	| wszServerLegacyDN
-									std::wstring wszServerLegacyDN = argv[i + 1];
-									std::transform(wszServerLegacyDN.begin(), wszServerLegacyDN.end(), wszServerLegacyDN.begin(), ::tolower);
-									serviceOptions->wszServerLegacyDN = wszServerLegacyDN;
-									i++;
-								}
-								else return false;
-							}
-							else return false;
-						}
-						else return false;
-					}
-				}
-				else if (tolower(argv[i][2]) == 'u')
-				{
-					if (tolower(argv[i][3]) == 's')
-					{
-
-						if (i + 1 < argc)
-						{
-							// sus	| wszUnresolvedServer
-							std::wstring wszUnresolvedServer = argv[i + 1];
-							std::transform(wszUnresolvedServer.begin(), wszUnresolvedServer.end(), wszUnresolvedServer.begin(), ::tolower);
-							serviceOptions->wszUnresolvedServer = wszUnresolvedServer;
-							i++;
-						}
-						else return false;
-					}
-					else if (tolower(argv[i][3]) == 'u')
-					{
-						if (i + 1 < argc)
-						{
-							// suu	| wszUnresolvedUser
-							std::wstring wszUnresolvedUser = argv[i + 1];
-							std::transform(wszUnresolvedUser.begin(), wszUnresolvedUser.end(), wszUnresolvedUser.begin(), ::tolower);
-							serviceOptions->wszUnresolvedUser = wszUnresolvedUser;
-							i++;
-						}
-						else return false;
-					}
-					else return false;
-				}
-				else return false;
-				break;
-			}
-			break;
-		}
-	}
-	return true;
-}
-
-BOOL ParseArgsMailbox(int argc, _TCHAR* argv[], MailboxOptions * mailboxOptions)
-{
-	if (!mailboxOptions) return FALSE;
-
-	mailboxOptions->bDefaultService = false;
-
-	for (int i = 1; i < argc; i++)
-	{
-		switch (argv[i][0])
-		{
-		case '-':
-		case '/':
-		case '\\':
-			if (0 == argv[i][1])
-			{
-				return false;
-			}
-			switch (tolower(argv[i][1]))
-			{
-			case 'm':
-				if (tolower(argv[i][2]) == 'd')
-				{
-					if (tolower(argv[i][3]) == 's')
-					{
-						// mds		| bDefaultService
-						mailboxOptions->bDefaultService = true;
-					}
-				}
-				else if (tolower(argv[i][2]) == 'm')
-				{
-					if (tolower(argv[i][3]) == 'd')
-					{
-						if (tolower(argv[i][4]) == 'n')
-						{
-							if (i + 1 < argc)
-							{
-								// mmdn		| wszMailboxDisplayName
-								std::wstring wszMailboxDisplayName = argv[i + 1];
-								std::transform(wszMailboxDisplayName.begin(), wszMailboxDisplayName.end(), wszMailboxDisplayName.begin(), ::tolower);
-								mailboxOptions->wszMailboxDisplayName = wszMailboxDisplayName;
-								i++;
-							}
-						}
-					}
-					if (tolower(argv[i][3]) == 'l')
-					{
-						if (tolower(argv[i][4]) == 'd')
-						{
-							if (tolower(argv[i][5]) == 'n')
-							{
-								if (i + 1 < argc)
-								{
-									// mmldn		| wszMailboxLegacyDN
-									std::wstring wszMailboxLegacyDN = argv[i + 1];
-									std::transform(wszMailboxLegacyDN.begin(), wszMailboxLegacyDN.end(), wszMailboxLegacyDN.begin(), ::tolower);
-									mailboxOptions->wszMailboxLegacyDN = wszMailboxLegacyDN;
-									i++;
-								}
-							}
-						}
-					}
-				}
-				else if (tolower(argv[i][2]) == 'p')
-				{
-					if (tolower(argv[i][3]) == 'n')
-					{
-						if (i + 1 < argc)
-						{
-							// mpn		| wszProfileName
-							std::wstring wszProfileName = argv[i + 1];
-							std::transform(wszProfileName.begin(), wszProfileName.end(), wszProfileName.begin(), ::tolower);
-							mailboxOptions->wszProfileName = wszProfileName;
-							i++;
-						}
-					}
-					else if (tolower(argv[i][3]) == 'm')
-					{
-						if (i + 1 < argc)
-						{
-							// mpm		| ulProfileMode
-							std::wstring profileMode = argv[i + 1];
-							std::transform(profileMode.begin(), profileMode.end(), profileMode.begin(), ::tolower);
-							if (profileMode == L"all")
-							{
-								mailboxOptions->ulProfileMode = (ULONG)PROFILEMODE_ALL;
-								i++;
-							}
-							else if (profileMode == L"one")
-							{
-								mailboxOptions->ulProfileMode = (ULONG)PROFILEMODE_ONE;
-								i++;
-							}
-							else if (profileMode == L"default")
-							{
-								mailboxOptions->ulProfileMode = (ULONG)PROFILEMODE_DEFAULT;
-								i++;
-							}
-							else return false;
-						}
-					}
-					else return false;
-				}
-				else if (tolower(argv[i][2]) == 's')
-				{
-					if (tolower(argv[i][3]) == 'a')
-					{
-						if (i + 1 < argc)
-						{
-							// msa		| wszSmtpAddress
-							std::wstring wszSmtpAddress = argv[i + 1];
-							std::transform(wszSmtpAddress.begin(), wszSmtpAddress.end(), wszSmtpAddress.begin(), ::tolower);
-							mailboxOptions->wszSmtpAddress = wszSmtpAddress;
-							i++;
-						}
-					}
-					else if (tolower(argv[i][3]) == 'd')
-					{
-						if (tolower(argv[i][4]) == 'n')
-						{
-							if (i + 1 < argc)
-							{
-								// msdn		| wszServerDisplayName
-								std::wstring wszServerDisplayName = argv[i + 1];
-								std::transform(wszServerDisplayName.begin(), wszServerDisplayName.end(), wszServerDisplayName.begin(), ::tolower);
-								mailboxOptions->wszServerDisplayName = wszServerDisplayName;
-								i++;
-							}
-						}
-					}
-					if (tolower(argv[i][3]) == 'i')
-					{
-						if (i + 1 < argc)
-						{
-							// msi	| ulServiceIndex
-							mailboxOptions->ulServiceIndex = _wtoi(argv[i + 1]);;
-							i++;
-						}
-					}
-					if (tolower(argv[i][3]) == 'l')
-					{
-						if (tolower(argv[i][4]) == 'd')
-						{
-							if (tolower(argv[i][5]) == 'n')
-							{
-								if (i + 1 < argc)
-								{
-									// msldn	| wszServerLegacyDN
-									std::wstring wszServerLegacyDN = argv[i + 1];
-									std::transform(wszServerLegacyDN.begin(), wszServerLegacyDN.end(), wszServerLegacyDN.begin(), ::tolower);
-									mailboxOptions->wszServerLegacyDN = wszServerLegacyDN;
-									i++;
-								}
-							}
-						}
-					}
-				}
-				else return false;
-				break;
-			}
-			break;
-		}
-
-	}
-	return true;
-}
-
+//BOOL ParseArgsProfile(int argc, _TCHAR* argv[], ProfileOptions * profileOptions)
+//{
+//	if (!profileOptions) return FALSE;
+//	profileOptions->bSetDefaultProfile = false;
+//	profileOptions->ulProfileMode = PROFILEMODE_DEFAULT;
+//
+//	for (int i = 1; i < argc; i++)
+//	{
+//		switch (argv[i][0])
+//		{
+//		case '-':
+//		case '/':
+//		case '\\':
+//			if (0 == argv[i][1])
+//			{
+//				return false;
+//			}
+//			switch (tolower(argv[i][1]))
+//			{
+//			case 'p':
+//				if (tolower(argv[i][2]) == 'm')
+//				{
+//					if (i + 1 < argc)
+//					{
+//						std::wstring profileMode = argv[i + 1];
+//						std::transform(profileMode.begin(), profileMode.end(), profileMode.begin(), ::tolower);
+//						if (profileMode == L"all")
+//						{
+//							profileOptions->ulProfileMode = (ULONG)PROFILEMODE_ALL;
+//							i++;
+//						}
+//						else if (profileMode == L"one")
+//						{
+//							profileOptions->ulProfileMode = (ULONG)PROFILEMODE_ONE;
+//							i++;
+//						}
+//						else if (profileMode == L"default")
+//						{
+//							profileOptions->ulProfileMode = (ULONG)PROFILEMODE_DEFAULT;
+//							i++;
+//						}
+//						else return false;
+//					}
+//				}
+//				else if (tolower(argv[i][2]) == 'n')
+//				{
+//					if (i + 1 < argc)
+//					{
+//						profileOptions->wszProfileName = argv[i + 1];
+//						profileOptions->ulProfileMode = PROFILEMODE_ONE;
+//						i++;
+//					}
+//					else return false;
+//				}
+//				else if (tolower(argv[i][2]) == 'd')
+//				{
+//					profileOptions->bSetDefaultProfile = true;
+//				}
+//				else return false;
+//				break;
+//			}
+//			break;
+//		}
+//	}
+//	return true;
+//}
+//
+//BOOL ParseArgsService(int argc, _TCHAR* argv[], ServiceOptions * serviceOptions)
+//{
+//	if (!serviceOptions) return FALSE;
+//	serviceOptions->ulServiceMode = SERVICEMODE_DEFAULT;
+//	serviceOptions->bSetDefaultservice = false;
+//	serviceOptions->ulProfileMode = PROFILEMODE_DEFAULT;
+//
+//	for (int i = 1; i < argc; i++)
+//	{
+//		switch (argv[i][0])
+//		{
+//		case '-':
+//		case '/':
+//		case '\\':
+//			if (0 == argv[i][1])
+//			{
+//				return false;
+//			}
+//			switch (tolower(argv[i][1]))
+//			{
+//			case 's':
+//				if (tolower(argv[i][2]) == 'a')
+//				{
+//					if (tolower(argv[i][3]) == 'b')
+//					{
+//						if (tolower(argv[i][4]) == 'e')
+//						{
+//							if (i + 1 < argc)
+//							{
+//								// sabe		| wszAddressBookExternalUrl
+//								std::wstring wszAddressBookExternalUrl = argv[i + 1];
+//								std::transform(wszAddressBookExternalUrl.begin(), wszAddressBookExternalUrl.end(), wszAddressBookExternalUrl.begin(), ::tolower);
+//								serviceOptions->wszAddressBookExternalUrl = wszAddressBookExternalUrl;
+//								i++;
+//							}
+//							else return false;
+//						}
+//						else if (tolower(argv[i][4]) == 'i')
+//						{
+//							if (i + 1 < argc)
+//							{
+//								// sabi		| wszAddressBookExternalUrl
+//								std::wstring wszAddressBookInternalUrl = argv[i + 1];
+//								std::transform(wszAddressBookInternalUrl.begin(), wszAddressBookInternalUrl.end(), wszAddressBookInternalUrl.begin(), ::tolower);
+//								serviceOptions->wszAddressBookInternalUrl = wszAddressBookInternalUrl;
+//								i++;
+//							}
+//							else return false;
+//						}
+//						else return false;
+//					}
+//					else if (tolower(argv[i][3]) == 'u')
+//					{
+//						if (i + 1 < argc)
+//						{
+//							// sau		| wszAutodiscoverUrl
+//							std::wstring wszAutodiscoverUrl = argv[i + 1];
+//							std::transform(wszAutodiscoverUrl.begin(), wszAutodiscoverUrl.end(), wszAutodiscoverUrl.begin(), ::tolower);
+//							serviceOptions->wszAutodiscoverUrl = wszAutodiscoverUrl;
+//							i++;
+//						}
+//						else return false;
+//					}
+//					else return false;
+//				}
+//				else if (tolower(argv[i][2]) == 'c')
+//				{
+//					if (tolower(argv[i][3]) == 'f')
+//					{
+//						if (tolower(argv[i][4]) == 'g')
+//						{
+//							if (tolower(argv[i][5]) == 'f')
+//							{
+//								if (i + 1 < argc)
+//								{
+//									// scfgf	| ulConfigFlags
+//									serviceOptions->ulConfigFlags = _wtoi(argv[i + 1]);
+//									i++;
+//								}
+//								else return false;
+//							}
+//							else return false;
+//						}
+//						else return false;
+//					}
+//					else if (tolower(argv[i][3]) == 'm')
+//					{
+//						if (tolower(argv[i][4]) == 'm')
+//						{
+//							if (i + 1 < argc)
+//							{
+//								// scmm	| iCachedModeMonths
+//								serviceOptions->iCachedModeMonths = _wtoi(argv[i + 1]);
+//								i++;
+//							}
+//							else return false;
+//						}
+//						else if (tolower(argv[i][4]) == 'o')
+//						{
+//							if (i + 1 < argc)
+//							{
+//								// scmo	| ulCachedModeOwner
+//								serviceOptions->ulCachedModeOwner = _wtoi(argv[i + 1]);
+//								i++;
+//							}
+//							else return false;
+//						}
+//						else if (tolower(argv[i][4]) == 'p')
+//						{
+//							if (tolower(argv[i][5]) == 'f')
+//							{
+//								if (i + 1 < argc)
+//								{
+//									// scmpf	| ulCachedModePublicFolder
+//									serviceOptions->ulCachedModePublicFolder = _wtoi(argv[i + 1]);
+//									i++;
+//								}
+//								else return false;
+//							}
+//							else return false;
+//						}
+//						else if (tolower(argv[i][4]) == 's')
+//						{
+//							if (i + 1 < argc)
+//							{
+//								// scms	| ulCachedModeShared
+//								serviceOptions->ulCachedModeShared = _wtoi(argv[i + 1]);
+//								i++;
+//							}
+//							else return false;
+//						}
+//						else return false;
+//					}
+//					else if (tolower(argv[i][3]) == 'n')
+//					{
+//						if (tolower(argv[i][4]) == 'c')
+//						{
+//							if (tolower(argv[i][5]) == 't')
+//							{
+//								if (tolower(argv[i][6]) == 'm')
+//								{
+//									if (i + 1 < argc)
+//									{
+//										// scnctm	| ulConnectMode
+//										serviceOptions->ulConnectMode = _wtoi(argv[i + 1]);
+//										i++;
+//									}
+//									else return false;
+//								}
+//								else return false;
+//							}
+//							else return false;
+//						}
+//						else return false;
+//					}
+//					else return false;
+//				}
+//				else if (tolower(argv[i][2]) == 'd')
+//				{
+//					if (tolower(argv[i][3]) == 's')
+//					{
+//						// sds	| bDefaultservice;
+//						serviceOptions->ulServiceMode = SERVICEMODE_DEFAULT;
+//					}
+//				}
+//				else if (tolower(argv[i][2]) == 'i')
+//				{
+//					if (i + 1 < argc)
+//					{
+//						// si	| iServiceIndex
+//						serviceOptions->iServiceIndex = _wtoi(argv[i + 1]);
+//						i++;
+//					}
+//					else return false;
+//				}
+//				else if (tolower(argv[i][2]) == 'm')
+//				{
+//					if (tolower(argv[i][3]) == 'd')
+//					{
+//						if (tolower(argv[i][4]) == 'n')
+//						{
+//							if (i + 1 < argc)
+//							{
+//								// smdn		| wszMailboxDisplayName
+//								std::wstring wszMailboxDisplayName = argv[i + 1];
+//								std::transform(wszMailboxDisplayName.begin(), wszMailboxDisplayName.end(), wszMailboxDisplayName.begin(), ::tolower);
+//								serviceOptions->wszMailboxDisplayName = wszMailboxDisplayName;
+//								i++;
+//							}
+//							else return false;
+//						}
+//					}
+//					else if (tolower(argv[i][3]) == 'l')
+//					{
+//						if (tolower(argv[i][4]) == 'd')
+//						{
+//							if (tolower(argv[i][5]) == 'n')
+//							{
+//								if (i + 1 < argc)
+//								{
+//									// smldn		| wszMailboxLegacyDN
+//									std::wstring wszMailboxLegacyDN = argv[i + 1];
+//									std::transform(wszMailboxLegacyDN.begin(), wszMailboxLegacyDN.end(), wszMailboxLegacyDN.begin(), ::tolower);
+//									serviceOptions->wszMailboxLegacyDN = wszMailboxLegacyDN;
+//									i++;
+//								}
+//								else return false;
+//							}
+//						}
+//					}
+//					else if (tolower(argv[i][3]) == 's')
+//					{
+//						if (tolower(argv[i][4]) == 'e')
+//						{
+//							if (i + 1 < argc)
+//							{
+//								// smse	| wszMailStoreExternalUrl
+//								std::wstring wszMailStoreExternalUrl = argv[i + 1];
+//								std::transform(wszMailStoreExternalUrl.begin(), wszMailStoreExternalUrl.end(), wszMailStoreExternalUrl.begin(), ::tolower);
+//								serviceOptions->wszMailStoreExternalUrl = wszMailStoreExternalUrl;
+//								i++;
+//							}
+//							else return false;
+//						}
+//						else if (tolower(argv[i][4]) == 'i')
+//						{
+//							if (i + 1 < argc)
+//							{
+//								// smsi	| wszMailStoreExternalUrl
+//								std::wstring wszMailStoreInternalUrl = argv[i + 1];
+//								std::transform(wszMailStoreInternalUrl.begin(), wszMailStoreInternalUrl.end(), wszMailStoreInternalUrl.begin(), ::tolower);
+//								serviceOptions->wszMailStoreInternalUrl = wszMailStoreInternalUrl;
+//								i++;
+//							}
+//							else return false;
+//						}
+//					}
+//				}
+//				else if (tolower(argv[i][2]) == 'p')
+//				{
+//					if (tolower(argv[i][3]) == 'm')
+//					{
+//						// spm		| ulProfileMode
+//						if (i + 1 < argc)
+//						{
+//							std::wstring profileMode = argv[i + 1];
+//							std::transform(profileMode.begin(), profileMode.end(), profileMode.begin(), ::tolower);
+//							if (profileMode == L"all")
+//							{
+//								serviceOptions->ulProfileMode = (ULONG)PROFILEMODE_ALL;
+//								i++;
+//							}
+//							else if (profileMode == L"one")
+//							{
+//								serviceOptions->ulProfileMode = (ULONG)PROFILEMODE_ONE;
+//								i++;
+//							}
+//							else if (profileMode == L"default")
+//							{
+//								serviceOptions->ulProfileMode = (ULONG)PROFILEMODE_DEFAULT;
+//								i++;
+//							}
+//							else return false;
+//						}
+//						else return false;
+//					}
+//					else if (tolower(argv[i][3]) == 'n')
+//					{
+//						if (i + 1 < argc)
+//						{
+//							// spn		| wszProfileName
+//							std::wstring wszProfileName = argv[i + 1];
+//							std::transform(wszProfileName.begin(), wszProfileName.end(), wszProfileName.begin(), ::tolower);
+//							serviceOptions->wszProfileName = wszProfileName;
+//							serviceOptions->ulProfileMode = PROFILEMODE_ONE;
+//							i++;
+//						}
+//						else return false;
+//					}
+//				}
+//				else if (tolower(argv[i][2]) == 'r')
+//				{
+//					if (tolower(argv[i][3]) == 'f')
+//					{
+//						// srf		| ulResourceFlags
+//						if (i + 1 < argc)
+//						{
+//							// si	| iServiceIndex
+//							serviceOptions->iServiceIndex = _wtoi(argv[i + 1]);
+//							i++;
+//						}
+//						else return false;
+//					}
+//					else if (tolower(argv[i][3]) == 'p')
+//					{
+//						if (tolower(argv[i][4]) == 's')
+//						{
+//
+//							if (i + 1 < argc)
+//							{
+//								// srps		| wszRohProxyServer
+//								std::wstring wszRohProxyServer = argv[i + 1];
+//								std::transform(wszRohProxyServer.begin(), wszRohProxyServer.end(), wszRohProxyServer.begin(), ::tolower);
+//								serviceOptions->wszRohProxyServer = wszRohProxyServer;
+//								i++;
+//							}
+//							else return false;
+//						}
+//						else return false;
+//					}
+//					else return false;
+//				}
+//				else if (tolower(argv[i][2]) == 's')
+//				{
+//					if (tolower(argv[i][3]) == 'a')
+//					{
+//						if (i + 1 < argc)
+//						{
+//							// ssa	| wszSmtpAddress
+//							std::wstring wszSmtpAddress = argv[i + 1];
+//							std::transform(wszSmtpAddress.begin(), wszSmtpAddress.end(), wszSmtpAddress.begin(), ::tolower);
+//							serviceOptions->wszSmtpAddress = wszSmtpAddress;
+//							i++;
+//						}
+//						else return false;
+//					}
+//					else if (tolower(argv[i][3]) == 'd')
+//					{
+//						if (tolower(argv[i][4]) == 'n')
+//						{
+//							if (i + 1 < argc)
+//							{
+//								// ssdn	| wszServerDisplayName
+//								std::wstring wszServerDisplayName = argv[i + 1];
+//								std::transform(wszServerDisplayName.begin(), wszServerDisplayName.end(), wszServerDisplayName.begin(), ::tolower);
+//								serviceOptions->wszServerDisplayName = wszServerDisplayName;
+//								i++;
+//							}
+//							else return false;
+//						}
+//						else if (tolower(argv[i][4]) == 's')
+//						{
+//							// ssds	| bSetDefaultservice
+//							serviceOptions->bSetDefaultservice = true;
+//						}
+//						else return false;
+//					}
+//					else if (tolower(argv[i][3]) == 'l')
+//					{
+//						if (tolower(argv[i][4]) == 'd')
+//						{
+//							if (tolower(argv[i][5]) == 'n')
+//							{
+//								if (i + 1 < argc)
+//								{
+//									// ssldn	| wszServerLegacyDN
+//									std::wstring wszServerLegacyDN = argv[i + 1];
+//									std::transform(wszServerLegacyDN.begin(), wszServerLegacyDN.end(), wszServerLegacyDN.begin(), ::tolower);
+//									serviceOptions->wszServerLegacyDN = wszServerLegacyDN;
+//									i++;
+//								}
+//								else return false;
+//							}
+//							else return false;
+//						}
+//						else return false;
+//					}
+//				}
+//				else if (tolower(argv[i][2]) == 'u')
+//				{
+//					if (tolower(argv[i][3]) == 's')
+//					{
+//
+//						if (i + 1 < argc)
+//						{
+//							// sus	| wszUnresolvedServer
+//							std::wstring wszUnresolvedServer = argv[i + 1];
+//							std::transform(wszUnresolvedServer.begin(), wszUnresolvedServer.end(), wszUnresolvedServer.begin(), ::tolower);
+//							serviceOptions->wszUnresolvedServer = wszUnresolvedServer;
+//							i++;
+//						}
+//						else return false;
+//					}
+//					else if (tolower(argv[i][3]) == 'u')
+//					{
+//						if (i + 1 < argc)
+//						{
+//							// suu	| wszUnresolvedUser
+//							std::wstring wszUnresolvedUser = argv[i + 1];
+//							std::transform(wszUnresolvedUser.begin(), wszUnresolvedUser.end(), wszUnresolvedUser.begin(), ::tolower);
+//							serviceOptions->wszUnresolvedUser = wszUnresolvedUser;
+//							i++;
+//						}
+//						else return false;
+//					}
+//					else return false;
+//				}
+//				else return false;
+//				break;
+//			}
+//			break;
+//		}
+//	}
+//	return true;
+//}
+//
+//BOOL ParseArgsMailbox(int argc, _TCHAR* argv[], MailboxOptions * mailboxOptions)
+//{
+//	if (!mailboxOptions) return FALSE;
+//
+//	mailboxOptions->bDefaultService = false;
+//
+//	for (int i = 1; i < argc; i++)
+//	{
+//		switch (argv[i][0])
+//		{
+//		case '-':
+//		case '/':
+//		case '\\':
+//			if (0 == argv[i][1])
+//			{
+//				return false;
+//			}
+//			switch (tolower(argv[i][1]))
+//			{
+//			case 'm':
+//				if (tolower(argv[i][2]) == 'd')
+//				{
+//					if (tolower(argv[i][3]) == 's')
+//					{
+//						// mds		| bDefaultService
+//						mailboxOptions->bDefaultService = true;
+//					}
+//				}
+//				else if (tolower(argv[i][2]) == 'm')
+//				{
+//					if (tolower(argv[i][3]) == 'd')
+//					{
+//						if (tolower(argv[i][4]) == 'n')
+//						{
+//							if (i + 1 < argc)
+//							{
+//								// mmdn		| wszMailboxDisplayName
+//								std::wstring wszMailboxDisplayName = argv[i + 1];
+//								std::transform(wszMailboxDisplayName.begin(), wszMailboxDisplayName.end(), wszMailboxDisplayName.begin(), ::tolower);
+//								mailboxOptions->wszMailboxDisplayName = wszMailboxDisplayName;
+//								i++;
+//							}
+//						}
+//					}
+//					if (tolower(argv[i][3]) == 'l')
+//					{
+//						if (tolower(argv[i][4]) == 'd')
+//						{
+//							if (tolower(argv[i][5]) == 'n')
+//							{
+//								if (i + 1 < argc)
+//								{
+//									// mmldn		| wszMailboxLegacyDN
+//									std::wstring wszMailboxLegacyDN = argv[i + 1];
+//									std::transform(wszMailboxLegacyDN.begin(), wszMailboxLegacyDN.end(), wszMailboxLegacyDN.begin(), ::tolower);
+//									mailboxOptions->wszMailboxLegacyDN = wszMailboxLegacyDN;
+//									i++;
+//								}
+//							}
+//						}
+//					}
+//				}
+//				else if (tolower(argv[i][2]) == 'p')
+//				{
+//					if (tolower(argv[i][3]) == 'n')
+//					{
+//						if (i + 1 < argc)
+//						{
+//							// mpn		| wszProfileName
+//							std::wstring wszProfileName = argv[i + 1];
+//							std::transform(wszProfileName.begin(), wszProfileName.end(), wszProfileName.begin(), ::tolower);
+//							mailboxOptions->wszProfileName = wszProfileName;
+//							i++;
+//						}
+//					}
+//					else if (tolower(argv[i][3]) == 'm')
+//					{
+//						if (i + 1 < argc)
+//						{
+//							// mpm		| ulProfileMode
+//							std::wstring profileMode = argv[i + 1];
+//							std::transform(profileMode.begin(), profileMode.end(), profileMode.begin(), ::tolower);
+//							if (profileMode == L"all")
+//							{
+//								mailboxOptions->ulProfileMode = (ULONG)PROFILEMODE_ALL;
+//								i++;
+//							}
+//							else if (profileMode == L"one")
+//							{
+//								mailboxOptions->ulProfileMode = (ULONG)PROFILEMODE_ONE;
+//								i++;
+//							}
+//							else if (profileMode == L"default")
+//							{
+//								mailboxOptions->ulProfileMode = (ULONG)PROFILEMODE_DEFAULT;
+//								i++;
+//							}
+//							else return false;
+//						}
+//					}
+//					else return false;
+//				}
+//				else if (tolower(argv[i][2]) == 's')
+//				{
+//					if (tolower(argv[i][3]) == 'a')
+//					{
+//						if (i + 1 < argc)
+//						{
+//							// msa		| wszSmtpAddress
+//							std::wstring wszSmtpAddress = argv[i + 1];
+//							std::transform(wszSmtpAddress.begin(), wszSmtpAddress.end(), wszSmtpAddress.begin(), ::tolower);
+//							mailboxOptions->wszSmtpAddress = wszSmtpAddress;
+//							i++;
+//						}
+//					}
+//					else if (tolower(argv[i][3]) == 'd')
+//					{
+//						if (tolower(argv[i][4]) == 'n')
+//						{
+//							if (i + 1 < argc)
+//							{
+//								// msdn		| wszServerDisplayName
+//								std::wstring wszServerDisplayName = argv[i + 1];
+//								std::transform(wszServerDisplayName.begin(), wszServerDisplayName.end(), wszServerDisplayName.begin(), ::tolower);
+//								mailboxOptions->wszServerDisplayName = wszServerDisplayName;
+//								i++;
+//							}
+//						}
+//					}
+//					if (tolower(argv[i][3]) == 'i')
+//					{
+//						if (i + 1 < argc)
+//						{
+//							// msi	| ulServiceIndex
+//							mailboxOptions->ulServiceIndex = _wtoi(argv[i + 1]);;
+//							i++;
+//						}
+//					}
+//					if (tolower(argv[i][3]) == 'l')
+//					{
+//						if (tolower(argv[i][4]) == 'd')
+//						{
+//							if (tolower(argv[i][5]) == 'n')
+//							{
+//								if (i + 1 < argc)
+//								{
+//									// msldn	| wszServerLegacyDN
+//									std::wstring wszServerLegacyDN = argv[i + 1];
+//									std::transform(wszServerLegacyDN.begin(), wszServerLegacyDN.end(), wszServerLegacyDN.begin(), ::tolower);
+//									mailboxOptions->wszServerLegacyDN = wszServerLegacyDN;
+//									i++;
+//								}
+//							}
+//						}
+//					}
+//				}
+//				else return false;
+//				break;
+//			}
+//			break;
+//		}
+//
+//	}
+//	return true;
+//}
+//
 
 void DisplayUsage()
 {
@@ -1356,33 +1430,51 @@ void DisplayUsage()
 	printf("       [-si serviceIndex] [-cmo <enable, disable>] [-cms <enable, disable>] \n");
 	printf("       [-cmp <enable, disable>]	[-cmm <0, 1, 3, 6, 12, 24>] [-ep exportpath]\n");
 	printf("\n");
+	printf("Usage: ProfileToolkit [-?] [-profile <all, one, default>] [-profilename profilename] \n");
+	printf("       [-si serviceIndex] [-cmo <enable, disable>] [-cms <enable, disable>] \n");
+	printf("       [-cmp <enable, disable>]	[-cmm <0, 1, 3, 6, 12, 24>] [-ep exportpath]\n");
+	printf("       [-addressbook <create, update, listall, listone>] [-addressbookdisplayname <displayname>] \n");
+	printf("       [-addressbookservername <servername>] [-addressbookconfigfilepath <configfilepath>] \n");
+	printf("\n");
 	printf("Options:\n");
-	printf("       -pm:    \"all\" to process all profiles.\n");
-	printf("               \"default\" to process the default profile.\n");
-	printf("               \"one\" to process a specific profile. Prifile Name needs to be \n");
-	printf("               specified using -pn.\n");
-	printf("               Default profile will be used if -pm is not used.\n");
-	printf("       -pn:    Name of the profile to process.\n");
-	printf("               Default profile will be used if -pn is not used.\n");
+	printf("    -profile:                  \"all\" to process all profiles.\n");
+	printf("							   \"default\" to process the default profile.\n");
+	printf("                               \"one\" to process a specific profile. Prifile Name needs to be \n");
+	printf("                               specified using -pn.\n");
+	printf("                               Default profile will be used if -pm is not used.\n");
+	printf("   -profilename:               Name of the profile to process.\n");
+	printf("                               Default profile will be used if -pn is not used.\n");
 	printf("\n");
-	printf("       -si:    Index of the account to process from previous export.\n");
-	printf("       	       Must be used in conjunction with -pm one -pn profile or -pm default.\n");
+	printf("   -addressbook:               \"create\" to create a new address book service.\n");
+	printf("                               \"update\" to update an existing address book service. The display name.\n");
+	printf("                               of the address book to update needs to be specified using -addressbookdisplayname.\n");
+	printf("                               \"listall\" Tto list all address book services in the profile. \n");
+	printf("                               \"listone\" to list an existing address book service. The display name.\n");
+	printf("                               of the address book to list needs to be specified using -addressbookdisplayname.\n");
+	printf("   -addressbookdisplayname:    The display name of the address book to create, update or list.\n");
+	printf("   -addressbookservername:     The display name of the LDAP server configure in the address book.\n");
+	printf("   -addressbookconfigfilepath: The display name of the LDAP server configure in the address book.\n");
+	printf("   -profilename:               Name of the profile to process.\n");
+	printf("                               Default profile will be used if -pn is not used.\n");
 	printf("\n");
-	printf("       -cmo:   \"enable\" or \"disable\" for enabling or disabling cached Exchange \n");
-	printf("               mode on the owner's mailbox.\n");
-	printf("       	       Must be used in conjunction with -pm one -pn profile and -si index.\n");
-	printf("       -cms:   \"enable\" or \"disable\" for enabling or disabling cached Exchange \n");
-	printf("               mode on shared folders (delegate).\n");
-	printf("       	       Must be used in conjunction with -pm one -pn profile and -si index.\n");
-	printf("       -cmp:   \"enable\" or \"disable\" for enabling or disabling cached Exchange \n");
-	printf("               mode on public folders favorites.\n");
-	printf("       	       Must be used in conjunction with -pm one -pn profile and -si index.\n");
-	printf("       -cmm:   0 for all or 1, 3, 6, 12 or 24 for the same number of months to sync\n");
-	printf("       	       Must be used in conjunction with -pm one -pn profile, -si index and.\n");
-	printf("       	       -cmo enable.\n");
-	printf("\n");
-	printf("       -ep:    exportPath for exporting settings to disk.\n");
-	printf("\n");
+	//printf("       -si:    Index of the account to process from previous export.\n");
+	//printf("       	       Must be used in conjunction with -pm one -pn profile or -pm default.\n");
+	//printf("\n");
+	//printf("       -cmo:   \"enable\" or \"disable\" for enabling or disabling cached Exchange \n");
+	//printf("               mode on the owner's mailbox.\n");
+	//printf("       	       Must be used in conjunction with -pm one -pn profile and -si index.\n");
+	//printf("       -cms:   \"enable\" or \"disable\" for enabling or disabling cached Exchange \n");
+	//printf("               mode on shared folders (delegate).\n");
+	//printf("       	       Must be used in conjunction with -pm one -pn profile and -si index.\n");
+	//printf("       -cmp:   \"enable\" or \"disable\" for enabling or disabling cached Exchange \n");
+	//printf("               mode on public folders favorites.\n");
+	//printf("       	       Must be used in conjunction with -pm one -pn profile and -si index.\n");
+	//printf("       -cmm:   0 for all or 1, 3, 6, 12 or 24 for the same number of months to sync\n");
+	//printf("       	       Must be used in conjunction with -pm one -pn profile, -si index and.\n");
+	//printf("       	       -cmo enable.\n");
+	//printf("\n");
+	//printf("       -ep:    exportPath for exporting settings to disk.\n");
+	//printf("\n");
 	printf("       -?      Displays this usage information.\n");
 }
 
@@ -1407,6 +1499,18 @@ void _tmain(int argc, _TCHAR* argv[])
 			DisplayUsage();
 		}
 		return;
+	}
+	else
+	{
+		if (!tkOptions->addressBookOptions->szConfigFilePath.empty())
+		{
+			// If a path was specified 
+			if (!PathFileExists(LPCWSTR(tkOptions->addressBookOptions->szConfigFilePath.c_str())))
+			{
+				printf("WARNING: The specified file \"%s\" does not exsits.\n", LPTSTR(tkOptions->addressBookOptions->szConfigFilePath.c_str()));
+				return;
+			}
+		}
 	}
 	Logger::SetLoggingMode((LoggingMode)tkOptions->ulLoggingMode);
 
@@ -1546,6 +1650,67 @@ void _tmain(int argc, _TCHAR* argv[])
 			break;
 		};
 
+
+		// SOME LDAP AB LOGIC
+
+			LPPROFADMIN lpProfAdmin = NULL;		// profile administration object pointer
+			LPSERVICEADMIN lpSvcAdmin = NULL;	// service administration object pointer
+			MAPIUID mapiUid = { 0 };			// MAPIUID structure
+			LPMAPIUID lpMapiUid = &mapiUid;		// pointer to a MAPIUID structure
+			BOOL fValidPath = false;
+			BOOL fServiceExists = false;
+			// Create a new ABProvider instance and set the service name to EMABLT (Address Book service)
+			ABProvider pABProvider = { 0 };
+			pABProvider.lpszServiceName = L"EMABLT";
+
+			// Make sure the file path is valid and parse the XML to populate the ABProvider parameters
+			if (!tkOptions->addressBookOptions->szConfigFilePath.empty())
+			{
+				fValidPath = true;
+				EC_HRES_MSG(ParseConfigXml(LPTSTR(tkOptions->addressBookOptions->szConfigFilePath.c_str()), &pABProvider), L"Parsing AB config file");
+			}
+
+			// If we're processing the default profile then fetch the name of it and populate that in the runtime options.
+			if (tkOptions->addressBookOptions->ulProfileMode == PROFILEMODE_DEFAULT)
+			{
+				tkOptions->addressBookOptions->szProfileName = GetDefaultProfileName();
+				if (tkOptions->addressBookOptions->szProfileName.empty())
+				{
+					printf("ERROR: No default profile found, please specify a valid profile name.");
+					return;
+				}
+
+			}
+
+			// Create a profile administration object.
+			EC_HRES_MSG(MAPIAdminProfiles(0,		// Bitmask of flags indicating options for the service entry function. 
+				&lpProfAdmin), L"Getting a profile admin interface pointer");					// Pointer to a pointer to the new profile administration object.
+			printf("Retrieved IProfAdmin interface pointer.\n");
+
+			// Get access to a message service administration object for making changes to the message services in a profile. 
+			EC_HRES_MSG(lpProfAdmin->AdminServices(LPTSTR(tkOptions->addressBookOptions->szProfileName.c_str()),	// A pointer to the name of the profile to be modified. The lpszProfileName parameter must not be NULL.
+				NULL,																			// Always NULL. 
+				NULL,																			// A handle of the parent window for any dialog boxes or windows that this method displays.
+				0,																				// A bitmask of flags that controls the retrieval of the message service administration object. The following flags can be set:
+				&lpSvcAdmin), L"Getting a service admin interface pointer");																	// A pointer to a pointer to a message service administration object.
+			printf("Retrieved IMsgServiceAdmin interface pointer.\n");
+
+		switch (tkOptions->addressBookOptions->ulRunningMode)
+		{
+		case ADDRESSBOOK_CREATE:
+
+			break;
+		case ADDRESSBOOK_UPDATE:
+			break;
+		case ADDRESSBOOK_LIST_ALL:
+				printf("Running in List mode.\n");
+				// Calling ListAllABServices to list all the existing Ldap AB Servies in the selected profile
+				EC_HRES(ListAllABServices(lpSvcAdmin));
+				break;
+			break;
+		case ADDRESSBOOK_LIST_ONE:
+			break;
+		}
 		//switch (tkOptions->ulScenario)
 		//{
 		//case SCENARIO_PROFILE:

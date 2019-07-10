@@ -1,3 +1,4 @@
+#pragma comment (lib, "Crypt32.lib")
 #include "Profile.h"
 
 LPWSTR GetDefaultProfileNameLP()
@@ -1475,5 +1476,608 @@ Cleanup:
 		MAPIFreeBuffer(lpProps);
 		lpProps = nullptr;
 	}
+	return hRes;
+}
+
+
+HRESULT ListAllABServices(LPSERVICEADMIN lpSvcAdmin)
+{
+	HRESULT hRes = S_OK;
+	LPMAPITABLE		lpMsgSvcTable = NULL; // MAPI table pointer.
+	LPSRowSet		lpSvcRows = NULL;
+	LPSRestriction	lpRes = NULL;
+	LPSPropValue	lpspvSvcName = NULL;
+
+	enum { iServiceUid, iDisplayName, iAbServerName, iAbServerPort, iAbUsername, iAbSearchBase, iAbSearchTimeout, iAbMaxEntries, iAbUseSSL, iAbRequireSpa, AbEnableBrowsing, iAbDefaultSearchBase, cptaProps };
+	SizedSPropTagArray(cptaProps, sptaProps) = { cptaProps, PR_SERVICE_UID, PR_DISPLAY_NAME, PROP_AB_PROVIDER_SERVER_NAME, PROP_AB_PROVIDER_SERVER_PORT,
+		PROP_AB_PROVIDER_USER_NAME, PROP_AB_PROVIDER_SEARCH_BASE, PROP_AB_PROVIDER_SEARCH_TIMEOUT, PROP_AB_PROVIDER_MAX_ENTRIES, PROP_AB_PROVIDER_USE_SSL,
+		PROP_AB_PROVIDER_SERVER_SPA, PROP_AB_PROVIDER_ENABLE_BROWSING, PROP_AB_PROVIDER_SEARCH_BASE_DEFAULT };
+
+	// Get access to the message service table, a list of the message services in the profile.
+	EC_HRES(lpSvcAdmin->GetMsgServiceTable(0, // Flags        
+		&lpMsgSvcTable)); // Pointer to table
+	printf("Retrieved message service table from profile.\n");
+
+	// Set up restriction to query table.
+	// Allocate and create the SRestriction
+	// Allocate base memory:
+	EC_HRES(MAPIAllocateBuffer(
+		sizeof(SRestriction),
+		(LPVOID*)& lpRes));
+
+	EC_HRES(MAPIAllocateMore(
+		sizeof(SPropValue),
+		lpRes,
+		(LPVOID*)& lpspvSvcName));
+
+	ZeroMemory(lpRes, sizeof(SRestriction));
+	ZeroMemory(lpspvSvcName, sizeof(SPropValue));
+
+	lpRes->rt = RES_CONTENT;
+	lpRes->res.resContent.ulFuzzyLevel = FL_FULLSTRING;
+	lpRes->res.resContent.ulPropTag = PR_SERVICE_NAME;
+	lpRes->res.resContent.lpProp = lpspvSvcName;
+	lpspvSvcName->ulPropTag = PR_SERVICE_NAME;
+	lpspvSvcName->Value.lpszA = "EMABLT";
+
+	printf("Set up restriction for searching Ldap AB services.\n");
+
+	// Query the table to get the entry for EMABLT type services.
+	EC_HRES(HrQueryAllRows(lpMsgSvcTable,
+		(LPSPropTagArray)& sptaProps,
+		lpRes,
+		NULL,
+		0,
+		&lpSvcRows));
+	printf("Queried service table for Ldap AB services.\n");
+
+	if (lpSvcRows->cRows > 0)
+	{
+		for (unsigned int i = 0; i < lpSvcRows->cRows; i++)
+		{
+			LPPROFSECT lpProfSect = NULL;			LPMAPIPROP lpMapiProp = NULL;
+			EC_HRES(lpSvcAdmin->OpenProfileSection(LPMAPIUID(lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb), NULL, MAPI_MODIFY | MAPI_FORCE_ACCESS, &lpProfSect));
+			ULONG ulPropVal = 0;
+			LPSPropValue lpsPropValues = NULL;
+			EC_HRES(lpProfSect->GetProps((LPSPropTagArray)& sptaProps, NULL, &ulPropVal, &lpsPropValues));
+			if (lpsPropValues)
+			{
+				printf("Listing entry #%i:\n", i);
+				printf("  Display Name        : %s\n", lpsPropValues[iDisplayName].Value.lpszA);
+				printf("  Ldap Server Name    : %s\n", lpsPropValues[iAbServerName].Value.lpszA);
+				printf("  Ldap Server Port    : %s\n", lpsPropValues[iAbServerPort].Value.lpszA);
+				printf("  Username            : %s\n", lpsPropValues[iAbUsername].Value.lpszA);
+				printf("  Search Base         : %s\n", lpsPropValues[iAbSearchBase].Value.lpszA);
+				printf("  Search Timeout      : %s\n", lpsPropValues[iAbSearchTimeout].Value.lpszA);
+				printf("  Maximum entries     : %s\n", lpsPropValues[iAbMaxEntries].Value.lpszA);
+				if (lpsPropValues[iAbUseSSL].Value.b)
+					printf("  Use SSL             : %s", "true\n");
+				else
+					printf("  Use SSL             : %s", "false\n");
+				if (lpsPropValues[iAbRequireSpa].Value.b)
+					printf("  Use SSL             : %s", "true\n");
+				else
+					printf("  Use SSL             : %s", "false\n");
+				if (lpsPropValues[AbEnableBrowsing].Value.b)
+					printf("  Use SSL             : %s", "true\n");
+				else
+					printf("  Use SSL             : %s", "false\n");
+				if (lpsPropValues[iAbDefaultSearchBase].Value.i == 1)
+					printf("  Use SSL             : %s", "true\n");
+				else
+					printf("  Use SSL             : %s", "false\n");
+			}
+			else
+				printf("Unable to retrieve Ldap AB properties.\n");
+		}
+	}
+	else
+		printf("No Ldap AB services found.\n");
+
+Error:
+	MAPIFreeBuffer(lpspvSvcName);
+	MAPIFreeBuffer(lpRes);
+	if (lpSvcRows) FreeProws(lpSvcRows);
+	if (lpMsgSvcTable) lpMsgSvcTable->Release();
+	return hRes;
+}
+
+// CreateABService
+// Creates a new EMABLT service and populates the parameters
+HRESULT CreateABService(LPSERVICEADMIN lpSvcAdmin, ABProvider* pABProvider)
+{
+	HRESULT				hRes = S_OK;
+	LPSERVICEADMIN2		lpSvcAdmin2 = NULL;		// Message Service Admin V2 pointer.
+	LPMAPITABLE			lpMsgSvcTable = NULL;		// MAPI table pointer.
+	LPSRowSet			lpSvcRows = NULL;		// Row set pointer.
+	SPropValue			rgval[12];						// Property value structure to hold configuration info.
+	DATA_BLOB			dataBlobIn = { 0 };
+	DATA_BLOB			dataBlobOut = { 0 };
+	MAPIUID				uidService = { 0 };
+	LPMAPIUID			lpuidService = &uidService;
+
+
+	printf("Attempting ot obtain an IMsgServiceAdmin2 interface pointer...");
+	// Retrieves pointers to the supported interfaces on an object.
+	hRes = lpSvcAdmin->QueryInterface(IID_IMsgServiceAdmin2, (LPVOID*)& lpSvcAdmin2);
+	if (SUCCEEDED(hRes))
+		printf("DONE\n");
+	else
+	{
+		printf("FAILED\n");
+		EC_HRES(hRes);
+	}
+	printf("Attempting to Create AB service...");
+	// Adds a message service to the current profile and returns that newly added service UID.
+	hRes = lpSvcAdmin2->CreateMsgServiceEx(pABProvider->lpszServiceName, pABProvider->lpszDisplayName, NULL, 0, &uidService);
+	if (SUCCEEDED(hRes))
+		printf("DONE\n");
+	else
+	{
+		printf("FAILED\n");
+		EC_HRES(hRes);
+	}
+
+	// Set up the new props
+	ZeroMemory(&rgval[0], sizeof(SPropValue));
+	rgval[0].ulPropTag = PROP_AB_PROVIDER_DISPLAY_NAME;
+	rgval[0].Value.lpszA = ConvertWideCharToMultiByte( pABProvider->lpszDisplayName);
+
+	ZeroMemory(&rgval[1], sizeof(SPropValue));
+	rgval[1].ulPropTag = PROP_AB_PROVIDER_SERVER_NAME;
+	rgval[1].Value.lpszA = ConvertWideCharToMultiByte(pABProvider->lpszServerName);
+
+	ZeroMemory(&rgval[2], sizeof(SPropValue));
+	rgval[2].ulPropTag = PROP_AB_PROVIDER_SERVER_PORT;
+	rgval[2].Value.lpszA = ConvertWideCharToMultiByte(pABProvider->lpszServerPort);
+
+	ZeroMemory(&rgval[3], sizeof(SPropValue));
+	rgval[3].ulPropTag = PROP_AB_PROVIDER_USER_NAME;
+	rgval[3].Value.lpszA = ConvertWideCharToMultiByte(pABProvider->lpszUsername);
+
+	ZeroMemory(&rgval[4], sizeof(SPropValue));
+	rgval[4].ulPropTag = PROP_AB_PROVIDER_SEARCH_BASE;
+	rgval[4].Value.lpszA = ConvertWideCharToMultiByte(pABProvider->lpszCustomSearchBase);
+
+	ZeroMemory(&rgval[5], sizeof(SPropValue));
+	rgval[5].ulPropTag = PROP_AB_PROVIDER_SEARCH_TIMEOUT;
+	rgval[5].Value.lpszA = ConvertWideCharToMultiByte(pABProvider->lpszTimeout);
+
+	ZeroMemory(&rgval[6], sizeof(SPropValue));
+	rgval[6].ulPropTag = PROP_AB_PROVIDER_MAX_ENTRIES;
+	rgval[6].Value.lpszA = ConvertWideCharToMultiByte(pABProvider->lpszMaxResults);
+
+	ZeroMemory(&rgval[7], sizeof(SPropValue));
+	rgval[7].ulPropTag = PROP_AB_PROVIDER_USE_SSL;
+	rgval[7].Value.b = pABProvider->bUseSSL;
+
+	ZeroMemory(&rgval[8], sizeof(SPropValue));
+	rgval[8].ulPropTag = PROP_AB_PROVIDER_SERVER_SPA;
+	rgval[8].Value.b = pABProvider->bRequireSPA;
+
+	LPWSTR lpszwPassword = pABProvider->lpszPassword;
+	// Encrypt the password if supplied
+	if (0 < wcslen(lpszwPassword))
+	{
+		LPBYTE pbData = (LPBYTE)lpszwPassword;
+		DWORD cbData = (wcslen(lpszwPassword) + 1) * sizeof(WCHAR);
+
+		dataBlobIn.pbData = pbData;
+		dataBlobIn.cbData = cbData;
+
+		if (!CryptProtectData(
+			&dataBlobIn,
+			L"",						// desc
+			NULL,						// optional
+			NULL,						// reserver
+			NULL,						// prompt struct
+			0,							// flags
+			&dataBlobOut))
+		{
+			printf("CryptProtectData failed!\n");
+			hRes = E_FAIL;
+			goto Error;
+		}
+	}
+
+	ZeroMemory(&rgval[9], sizeof(SPropValue));
+	rgval[9].ulPropTag = PROP_AB_PROVIDER_USER_PASSWORD_ENCODED;
+	rgval[9].Value.bin.cb = dataBlobOut.cbData;
+	rgval[9].Value.bin.lpb = dataBlobOut.pbData;
+
+	ZeroMemory(&rgval[10], sizeof(SPropValue));
+	rgval[10].ulPropTag = PROP_AB_PROVIDER_ENABLE_BROWSING;
+	rgval[10].Value.b = pABProvider->bEnableBrowsing;
+
+	ZeroMemory(&rgval[11], sizeof(SPropValue));
+	rgval[11].ulPropTag = PROP_AB_PROVIDER_SEARCH_BASE_DEFAULT;
+	rgval[11].Value.ul = pABProvider->ulDefaultSearchBase;
+
+	printf("Attempting to Configure AB service...");
+
+	// Reconfigures a message service with the new props.
+	hRes = lpSvcAdmin2->ConfigureMsgService(lpuidService, NULL, 0, 12, rgval);
+	if (SUCCEEDED(hRes))
+		printf("DONE\n");
+	else
+	{
+		printf("FAILED\n");
+		EC_HRES(hRes);
+	}
+Error:
+	return hRes;
+}
+
+// CheckABServiceExists
+// Searches for an AB service with a given Display name and returns a service UID
+HRESULT CheckABServiceExists(LPSERVICEADMIN lpSvcAdmin, LPTSTR lppszDisplayName, LPMAPIUID lpMapiUid, BOOL* success)
+{
+	HRESULT hRes = S_OK;
+	LPMAPITABLE		lpMsgSvcTable = NULL; // MAPI table pointer.
+	LPSRowSet		lpSvcRows = NULL;
+	LPSRestriction	lpRes = NULL;
+	LPSRestriction	lpResLevel1 = NULL;
+	LPSPropValue	lpspvSvcName = NULL;
+	LPSPropValue	lpspvDispName = NULL;
+
+	enum { iServiceUid, cptaProps };
+	SizedSPropTagArray(cptaProps, sptaProps) = { cptaProps, PR_SERVICE_UID };
+
+	// Provides access to the message service table, a list of the message services in the profile.
+	EC_HRES(lpSvcAdmin->GetMsgServiceTable(0, // Flags        
+		&lpMsgSvcTable)); // Pointer to table
+	printf("Retrieved message service table from profile.\n");
+
+	// Set up restriction to query table.
+	// Allocate and create our SRestriction
+	// Allocate base memory:
+	EC_HRES(MAPIAllocateBuffer(
+		sizeof(SRestriction),
+		(LPVOID*)& lpRes));
+
+	EC_HRES(MAPIAllocateMore(
+		sizeof(SRestriction) * 2,
+		lpRes,
+		(LPVOID*)& lpResLevel1));
+
+	EC_HRES(MAPIAllocateMore(
+		sizeof(SPropValue),
+		lpRes,
+		(LPVOID*)& lpspvSvcName));
+
+	EC_HRES(MAPIAllocateMore(
+		sizeof(SPropValue),
+		lpRes,
+		(LPVOID*)& lpspvDispName));
+
+	ZeroMemory(lpRes, sizeof(SRestriction));
+	ZeroMemory(lpResLevel1, sizeof(SRestriction) * 2);
+
+	ZeroMemory(lpspvSvcName, sizeof(SPropValue));
+	ZeroMemory(lpspvDispName, sizeof(SPropValue));
+
+	lpRes->rt = RES_AND;
+	lpRes->res.resAnd.cRes = 2;
+	lpRes->res.resAnd.lpRes = lpResLevel1;
+
+	//Get the services matching the EMABLT service Name
+	lpResLevel1[0].rt = RES_CONTENT;
+	lpResLevel1[0].res.resContent.ulFuzzyLevel = FL_FULLSTRING;
+	lpResLevel1[0].res.resContent.ulPropTag = PR_SERVICE_NAME;
+	lpResLevel1[0].res.resContent.lpProp = lpspvSvcName;
+	lpspvSvcName->ulPropTag = PR_SERVICE_NAME;
+	lpspvSvcName->Value.lpszA = "EMABLT";
+	//Get the services matching the supplied display Name
+	lpResLevel1[1].rt = RES_CONTENT;
+	lpResLevel1[1].res.resContent.ulFuzzyLevel = FL_FULLSTRING;
+	lpResLevel1[1].res.resContent.ulPropTag = PR_DISPLAY_NAME;
+	lpResLevel1[1].res.resContent.lpProp = lpspvDispName;
+	lpspvDispName->ulPropTag = PR_DISPLAY_NAME;
+	lpspvDispName->Value.lpszA = ConvertWideCharToMultiByte(lppszDisplayName);
+	printf("Set up restriction for searching Ldap AB service.\n");
+
+	// Query the table to get the entry for the EMABLT service.
+	EC_HRES(HrQueryAllRows(lpMsgSvcTable,
+		(LPSPropTagArray)& sptaProps,
+		lpRes,
+		NULL,
+		0,
+		&lpSvcRows));
+	printf("Queried service table for Ldap AB service.\n");
+
+	if (lpSvcRows->cRows > 0)
+	{
+		if (lpSvcRows->cRows = 1)
+		{
+			// 1 row expected
+			printf("Found one entry.\n");
+			*lpMapiUid = *(LPMAPIUID)lpSvcRows->aRow->lpProps[iServiceUid].Value.bin.lpb;
+
+			*success = true;
+		}
+		else
+		{
+			// if more than 1 row then return the 1st row only
+			printf("Found multiple entries. Processing first entry only!\n");
+			*lpMapiUid = *(LPMAPIUID)lpSvcRows->aRow[0].lpProps[iServiceUid].Value.bin.lpb;
+			*success = true;
+		}
+	}
+	else
+		*success = false;
+
+Error:
+	MAPIFreeBuffer(lpspvDispName);
+	MAPIFreeBuffer(lpspvSvcName);
+	MAPIFreeBuffer(lpResLevel1);
+	MAPIFreeBuffer(lpRes);
+	if (lpSvcRows) FreeProws(lpSvcRows);
+	if (lpMsgSvcTable) lpMsgSvcTable->Release();
+	return hRes;
+}
+
+// CheckABServiceExists
+// Searches for an AB service with a given Display name and Server name and returns a service UID
+HRESULT CheckABServiceExists(LPSERVICEADMIN lpSvcAdmin, LPTSTR lppszDisplayName, LPTSTR lppszServerName, LPMAPIUID lpMapiUid, BOOL* success)
+{
+	HRESULT hRes = S_OK;
+	LPMAPITABLE		lpMsgSvcTable = NULL; // MAPI table pointer.
+	LPSRowSet		lpSvcRows = NULL;
+	LPSRestriction	lpRes = NULL;
+	LPSRestriction	lpResLevel1 = NULL;
+	LPSPropValue	lpspvSvcName = NULL;
+	LPSPropValue	lpspvDispName = NULL;
+	LPSPropValue	lpspvSrvName = NULL;
+
+	enum { iServiceUid, cptaProps };
+	SizedSPropTagArray(cptaProps, sptaProps) = { cptaProps, PR_SERVICE_UID };
+
+	// Provides access to the message service table, a list of the message services in the profile.
+	hRes = lpSvcAdmin->GetMsgServiceTable(0, // Flags        
+		&lpMsgSvcTable); // Pointer to table
+	if (FAILED(hRes)) goto Error;
+	printf("Retrieved message service table from profile.\n");
+
+	// Set up restriction to query table.
+
+	// Allocate and create our SRestriction
+	// Allocate base memory:
+	EC_HRES(MAPIAllocateBuffer(
+		sizeof(SRestriction),
+		(LPVOID*)& lpRes));
+
+	EC_HRES(MAPIAllocateMore(
+		sizeof(SRestriction) * 3,
+		lpRes,
+		(LPVOID*)& lpResLevel1));
+
+	EC_HRES(MAPIAllocateMore(
+		sizeof(SPropValue),
+		lpRes,
+		(LPVOID*)& lpspvSvcName));
+
+	EC_HRES(MAPIAllocateMore(
+		sizeof(SPropValue),
+		lpRes,
+		(LPVOID*)& lpspvDispName));
+
+	EC_HRES(MAPIAllocateMore(
+		sizeof(SPropValue),
+		lpRes,
+		(LPVOID*)& lpspvSrvName));
+
+	ZeroMemory(lpRes, sizeof(SRestriction));
+	ZeroMemory(lpResLevel1, sizeof(SRestriction) * 3);
+
+	ZeroMemory(lpspvSvcName, sizeof(SPropValue));
+	ZeroMemory(lpspvDispName, sizeof(SPropValue));
+	ZeroMemory(lpspvSrvName, sizeof(SPropValue));
+
+	lpRes->rt = RES_AND;
+	lpRes->res.resAnd.cRes = 2;
+	lpRes->res.resAnd.lpRes = lpResLevel1;
+	//Get the services matching the EMABLT Service Name
+	lpResLevel1[0].rt = RES_CONTENT;
+	lpResLevel1[0].res.resContent.ulFuzzyLevel = FL_FULLSTRING;
+	lpResLevel1[0].res.resContent.ulPropTag = PR_SERVICE_NAME;
+	lpResLevel1[0].res.resContent.lpProp = lpspvSvcName;
+	lpspvSvcName->ulPropTag = PR_SERVICE_NAME;
+	lpspvSvcName->Value.lpszA = "EMABLT";
+	//Get the services matching the supplied Display Name
+	lpResLevel1[1].rt = RES_CONTENT;
+	lpResLevel1[1].res.resContent.ulFuzzyLevel = FL_IGNORECASE;
+	lpResLevel1[1].res.resContent.ulPropTag = PR_DISPLAY_NAME;
+	lpResLevel1[1].res.resContent.lpProp = lpspvDispName;
+	lpspvDispName->ulPropTag = PR_DISPLAY_NAME;
+	lpspvDispName->Value.lpszA = ConvertWideCharToMultiByte(lppszDisplayName);
+	//Get the services matching the supplied ldap server name
+	lpResLevel1[2].rt = RES_CONTENT;
+	lpResLevel1[2].res.resContent.ulFuzzyLevel = FL_IGNORECASE;
+	lpResLevel1[2].res.resContent.ulPropTag = PROP_AB_PROVIDER_SERVER_NAME;
+	lpResLevel1[2].res.resContent.lpProp = lpspvSrvName;
+	lpspvSrvName->ulPropTag = PROP_AB_PROVIDER_SERVER_NAME;
+	lpspvSrvName->Value.lpszA = ConvertWideCharToMultiByte(lppszServerName);
+	printf("Set up restriction for searching Ldap AB service.\n");
+
+	// Query the table to get the entry for the Exchange message service.
+	EC_HRES(HrQueryAllRows(lpMsgSvcTable,
+		(LPSPropTagArray)& sptaProps,
+		lpRes,
+		NULL,
+		0,
+		&lpSvcRows));
+	printf("Queried service table for Ldap AB service.\n");
+
+	if (lpSvcRows->cRows > 0)
+	{
+		if (lpSvcRows->cRows = 1)
+		{
+			// 1 row expected
+			printf("Found one entry.\n");
+			*lpMapiUid = *(LPMAPIUID)lpSvcRows->aRow->lpProps[iServiceUid].Value.bin.lpb;
+			*success = true;
+		}
+		else
+		{
+			// if more than 1 row, return the 1st row only
+			printf("Found multiple entries. Processing first entry only!\n");
+			*lpMapiUid = *(LPMAPIUID)lpSvcRows->aRow[0].lpProps[iServiceUid].Value.bin.lpb;
+			*success = true;
+		}
+	}
+	else
+		*success = false;
+
+Error:
+	MAPIFreeBuffer(lpspvSrvName);
+	MAPIFreeBuffer(lpspvDispName);
+	MAPIFreeBuffer(lpspvSvcName);
+	MAPIFreeBuffer(lpResLevel1);
+	MAPIFreeBuffer(lpRes);
+	if (lpSvcRows) FreeProws(lpSvcRows);
+	if (lpMsgSvcTable) lpMsgSvcTable->Release();
+	return hRes;
+}
+
+// UpdateABService
+// Updates the AB service with the given service UID
+HRESULT UpdateABService(LPSERVICEADMIN lpSvcAdmin, ABProvider* pABProvider, LPMAPIUID lpMapiUid)
+{
+	HRESULT				hRes = S_OK;
+	SPropValue			rgval[12];						// Property value structure to hold configuration info.
+	DATA_BLOB			dataBlobIn = { 0 };
+	DATA_BLOB			dataBlobOut = { 0 };
+
+	// Setting up the props
+
+	// The display name of the new LDAP AB. 
+	// PT_STRING8
+	ZeroMemory(&rgval[0], sizeof(SPropValue));
+	rgval[0].ulPropTag = PROP_AB_PROVIDER_DISPLAY_NAME;
+	rgval[0].Value.lpszA = ConvertWideCharToMultiByte(pABProvider->lpszDisplayName);
+
+	// The LDAP server name.
+	// PT_STRING8
+	ZeroMemory(&rgval[1], sizeof(SPropValue));
+	rgval[1].ulPropTag = PROP_AB_PROVIDER_SERVER_NAME;
+	rgval[1].Value.lpszA = ConvertWideCharToMultiByte(pABProvider->lpszServerName);
+
+	// The port to connect to.
+	// PT_STRING8
+	ZeroMemory(&rgval[2], sizeof(SPropValue));
+	rgval[2].ulPropTag = PROP_AB_PROVIDER_SERVER_PORT;
+	rgval[2].Value.lpszA = ConvertWideCharToMultiByte(pABProvider->lpszServerPort);
+
+	// LDAP AB username.
+	// PT_STRING8
+	ZeroMemory(&rgval[3], sizeof(SPropValue));
+	rgval[3].ulPropTag = PROP_AB_PROVIDER_USER_NAME;
+	rgval[3].Value.lpszA = ConvertWideCharToMultiByte(pABProvider->lpszUsername);
+
+	// Custom search base if needed.
+	// PT_STRING8
+	ZeroMemory(&rgval[4], sizeof(SPropValue));
+	rgval[4].ulPropTag = PROP_AB_PROVIDER_SEARCH_BASE;
+	rgval[4].Value.lpszA = ConvertWideCharToMultiByte(pABProvider->lpszCustomSearchBase);
+
+	// AB search time out.
+	// PT_STRING8
+	ZeroMemory(&rgval[5], sizeof(SPropValue));
+	rgval[5].ulPropTag = PROP_AB_PROVIDER_SEARCH_TIMEOUT;
+	rgval[5].Value.lpszA = ConvertWideCharToMultiByte(pABProvider->lpszTimeout);
+
+	// Maximum number of entries to be returned.
+	// PT_STRING8
+	ZeroMemory(&rgval[6], sizeof(SPropValue));
+	rgval[6].ulPropTag = PROP_AB_PROVIDER_MAX_ENTRIES;
+	rgval[6].Value.lpszA = ConvertWideCharToMultiByte(pABProvider->lpszMaxResults);
+
+	// Indicates whether the AB requires an SSL connection or not.
+	ZeroMemory(&rgval[7], sizeof(SPropValue));
+	rgval[7].ulPropTag = PROP_AB_PROVIDER_USE_SSL;
+	rgval[7].Value.b = pABProvider->bUseSSL;
+
+	// Indicates whether the AB requires secure password auth.
+	ZeroMemory(&rgval[8], sizeof(SPropValue));
+	rgval[8].ulPropTag = PROP_AB_PROVIDER_SERVER_SPA;
+	rgval[8].Value.b = pABProvider->bRequireSPA;
+
+	// Logic to encrypt the password if password supplied.
+	LPWSTR lpszwPassword = pABProvider->lpszPassword;
+	// Encrypt the password if supplied
+	if (0 < wcslen(lpszwPassword))
+	{
+		LPBYTE pbData = (LPBYTE)lpszwPassword;
+		DWORD cbData = (wcslen(lpszwPassword) + 1) * sizeof(WCHAR);
+
+		dataBlobIn.pbData = pbData;
+		dataBlobIn.cbData = cbData;
+
+		if (!CryptProtectData(
+			&dataBlobIn,
+			L"",						// desc
+			NULL,						// optional
+			NULL,						// reserver
+			NULL,						// prompt struct
+			0,							// flags
+			&dataBlobOut))
+		{
+			printf("CryptProtectData failed!\n");
+			hRes = E_FAIL;
+			goto Error;
+		}
+	}
+
+	// Password for the AB.
+	ZeroMemory(&rgval[9], sizeof(SPropValue));
+	rgval[9].ulPropTag = PROP_AB_PROVIDER_USER_PASSWORD_ENCODED;
+	rgval[9].Value.bin.cb = dataBlobOut.cbData;
+	rgval[9].Value.bin.lpb = dataBlobOut.pbData;
+
+	// AB browsing support.
+	ZeroMemory(&rgval[10], sizeof(SPropValue));
+	rgval[10].ulPropTag = PROP_AB_PROVIDER_ENABLE_BROWSING;
+	rgval[10].Value.b = pABProvider->bEnableBrowsing;
+
+	// Indicates whether to use the default search base.
+	ZeroMemory(&rgval[11], sizeof(SPropValue));
+	rgval[11].ulPropTag = PROP_AB_PROVIDER_SEARCH_BASE_DEFAULT;
+	rgval[11].Value.ul = pABProvider->ulDefaultSearchBase;
+
+	printf("Attempting to update AB service...");
+
+	// Reconfigures a message service with the new props.
+	hRes = lpSvcAdmin->ConfigureMsgService(lpMapiUid, NULL, 0, 12, rgval);
+	if (SUCCEEDED(hRes))
+		printf("DONE\n");
+	else
+	{
+		printf("FAILED\n");
+		EC_HRES(hRes);
+	}
+
+Error:
+	MAPIFreeBuffer(rgval);
+	if (hRes != S_OK)
+		EC_HRES(hRes);
+	return hRes;
+}
+
+// RemoveABService
+// Removes the AB sercie with the given service UID
+HRESULT RemoveABService(LPSERVICEADMIN lpSvcAdmin, LPMAPIUID lpMapiUid)
+{
+	HRESULT hRes = S_OK;
+	printf("Attempting to delete AB service...");
+	// Deletes a message service from a profile.
+	hRes = lpSvcAdmin->DeleteMsgService(lpMapiUid);
+	if SUCCEEDED(hRes)
+		printf("DONE\n");
+	else
+		printf("FAILED\n");
+
+Error:
+	if (hRes != S_OK)
+		EC_HRES(hRes);
 	return hRes;
 }

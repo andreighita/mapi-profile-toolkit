@@ -8,12 +8,6 @@
     <Filter Include="Active Directory">
       <UniqueIdentifier>{a119b3b5-cf54-4370-9891-5d0a90f89569}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Address Book">
-      <UniqueIdentifier>{8ce2d3eb-08bd-487a-9824-597f481c5d00}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Outlook Account">
-      <UniqueIdentifier>{04e18d9c-187b-4aa0-bd43-ed5da4d48955}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Registry">
       <UniqueIdentifier>{0d0c0cfc-bad6-41e1-9dfc-dfd363f35288}</UniqueIdentifier>
     </Filter>
@@ -32,6 +26,15 @@
     <Filter Include="MAPI\Profile">
       <UniqueIdentifier>{8a50acd4-6c49-43f8-9463-2992be89ec94}</UniqueIdentifier>
     </Filter>
+    <Filter Include="OutlookAccount">
+      <UniqueIdentifier>{04e18d9c-187b-4aa0-bd43-ed5da4d48955}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MapiStubLibrary">
+      <UniqueIdentifier>{c13d50cf-0052-41bf-9aaf-e13921548fad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AddressBook">
+      <UniqueIdentifier>{e18f0158-345d-4cec-9648-b40417484f8e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -45,19 +48,16 @@
       <Filter>Active Directory</Filter>
     </ClInclude>
     <ClInclude Include="AccountFunctions.h">
-      <Filter>Outlook Account</Filter>
+      <Filter>OutlookAccount</Filter>
     </ClInclude>
     <ClInclude Include="AccountHelper.h">
-      <Filter>Outlook Account</Filter>
+      <Filter>OutlookAccount</Filter>
     </ClInclude>
     <ClInclude Include="AccountMgmt.h">
-      <Filter>Outlook Account</Filter>
+      <Filter>OutlookAccount</Filter>
     </ClInclude>
     <ClInclude Include="AccountObjects.h">
-      <Filter>Outlook Account</Filter>
-    </ClInclude>
-    <ClInclude Include="ABProviderObjects.h">
-      <Filter>Address Book</Filter>
+      <Filter>OutlookAccount</Filter>
     </ClInclude>
     <ClInclude Include="RegistryHelper.h">
       <Filter>Registry</Filter>
@@ -82,8 +82,6 @@
     </ClInclude>
     <ClInclude Include="EdkMdb.h" />
     <ClInclude Include="abhelp.h" />
-    <ClInclude Include="CBaseScenario.h" />
-    <ClInclude Include="CProfileScenario.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="CachedMode.h">
       <Filter>MAPI\Profile</Filter>
@@ -106,6 +104,15 @@
     <ClInclude Include="Profile.h">
       <Filter>MAPI\Profile</Filter>
     </ClInclude>
+    <ClInclude Include="AddressBook\LdapABManager.h">
+      <Filter>AddressBook</Filter>
+    </ClInclude>
+    <ClInclude Include="AddressBook\ConfigXmlParser.h">
+      <Filter>AddressBook</Filter>
+    </ClInclude>
+    <ClInclude Include="AddressBook\ABProviderObjects.h">
+      <Filter>AddressBook</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MapiProfileToolkit.cpp" />
@@ -114,10 +121,10 @@
       <Filter>Active Directory</Filter>
     </ClCompile>
     <ClCompile Include="AccountFunctions.cpp">
-      <Filter>Outlook Account</Filter>
+      <Filter>OutlookAccount</Filter>
     </ClCompile>
     <ClCompile Include="AccountHelper.cpp">
-      <Filter>Outlook Account</Filter>
+      <Filter>OutlookAccount</Filter>
     </ClCompile>
     <ClCompile Include="RegistryHelper.cpp">
       <Filter>Registry</Filter>
@@ -128,8 +135,6 @@
     <ClCompile Include="StringOperations.cpp">
       <Filter>Utility</Filter>
     </ClCompile>
-    <ClCompile Include="CBaseScenario.cpp" />
-    <ClCompile Include="CProfileScenario.cpp" />
     <ClCompile Include="CachedMode.cpp">
       <Filter>MAPI\Profile</Filter>
     </ClCompile>
@@ -147,6 +152,12 @@
     </ClCompile>
     <ClCompile Include="Profile.cpp">
       <Filter>MAPI\Profile</Filter>
+    </ClCompile>
+    <ClCompile Include="AddressBook\LdapABManager.cpp">
+      <Filter>AddressBook</Filter>
+    </ClCompile>
+    <ClCompile Include="AddressBook\ConfigXmlParser.cpp">
+      <Filter>AddressBook</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -20,7 +20,6 @@ CAccountHelper::CAccountHelper(LPWSTR lpwszProfName, LPMAPISESSION lpSession)
 
 	if (lpwszProfName)
 	{
-
 		hRes = StringCchLengthW(lpwszProfName, STRSAFE_MAX_CCH, &m_cchProfile);
 		if (SUCCEEDED(hRes) && m_cchProfile)
 		{

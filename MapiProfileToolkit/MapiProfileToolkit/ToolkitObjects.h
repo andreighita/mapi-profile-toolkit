@@ -9,6 +9,12 @@
 #define CONNECT_ROH (ULONG)1
 #define CONNECT_MOH (ULONG)2
 
+// 1 = List one; 2 = List all; 3 = Update; 4 = Create 
+#define ADDRESSBOOK_LIST_ONE (ULONG)1 
+#define ADDRESSBOOK_LIST_ALL (ULONG)2
+#define ADDRESSBOOK_UPDATE (ULONG)3
+#define ADDRESSBOOK_CREATE (ULONG)4
+
 enum 
 { 
 	SCENARIO_PROFILE = 1,
@@ -143,9 +149,14 @@ struct MailboxOptions
 	ULONG ulRohProxyServerAuthPackage;		// mrpsap
 };
 
-struct LdapOptions
+struct AddressBookOptions
 {
-
+	ULONG ulRunningMode; // 1 = List one; 2 = List all; 2 = Update; 3 = Create 
+	ULONG ulProfileMode; // 1 = default; 2 = specific;
+	std::wstring szProfileName;
+	std::wstring szABDisplayName;
+	std::wstring	szConfigFilePath;
+	std::wstring	szABServerName;
 };
 
 struct DataFileOptions
@@ -181,7 +192,7 @@ struct RuntimeOptions
 	ServiceOptions * serviceOptions;
 	MailboxOptions * mailboxOptions;
 	DataFileOptions * dataFileOptions;
-	LdapOptions * ldapOptions;
+	AddressBookOptions * addressBookOptions;
 };
 
 struct ScenarioAddMAilbox
