@@ -117,11 +117,11 @@ HRESULT HrSetCachedModeOneService(LPSTR lpszProfileName, LPMAPIUID lpServiceUid,
 								{
 									profileConfigFlags[0].Value.l = profileConfigFlags[0].Value.l ^ CONFIG_OST_CACHE_PRIVATE;
 									EC_HRES_MSG(lpEmsMdbProfSect->SetProps(1, profileConfigFlags, NULL), L"Calling SetProps");
-									printf("Cached mode owner enabled.\n");
+									wprintf(L"Cached mode owner enabled.\n");
 								}
 								else
 								{
-									printf("Cached mode owner already enabled on service.\n");
+									wprintf(L"Cached mode owner already enabled on service.\n");
 								}
 
 							}
@@ -131,11 +131,11 @@ HRESULT HrSetCachedModeOneService(LPSTR lpszProfileName, LPMAPIUID lpServiceUid,
 								{
 									profileConfigFlags[0].Value.l = profileConfigFlags[0].Value.l ^ CONFIG_OST_CACHE_PRIVATE;
 									EC_HRES_MSG(lpEmsMdbProfSect->SetProps(1, profileConfigFlags, NULL), L"Calling SetProps");
-									printf("Cached mode owner disabled.\n");
+									wprintf(L"Cached mode owner disabled.\n");
 								}
 								else
 								{
-									printf("Cached mode owner already disabled on service.\n");
+									wprintf(L"Cached mode owner already disabled on service.\n");
 								}
 
 							}
@@ -147,11 +147,11 @@ HRESULT HrSetCachedModeOneService(LPSTR lpszProfileName, LPMAPIUID lpServiceUid,
 								{
 									profileConfigFlags[0].Value.l = profileConfigFlags[0].Value.l ^ CONFIG_OST_CACHE_DELEGATE_PIM;
 									EC_HRES_MSG(lpEmsMdbProfSect->SetProps(1, profileConfigFlags, NULL), L"Calling SetProps");
-									printf("Cached mode shared enabled.\n");
+									wprintf(L"Cached mode shared enabled.\n");
 								}
 								else
 								{
-									printf("Cached mode shared already enabled on service.\n");
+									wprintf(L"Cached mode shared already enabled on service.\n");
 								}
 							}
 							else
@@ -160,11 +160,11 @@ HRESULT HrSetCachedModeOneService(LPSTR lpszProfileName, LPMAPIUID lpServiceUid,
 								{
 									profileConfigFlags[0].Value.l = profileConfigFlags[0].Value.l ^ CONFIG_OST_CACHE_DELEGATE_PIM;
 									EC_HRES_MSG(lpEmsMdbProfSect->SetProps(1, profileConfigFlags, NULL), L"Calling SetProps");
-									printf("Cached mode shared disabled.\n");
+									wprintf(L"Cached mode shared disabled.\n");
 								}
 								else
 								{
-									printf("Cached mode shared already disabled on service.\n");
+									wprintf(L"Cached mode shared already disabled on service.\n");
 								}
 							}
 
@@ -175,11 +175,11 @@ HRESULT HrSetCachedModeOneService(LPSTR lpszProfileName, LPMAPIUID lpServiceUid,
 								{
 									profileConfigFlags[0].Value.l = profileConfigFlags[0].Value.l ^ CONFIG_OST_CACHE_PUBLIC;
 									EC_HRES_MSG(lpEmsMdbProfSect->SetProps(1, profileConfigFlags, NULL), L"Calling SetProps");
-									printf("Cached mode public folders enabled.\n");
+									wprintf(L"Cached mode public folders enabled.\n");
 								}
 								else
 								{
-									printf("Cached mode public folders already enabled on service.\n");
+									wprintf(L"Cached mode public folders already enabled on service.\n");
 								}
 							}
 							else
@@ -188,11 +188,11 @@ HRESULT HrSetCachedModeOneService(LPSTR lpszProfileName, LPMAPIUID lpServiceUid,
 								{
 									profileConfigFlags[0].Value.l = profileConfigFlags[0].Value.l ^ CONFIG_OST_CACHE_PUBLIC;
 									EC_HRES_MSG(lpEmsMdbProfSect->SetProps(1, profileConfigFlags, NULL), L"Calling SetProps");
-									printf("Cached mode public folders disabled.\n");
+									wprintf(L"Cached mode public folders disabled.\n");
 								}
 								else
 								{
-									printf("Cached mode public folders already disabled on service.\n");
+									wprintf(L"Cached mode public folders already disabled on service.\n");
 								}
 							}
 
@@ -216,7 +216,7 @@ HRESULT HrSetCachedModeOneService(LPSTR lpszProfileName, LPMAPIUID lpServiceUid,
 
 								profileRuleActionType[0].Value.i = iCachedModeMonths;
 								EC_HRES_MSG(lpEmsMdbProfSect->SetProps(1, profileRuleActionType, NULL), L"Calling SetProps");
-								printf("Cached mode amount to sync set.\n");
+								wprintf(L"Cached mode amount to sync set.\n");
 
 								EC_HRES_MSG(lpEmsMdbProfSect->SaveChanges(0), L"Calling SaveChanges");
 								if (profileRuleActionType) MAPIFreeBuffer(profileRuleActionType);

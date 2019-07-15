@@ -49,7 +49,7 @@ void QueryKey(HKEY hKey)
 
 	if (cSubKeys)
 	{
-		printf("\nNumber of subkeys: %d\n", cSubKeys);
+		wprintf(L"\nNumber of subkeys: %d\n", cSubKeys);
 
 		for (i = 0; i<cSubKeys; i++)
 		{
@@ -72,7 +72,7 @@ void QueryKey(HKEY hKey)
 
 	if (cValues)
 	{
-		printf("\nNumber of values: %d\n", cValues);
+		wprintf(L"\nNumber of values: %d\n", cValues);
 
 		for (i = 0, retCode = ERROR_SUCCESS; i<cValues; i++)
 		{

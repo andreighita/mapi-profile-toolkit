@@ -193,50 +193,50 @@
 //
 //void DisplayUsage()
 //{
-//	printf("DISCLAIMER:\n");
+//	wprintf(L"DISCLAIMER:\n");
 //
-//	printf("Microsoft provides programming examples for illustration only, without \n");
-//	printf("warranty either expressed or implied.This includes, but is not limited\n");
-//	printf("to, the implied warranties of merchantability or fitness for a particular\n");
-//	printf("purpose.This sample assumes that you are familiar with the programming\n");
-//	printf("language that is being demonstrated and with the tools that are used to\n");
-//	printf("create and to debug procedures.Microsoft support engineers can help\n");
-//	printf("explain the functionality of a particular procedure, but they will not\n");
-//	printf("modify these examples to provide added functionality or construct\n");
-//	printf("procedures to meet your specific requirements.\n");
-//	printf("\n");
-//	printf("\n");
-//	printf("LdapABManager - Ldap Address Book Manager\n");
-//	printf("    Sample utility for listing, creating, updating or removing Ldap address books. \n");
-//	printf("\n");
-//	printf("Usage: LdapABManager [-?] [-pm <one, default>] [-pn profilename] \n");
-//	printf("       [-dn displayname] [-sn servername] [-f configurationfilepath] \n");
-//	printf("       [-m <listall, listone, create, update, remove>] \n");
-//	printf("\n");
-//	printf("Options:\n");
-//	printf("       -pm : Sets the profile mode.\n");
-//	printf("              \"default\" to process the default profile.\n");
-//	printf("              \"one\" to process a specific profile. The profile Name needs to be \n");
-//	printf("              specified using -pn. Default profile will be used if -pm is not \n");
-//	printf("              used.\n");
-//	printf("       -pn : Name of the profile to process.\n");
-//	printf("             Default profile will be used if -pn is not used.\n");
-//	printf("\n");
-//	printf("       -dn : Display name of the Ldap Addressbook to list.\n");
-//	printf("\n");
-//	printf("       -f  : Full path to the XML configuration file. For example: \n");
-//	printf("             \"C:\\LdapABManager\\ABConfiguration.xml\".\n");
-//	printf("\n");
-//	printf("       -m  : Sets the running mode.\n");
-//	printf("              \"list\" to list all Ldap Addressbooks \n");
-//	printf("              \"create\" to create a new Ldap Addressbook \n");
-//	printf("       	      Must be used in conjunction with -f .\n");
-//	printf("              \"update\" to update a specifc Ldap Addressbook \n");
-//	printf("       	      Must be used in conjunction with -dn, optionally -sn and -f.\n");
-//	printf("              \"remove\" to remove a specifc Ldap Addressbook \n");
-//	printf("       	      Must be used in conjunction with -dn and optionally -sn.\n");
-//	printf("\n");
-//	printf("       -?  : Displays this usage information.\n");
+//	wprintf(L"Microsoft provides programming examples for illustration only, without \n");
+//	wprintf(L"warranty either expressed or implied.This includes, but is not limited\n");
+//	wprintf(L"to, the implied warranties of merchantability or fitness for a particular\n");
+//	wprintf(L"purpose.This sample assumes that you are familiar with the programming\n");
+//	wprintf(L"language that is being demonstrated and with the tools that are used to\n");
+//	wprintf(L"create and to debug procedures.Microsoft support engineers can help\n");
+//	wprintf(L"explain the functionality of a particular procedure, but they will not\n");
+//	wprintf(L"modify these examples to provide added functionality or construct\n");
+//	wprintf(L"procedures to meet your specific requirements.\n");
+//	wprintf(L"\n");
+//	wprintf(L"\n");
+//	wprintf(L"LdapABManager - Ldap Address Book Manager\n");
+//	wprintf(L"    Sample utility for listing, creating, updating or removing Ldap address books. \n");
+//	wprintf(L"\n");
+//	wprintf(L"Usage: LdapABManager [-?] [-pm <one, default>] [-pn profilename] \n");
+//	wprintf(L"       [-dn displayname] [-sn servername] [-f configurationfilepath] \n");
+//	wprintf(L"       [-m <listall, listone, create, update, remove>] \n");
+//	wprintf(L"\n");
+//	wprintf(L"Options:\n");
+//	wprintf(L"       -pm : Sets the profile mode.\n");
+//	wprintf(L"              \"default\" to process the default profile.\n");
+//	wprintf(L"              \"one\" to process a specific profile. The profile Name needs to be \n");
+//	wprintf(L"              specified using -pn. Default profile will be used if -pm is not \n");
+//	wprintf(L"              used.\n");
+//	wprintf(L"       -pn : Name of the profile to process.\n");
+//	wprintf(L"             Default profile will be used if -pn is not used.\n");
+//	wprintf(L"\n");
+//	wprintf(L"       -dn : Display name of the Ldap Addressbook to list.\n");
+//	wprintf(L"\n");
+//	wprintf(L"       -f  : Full path to the XML configuration file. For example: \n");
+//	wprintf(L"             \"C:\\LdapABManager\\ABConfiguration.xml\".\n");
+//	wprintf(L"\n");
+//	wprintf(L"       -m  : Sets the running mode.\n");
+//	wprintf(L"              \"list\" to list all Ldap Addressbooks \n");
+//	wprintf(L"              \"create\" to create a new Ldap Addressbook \n");
+//	wprintf(L"       	      Must be used in conjunction with -f .\n");
+//	wprintf(L"              \"update\" to update a specifc Ldap Addressbook \n");
+//	wprintf(L"       	      Must be used in conjunction with -dn, optionally -sn and -f.\n");
+//	wprintf(L"              \"remove\" to remove a specifc Ldap Addressbook \n");
+//	wprintf(L"       	      Must be used in conjunction with -dn and optionally -sn.\n");
+//	wprintf(L"\n");
+//	wprintf(L"       -?  : Displays this usage information.\n");
 //}
 //
 //
@@ -260,7 +260,7 @@
 //				// If a path was specified 
 //				if (!PathFileExists(LPCSTR(runtimeOptions.szConfigFilePath.c_str())))
 //				{
-//					printf("WARNING: The specified file \"%s\" does not exsits.\n", LPTSTR(runtimeOptions.szConfigFilePath.c_str()));
+//					wprintf(L"WARNING: The specified file \"%s\" does not exsits.\n", LPTSTR(runtimeOptions.szConfigFilePath.c_str()));
 //					return;
 //				}
 //			}
@@ -297,7 +297,7 @@
 //				runtimeOptions.szProfileName = GetDefaultProfileName();
 //				if (runtimeOptions.szProfileName.empty())
 //				{
-//					printf("ERROR: No default profile found, please specify a valid profile name.");
+//					wprintf(L"ERROR: No default profile found, please specify a valid profile name.");
 //					return;
 //				}
 //
@@ -306,7 +306,7 @@
 //			// Create a profile administration object.
 //			EC_HRES(MAPIAdminProfiles(0,		// Bitmask of flags indicating options for the service entry function. 
 //				&lpProfAdmin));					// Pointer to a pointer to the new profile administration object.
-//			printf("Retrieved IProfAdmin interface pointer.\n");
+//			wprintf(L"Retrieved IProfAdmin interface pointer.\n");
 //
 //			// Get access to a message service administration object for making changes to the message services in a profile. 
 //			EC_HRES(lpProfAdmin->AdminServices(LPTSTR(runtimeOptions.szProfileName.c_str()),	// A pointer to the name of the profile to be modified. The lpszProfileName parameter must not be NULL.
@@ -314,18 +314,18 @@
 //				NULL,																			// A handle of the parent window for any dialog boxes or windows that this method displays.
 //				0,																				// A bitmask of flags that controls the retrieval of the message service administration object. The following flags can be set:
 //				&lpSvcAdmin));																	// A pointer to a pointer to a message service administration object.
-//			printf("Retrieved IMsgServiceAdmin interface pointer.\n");
+//			wprintf(L"Retrieved IMsgServiceAdmin interface pointer.\n");
 //
 //			// Branching based on the selected running mode
 //			switch (runtimeOptions.ulRunningMode)
 //			{
 //			case RUNNINGMODE_LIST:
-//				printf("Running in List mode.\n");
+//				wprintf(L"Running in List mode.\n");
 //				// Calling ListAllABServices to list all the existing Ldap AB Servies in the selected profile
 //				EC_HRES(ListAllABServices(lpSvcAdmin));
 //				break;
 //			case RUNNINGMODE_CREATE:
-//				printf("Running in Create mode.\n");
+//				wprintf(L"Running in Create mode.\n");
 //				if (fValidPath)
 //				{
 //					// Calling CheckABServiceExists to retrieve a pointer to a MAPIUID for an existing AB service that matches the
@@ -335,13 +335,13 @@
 //						// If no existing service is found then call CreateAbService to create the new service
 //						EC_HRES(CreateABService(lpSvcAdmin, &pABProvider));
 //					else
-//						printf("The specified AB already exists.\n");
+//						wprintf(L"The specified AB already exists.\n");
 //				}
 //				else
-//					printf("ERROR: Invalid input file or invalid file path.");
+//					wprintf(L"ERROR: Invalid input file or invalid file path.");
 //				break;
 //			case RUNNINGMODE_UPDATE:
-//				printf("Running in Update mode.\n");
+//				wprintf(L"Running in Update mode.\n");
 //				if (fValidPath)
 //				{
 //					if (!runtimeOptions.szABServerName.empty())
@@ -358,13 +358,13 @@
 //						// If the searched for service is found then call UpdateABService to update the service properties
 //						EC_HRES(UpdateABService(lpSvcAdmin, &pABProvider, lpMapiUid));
 //					else
-//						printf("The specified AB doesn't exist.\n");
+//						wprintf(L"The specified AB doesn't exist.\n");
 //				}
 //				else
-//					printf("ERROR: Invalid input file or invalid file path.");
+//					wprintf(L"ERROR: Invalid input file or invalid file path.");
 //				break;
 //			case RUNNINGMODE_REMOVE:
-//				printf("Running in Remove mode.\n");
+//				wprintf(L"Running in Remove mode.\n");
 //				if (!runtimeOptions.szABServerName.empty())
 //				{
 //					// Calling CheckABServiceExists to retrieve a pointer to a MAPIUID for an existing AB service that matches the
@@ -379,7 +379,7 @@
 //					// If the searched for service is found then call RemoveABService to update the service properties
 //					EC_HRES(RemoveABService(lpSvcAdmin, lpMapiUid));
 //				else
-//					printf("The specified AB doesn't exist.\n");
+//					wprintf(L"The specified AB doesn't exist.\n");
 //				break;
 //			}
 //			if (lpSvcAdmin) lpSvcAdmin->Release();

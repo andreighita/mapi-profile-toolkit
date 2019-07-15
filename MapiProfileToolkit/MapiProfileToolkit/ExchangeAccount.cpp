@@ -539,7 +539,7 @@ HRESULT HrCreateMsemsServiceLegacyUnresolved(BOOL bDefaultProfile,
 
 		EC_HRES_MSG(lpServiceAdmin->QueryInterface(IID_IMsgServiceAdmin2, (LPVOID*)& lpServiceAdmin2), L"Calling QueryInterface.");
 
-		printf("Creating MsgService.\n");
+		wprintf(L"Creating MsgService.\n");
 		// Adds a message service to the current profile and returns that newly added service UID.
 		hRes = lpServiceAdmin2->CreateMsgServiceEx((LPTSTR)"MSEMS", (LPTSTR)"Microsoft Exchange", NULL, 0, &uidService);
 		if (FAILED(hRes)) goto Error;
@@ -554,7 +554,7 @@ HRESULT HrCreateMsemsServiceLegacyUnresolved(BOOL bDefaultProfile,
 		rgval[1].ulPropTag = PR_PROFILE_UNRESOLVED_NAME;
 		rgval[1].Value.lpszA = ConvertWideCharToMultiByte(lpszwMailboxDN);
 
-		printf("Configuring MsgService.\n");
+		wprintf(L"Configuring MsgService.\n");
 		// Create the message service with the above properties.
 		hRes = lpServiceAdmin2->ConfigureMsgService(&uidService,
 			NULL,
@@ -568,11 +568,11 @@ HRESULT HrCreateMsemsServiceLegacyUnresolved(BOOL bDefaultProfile,
 	goto cleanup;
 
 Error:
-	printf("ERROR: hRes = %0x\n", hRes);
+	wprintf(L"ERROR: hRes = %0x\n", hRes);
 
 cleanup:
 	// Clean up
-	printf("Done cleaning up.\n");
+	wprintf(L"Done cleaning up.\n");
 	if (lpServiceAdmin2) lpServiceAdmin2->Release();
 	if (lpServiceAdmin) lpServiceAdmin->Release();
 	if (lpProfAdmin) lpProfAdmin->Release();
@@ -671,12 +671,12 @@ HRESULT HrCreateMsemsServiceROH(BOOL bDefaultProfile,
 	{
 		EC_HRES_MSG(lpServiceAdmin->QueryInterface(IID_IMsgServiceAdmin2, (LPVOID*)& lpServiceAdmin2), L"Calling QueryInterface.");
 
-		printf("Creating MsgService.\n");
+		wprintf(L"Creating MsgService.\n");
 		// Adds a message service to the current profile and returns that newly added service UID.
 		hRes = lpServiceAdmin2->CreateMsgServiceEx((LPTSTR)"MSEMS", (LPTSTR)"Microsoft Exchange", NULL, 0, &uidService);
 		if (FAILED(hRes)) goto Error;
 
-		printf("Configuring MsgService.\n");
+		wprintf(L"Configuring MsgService.\n");
 
 		int paramC = 0;
 
@@ -815,7 +815,7 @@ HRESULT HrCreateMsemsServiceROH(BOOL bDefaultProfile,
 			goto Error;
 		}
 
-		printf("Saving changes.\n");
+		wprintf(L"Saving changes.\n");
 
 		hRes = lpEmsMdbProfSect->SaveChanges(KEEP_OPEN_READWRITE);
 
@@ -875,7 +875,7 @@ HRESULT HrCreateMsemsServiceROH(BOOL bDefaultProfile,
 				goto Error;
 			}
 
-			printf("Saving changes.\n");
+			wprintf(L"Saving changes.\n");
 			hRes = lpStoreProviderSect->SaveChanges(KEEP_OPEN_READWRITE);
 
 			if (FAILED(hRes))
@@ -888,7 +888,7 @@ HRESULT HrCreateMsemsServiceROH(BOOL bDefaultProfile,
 		goto cleanup;
 
 	Error:
-		printf("ERROR: hRes = %0x\n", hRes);
+		wprintf(L"ERROR: hRes = %0x\n", hRes);
 	}
 
 cleanup:
@@ -899,7 +899,7 @@ cleanup:
 	if (lpServiceAdmin2) lpServiceAdmin2->Release();
 	if (lpServiceAdmin) lpServiceAdmin->Release();
 	if (lpProfAdmin) lpProfAdmin->Release();
-	printf("Done cleaning up.\n");
+	wprintf(L"Done cleaning up.\n");
 	return hRes;
 }
 
@@ -977,7 +977,7 @@ HRESULT HrCreateMsemsServiceMOH(BOOL bDefaultProfile,
 
 		EC_HRES_MSG(lpServiceAdmin->QueryInterface(IID_IMsgServiceAdmin2, (LPVOID*)& lpServiceAdmin2), L"Calling QueryInterface.");
 
-		printf("Creating MsgService.\n");
+		wprintf(L"Creating MsgService.\n");
 
 		// Adds a message service to the current profile and returns that newly added service UID.
 		hRes = lpServiceAdmin2->CreateMsgServiceEx((LPTSTR)"MSEMS", (LPTSTR)"Microsoft Exchange", NULL, 0, &uidService);
@@ -1076,7 +1076,7 @@ HRESULT HrCreateMsemsServiceMOH(BOOL bDefaultProfile,
 				goto Error;
 			}
 
-			printf("Saving changes.\n");
+			wprintf(L"Saving changes.\n");
 			hRes = lpStoreProviderSect->SaveChanges(KEEP_OPEN_READWRITE);
 
 			if (FAILED(hRes))
@@ -1136,7 +1136,7 @@ HRESULT HrCreateMsemsServiceMOH(BOOL bDefaultProfile,
 
 
 Error:
-	printf("ERROR: hRes = %0x\n", hRes);
+	wprintf(L"ERROR: hRes = %0x\n", hRes);
 
 cleanup:
 	// Clean up
@@ -1146,7 +1146,7 @@ cleanup:
 	if (lpServiceAdmin2) lpServiceAdmin2->Release();
 	if (lpServiceAdmin) lpServiceAdmin->Release();
 	if (lpProfAdmin) lpProfAdmin->Release();
-	printf("Done cleaning up.\n");
+	wprintf(L"Done cleaning up.\n");
 	return hRes;
 }
 
@@ -1285,7 +1285,7 @@ HRESULT HrUpdatePrStoreProviders(LPSERVICEADMIN lpServiceAdmin, LPMAPIUID lpServ
 			&ulProps,
 			&lpGlobalVals), L"Calling GetProps");
 
-		printf("Got the list of mailboxes being opened.\n");
+		wprintf(L"Got the list of mailboxes being opened.\n");
 
 		// Now we set up an SPropValue structure with the original
 		// list + the UID of the new service.
@@ -1297,7 +1297,7 @@ HRESULT HrUpdatePrStoreProviders(LPSERVICEADMIN lpServiceAdmin, LPMAPIUID lpServ
 		hRes = MAPIAllocateBuffer(cbNewBuffer,
 			(LPVOID*)& NewVals.Value.bin.lpb);
 
-		printf("Allocated buffer to hold new list of mailboxes to be opened.\n");
+		wprintf(L"Allocated buffer to hold new list of mailboxes to be opened.\n");
 
 		// Copy the bits into the list.
 		// First, copy the existing list.
@@ -1309,7 +1309,7 @@ HRESULT HrUpdatePrStoreProviders(LPSERVICEADMIN lpServiceAdmin, LPMAPIUID lpServ
 		memcpy(NewVals.Value.bin.lpb + lpGlobalVals->Value.bin.cb,
 			lpProviderUid,
 			sizeof(MAPIUID));
-		printf("Concatenated list of mailboxes and new mailbox.\n");
+		wprintf(L"Concatenated list of mailboxes and new mailbox.\n");
 
 		// Set the count of bytes on the SPropValue variable.
 		NewVals.Value.bin.cb = cbNewBuffer;

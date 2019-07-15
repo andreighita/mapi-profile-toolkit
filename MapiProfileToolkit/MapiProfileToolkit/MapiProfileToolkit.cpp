@@ -194,17 +194,17 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 				}
 				else if (wszValue == L"update")
 				{
-					pRunOpts->profileOptions->ulProfileAction = ADDRESSBOOK_UPDATE;
+					pRunOpts->addressBookOptions->ulRunningMode = ADDRESSBOOK_UPDATE;
 					i++;
 				}
 				else if (wszValue == L"listone")
 				{
-					pRunOpts->profileOptions->ulProfileAction = ADDRESSBOOK_LIST_ONE;
+					pRunOpts->addressBookOptions->ulRunningMode = ADDRESSBOOK_LIST_ONE;
 					i++;
 				}
 				else if (wszValue == L"listall")
 				{
-					pRunOpts->profileOptions->ulProfileAction = ADDRESSBOOK_LIST_ALL;
+					pRunOpts->addressBookOptions->ulRunningMode = ADDRESSBOOK_LIST_ALL;
 					i++;
 				}
 				else
@@ -1422,60 +1422,60 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 
 void DisplayUsage()
 {
-	printf("ProfileToolkit - Profile Examination Tool\n");
-	printf("    Lists profile settings and optionally enables or disables cached exchange \n");
-	printf("    mode.\n");
-	printf("\n");
-	printf("Usage: ProfileToolkit [-?] [-pm <all, one, default>] [-pn profilename] \n");
-	printf("       [-si serviceIndex] [-cmo <enable, disable>] [-cms <enable, disable>] \n");
-	printf("       [-cmp <enable, disable>]	[-cmm <0, 1, 3, 6, 12, 24>] [-ep exportpath]\n");
-	printf("\n");
-	printf("Usage: ProfileToolkit [-?] [-profile <all, one, default>] [-profilename profilename] \n");
-	printf("       [-si serviceIndex] [-cmo <enable, disable>] [-cms <enable, disable>] \n");
-	printf("       [-cmp <enable, disable>]	[-cmm <0, 1, 3, 6, 12, 24>] [-ep exportpath]\n");
-	printf("       [-addressbook <create, update, listall, listone>] [-addressbookdisplayname <displayname>] \n");
-	printf("       [-addressbookservername <servername>] [-addressbookconfigfilepath <configfilepath>] \n");
-	printf("\n");
-	printf("Options:\n");
-	printf("    -profile:                  \"all\" to process all profiles.\n");
-	printf("							   \"default\" to process the default profile.\n");
-	printf("                               \"one\" to process a specific profile. Prifile Name needs to be \n");
-	printf("                               specified using -pn.\n");
-	printf("                               Default profile will be used if -pm is not used.\n");
-	printf("   -profilename:               Name of the profile to process.\n");
-	printf("                               Default profile will be used if -pn is not used.\n");
-	printf("\n");
-	printf("   -addressbook:               \"create\" to create a new address book service.\n");
-	printf("                               \"update\" to update an existing address book service. The display name.\n");
-	printf("                               of the address book to update needs to be specified using -addressbookdisplayname.\n");
-	printf("                               \"listall\" Tto list all address book services in the profile. \n");
-	printf("                               \"listone\" to list an existing address book service. The display name.\n");
-	printf("                               of the address book to list needs to be specified using -addressbookdisplayname.\n");
-	printf("   -addressbookdisplayname:    The display name of the address book to create, update or list.\n");
-	printf("   -addressbookservername:     The display name of the LDAP server configure in the address book.\n");
-	printf("   -addressbookconfigfilepath: The display name of the LDAP server configure in the address book.\n");
-	printf("   -profilename:               Name of the profile to process.\n");
-	printf("                               Default profile will be used if -pn is not used.\n");
-	printf("\n");
-	//printf("       -si:    Index of the account to process from previous export.\n");
-	//printf("       	       Must be used in conjunction with -pm one -pn profile or -pm default.\n");
-	//printf("\n");
-	//printf("       -cmo:   \"enable\" or \"disable\" for enabling or disabling cached Exchange \n");
-	//printf("               mode on the owner's mailbox.\n");
-	//printf("       	       Must be used in conjunction with -pm one -pn profile and -si index.\n");
-	//printf("       -cms:   \"enable\" or \"disable\" for enabling or disabling cached Exchange \n");
-	//printf("               mode on shared folders (delegate).\n");
-	//printf("       	       Must be used in conjunction with -pm one -pn profile and -si index.\n");
-	//printf("       -cmp:   \"enable\" or \"disable\" for enabling or disabling cached Exchange \n");
-	//printf("               mode on public folders favorites.\n");
-	//printf("       	       Must be used in conjunction with -pm one -pn profile and -si index.\n");
-	//printf("       -cmm:   0 for all or 1, 3, 6, 12 or 24 for the same number of months to sync\n");
-	//printf("       	       Must be used in conjunction with -pm one -pn profile, -si index and.\n");
-	//printf("       	       -cmo enable.\n");
-	//printf("\n");
-	//printf("       -ep:    exportPath for exporting settings to disk.\n");
-	//printf("\n");
-	printf("       -?      Displays this usage information.\n");
+	wprintf(L"ProfileToolkit - Profile Examination Tool\n");
+	wprintf(L"    Lists profile settings and optionally enables or disables cached exchange \n");
+	wprintf(L"    mode.\n");
+	wprintf(L"\n");
+	wprintf(L"Usage: ProfileToolkit [-?] [-pm <all, one, default>] [-pn profilename] \n");
+	wprintf(L"       [-si serviceIndex] [-cmo <enable, disable>] [-cms <enable, disable>] \n");
+	wprintf(L"       [-cmp <enable, disable>]	[-cmm <0, 1, 3, 6, 12, 24>] [-ep exportpath]\n");
+	wprintf(L"\n");
+	wprintf(L"Usage: ProfileToolkit [-?] [-profile <all, one, default>] [-profilename profilename] \n");
+	wprintf(L"       [-si serviceIndex] [-cmo <enable, disable>] [-cms <enable, disable>] \n");
+	wprintf(L"       [-cmp <enable, disable>]	[-cmm <0, 1, 3, 6, 12, 24>] [-ep exportpath]\n");
+	wprintf(L"       [-addressbook <create, update, listall, listone>] [-addressbookdisplayname <displayname>] \n");
+	wprintf(L"       [-addressbookservername <servername>] [-addressbookconfigfilepath <configfilepath>] \n");
+	wprintf(L"\n");
+	wprintf(L"Options:\n");
+	wprintf(L"    -profile:                  \"all\" to process all profiles.\n");
+	wprintf(L"							   \"default\" to process the default profile.\n");
+	wprintf(L"                               \"one\" to process a specific profile. Prifile Name needs to be \n");
+	wprintf(L"                               specified using -pn.\n");
+	wprintf(L"                               Default profile will be used if -pm is not used.\n");
+	wprintf(L"   -profilename:               Name of the profile to process.\n");
+	wprintf(L"                               Default profile will be used if -pn is not used.\n");
+	wprintf(L"\n");
+	wprintf(L"   -addressbook:               \"create\" to create a new address book service.\n");
+	wprintf(L"                               \"update\" to update an existing address book service. The display name.\n");
+	wprintf(L"                               of the address book to update needs to be specified using -addressbookdisplayname.\n");
+	wprintf(L"                               \"listall\" Tto list all address book services in the profile. \n");
+	wprintf(L"                               \"listone\" to list an existing address book service. The display name.\n");
+	wprintf(L"                               of the address book to list needs to be specified using -addressbookdisplayname.\n");
+	wprintf(L"   -addressbookdisplayname:    The display name of the address book to create, update or list.\n");
+	wprintf(L"   -addressbookservername:     The display name of the LDAP server configure in the address book.\n");
+	wprintf(L"   -addressbookconfigfilepath: The display name of the LDAP server configure in the address book.\n");
+	wprintf(L"   -profilename:               Name of the profile to process.\n");
+	wprintf(L"                               Default profile will be used if -pn is not used.\n");
+	wprintf(L"\n");
+	//wprintf(L"       -si:    Index of the account to process from previous export.\n");
+	//wprintf(L"       	       Must be used in conjunction with -pm one -pn profile or -pm default.\n");
+	//wprintf(L"\n");
+	//wprintf(L"       -cmo:   \"enable\" or \"disable\" for enabling or disabling cached Exchange \n");
+	//wprintf(L"               mode on the owner's mailbox.\n");
+	//wprintf(L"       	       Must be used in conjunction with -pm one -pn profile and -si index.\n");
+	//wprintf(L"       -cms:   \"enable\" or \"disable\" for enabling or disabling cached Exchange \n");
+	//wprintf(L"               mode on shared folders (delegate).\n");
+	//wprintf(L"       	       Must be used in conjunction with -pm one -pn profile and -si index.\n");
+	//wprintf(L"       -cmp:   \"enable\" or \"disable\" for enabling or disabling cached Exchange \n");
+	//wprintf(L"               mode on public folders favorites.\n");
+	//wprintf(L"       	       Must be used in conjunction with -pm one -pn profile and -si index.\n");
+	//wprintf(L"       -cmm:   0 for all or 1, 3, 6, 12 or 24 for the same number of months to sync\n");
+	//wprintf(L"       	       Must be used in conjunction with -pm one -pn profile, -si index and.\n");
+	//wprintf(L"       	       -cmo enable.\n");
+	//wprintf(L"\n");
+	//wprintf(L"       -ep:    exportPath for exporting settings to disk.\n");
+	//wprintf(L"\n");
+	wprintf(L"       -?      Displays this usage information.\n");
 }
 
 LoggingMode loggingMode;
@@ -1507,7 +1507,7 @@ void _tmain(int argc, _TCHAR* argv[])
 			// If a path was specified 
 			if (!PathFileExists(LPCWSTR(tkOptions->addressBookOptions->szConfigFilePath.c_str())))
 			{
-				printf("WARNING: The specified file \"%s\" does not exsits.\n", LPTSTR(tkOptions->addressBookOptions->szConfigFilePath.c_str()));
+				wprintf(L"WARNING: The specified file \"%s\" does not exsits.\n", LPTSTR(tkOptions->addressBookOptions->szConfigFilePath.c_str()));
 				return;
 			}
 		}
@@ -1525,131 +1525,135 @@ void _tmain(int argc, _TCHAR* argv[])
 		ProfileInfo * profileInfo = new ProfileInfo[ulProfileCount];
 		//HrGetProfiles(ulProfileCount, profileInfo);
 
-		switch (tkOptions->profileOptions->ulProfileAction)
+		if (ACTION_UNKNOWN != tkOptions->profileOptions->ulProfileAction)
 		{
-		case ACTION_ADD:
-			EC_HRES_MSG(HrCreateProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str()), L"Calling HrCreateProfile");
-			if (tkOptions->serviceOptions->ulServiceAction == ACTION_ADD)
-			EC_HRES_LOG(HrCreateMsemsService(PROFILEMODE_ONE,
-				(LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(),
-				tkOptions->iOutlookVersion,
-				tkOptions->serviceOptions), L"Calling HrCreateMsemsService");
-			break;
-		case ACTION_EDIT:
-			if (tkOptions->profileOptions->bSetDefaultProfile)
-			{
-				HrSetDefaultProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str());
-			}
-			switch (tkOptions->serviceOptions->ulServiceAction)
+
+			switch (tkOptions->profileOptions->ulProfileAction)
 			{
 			case ACTION_ADD:
-				EC_HRES_LOG(HrCreateMsemsService(tkOptions->profileOptions->ulProfileMode == PROFILEMODE_DEFAULT, 
-					(LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(), 
-					tkOptions->iOutlookVersion, 
-					tkOptions->serviceOptions), L"Calling HrCreateMsemsService");
+				EC_HRES_MSG(HrCreateProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str()), L"Calling HrCreateProfile");
+				if (tkOptions->serviceOptions->ulServiceAction == ACTION_ADD)
+					EC_HRES_LOG(HrCreateMsemsService(PROFILEMODE_ONE,
+					(LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(),
+						tkOptions->iOutlookVersion,
+						tkOptions->serviceOptions), L"Calling HrCreateMsemsService");
+				break;
 			case ACTION_EDIT:
-
-				switch (tkOptions->mailboxOptions->ulMailboxAction)
+				if (tkOptions->profileOptions->bSetDefaultProfile)
+				{
+					HrSetDefaultProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str());
+				}
+				switch (tkOptions->serviceOptions->ulServiceAction)
 				{
 				case ACTION_ADD:
-					EC_HRES_LOG(HrAddDelegateMailbox(tkOptions->profileOptions->ulProfileMode,
+					EC_HRES_LOG(HrCreateMsemsService(tkOptions->profileOptions->ulProfileMode == PROFILEMODE_DEFAULT,
 						(LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(),
-						tkOptions->serviceOptions->ulServiceMode == SERVICEMODE_DEFAULT,
-						tkOptions->serviceOptions->iServiceIndex,
 						tkOptions->iOutlookVersion,
-						tkOptions->mailboxOptions), L"Calling HrAddDelegateMailbox");
-					break;
+						tkOptions->serviceOptions), L"Calling HrCreateMsemsService");
 				case ACTION_EDIT:
-				case ACTION_REMOVE:
-					break;
-				case ACTION_PROMOTEDELEGATE:
-					EC_HRES_LOG(HrPromoteDelegates((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(),
-						tkOptions->profileOptions->ulProfileMode == PROFILEMODE_DEFAULT,
-						tkOptions->profileOptions->ulProfileMode == PROFILEMODE_ALL,
-						tkOptions->serviceOptions->iServiceIndex,
-						tkOptions->serviceOptions->ulServiceMode == SERVICEMODE_DEFAULT,
-						tkOptions->serviceOptions->ulServiceMode == SERVICEMODE_ALL,
-						tkOptions->iOutlookVersion,
-						tkOptions->serviceOptions->ulConnectMode), L"Calling HrPromoteDelegates");
-					// If Caching options were specified then update the cached mode configuration accordingly
-					if ((tkOptions->serviceOptions->ulCachedModeOwner > 0) || (tkOptions->serviceOptions->ulCachedModeShared > 0) || (tkOptions->serviceOptions->ulCachedModePublicFolder > 0))
-					{
-						// This is not yet implemented
-					}
-					break;
-				case ACTION_ADDDELEGATE:
 
+					switch (tkOptions->mailboxOptions->ulMailboxAction)
+					{
+					case ACTION_ADD:
+						EC_HRES_LOG(HrAddDelegateMailbox(tkOptions->profileOptions->ulProfileMode,
+							(LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(),
+							tkOptions->serviceOptions->ulServiceMode == SERVICEMODE_DEFAULT,
+							tkOptions->serviceOptions->iServiceIndex,
+							tkOptions->iOutlookVersion,
+							tkOptions->mailboxOptions), L"Calling HrAddDelegateMailbox");
+						break;
+					case ACTION_EDIT:
+					case ACTION_REMOVE:
+						break;
+					case ACTION_PROMOTEDELEGATE:
+						EC_HRES_LOG(HrPromoteDelegates((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(),
+							tkOptions->profileOptions->ulProfileMode == PROFILEMODE_DEFAULT,
+							tkOptions->profileOptions->ulProfileMode == PROFILEMODE_ALL,
+							tkOptions->serviceOptions->iServiceIndex,
+							tkOptions->serviceOptions->ulServiceMode == SERVICEMODE_DEFAULT,
+							tkOptions->serviceOptions->ulServiceMode == SERVICEMODE_ALL,
+							tkOptions->iOutlookVersion,
+							tkOptions->serviceOptions->ulConnectMode), L"Calling HrPromoteDelegates");
+						// If Caching options were specified then update the cached mode configuration accordingly
+						if ((tkOptions->serviceOptions->ulCachedModeOwner > 0) || (tkOptions->serviceOptions->ulCachedModeShared > 0) || (tkOptions->serviceOptions->ulCachedModePublicFolder > 0))
+						{
+							// This is not yet implemented
+						}
+						break;
+					case ACTION_ADDDELEGATE:
+
+					case ACTION_LIST:
+
+						break;
+					};
+
+				case ACTION_UPDATE:
+					break;
 				case ACTION_LIST:
+					break;
+				case ACTION_ENABLECACHEDMODE:
+					if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_DEFAULT)
+					{
+						EC_HRES_LOG(HrSetCachedMode((LPWSTR)GetDefaultProfileName().c_str(), true, false, -1, tkOptions->serviceOptions->ulServiceMode == SERVICEMODE_DEFAULT, tkOptions->serviceOptions->ulServiceMode == SERVICEMODE_ALL, tkOptions->serviceOptions->ulCachedModeOwner == 1, tkOptions->serviceOptions->ulCachedModeShared == 1, tkOptions->serviceOptions->ulCachedModePublicFolder == 1, tkOptions->serviceOptions->iCachedModeMonths, tkOptions->iOutlookVersion), L"HrSetCachedMode");
+					}
+					else if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_ONE)
+					{
+						EC_HRES_LOG(HrSetCachedMode((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(), false, false, -1, tkOptions->serviceOptions->ulServiceMode == SERVICEMODE_DEFAULT, tkOptions->serviceOptions->ulServiceMode == SERVICEMODE_ALL, tkOptions->serviceOptions->ulCachedModeOwner == 1, tkOptions->serviceOptions->ulCachedModeShared == 1, tkOptions->serviceOptions->ulCachedModePublicFolder == 1, tkOptions->serviceOptions->iCachedModeMonths, tkOptions->iOutlookVersion), L"HrSetCachedMode");
+					}
 
 					break;
 				};
-
-			case ACTION_UPDATE:
 				break;
 			case ACTION_LIST:
+				EC_HRES_LOG(HrListProfiles(tkOptions->profileOptions, tkOptions->wszExportPath), L"Calling HrListProfiles");
 				break;
-			case ACTION_ENABLECACHEDMODE:
+			case ACTION_CLONE:
+
+				MAPIAllocateBuffer(sizeof(ProfileInfo), (LPVOID*)lpProfInfo);
+				ZeroMemory(lpProfInfo, sizeof(ProfileInfo));
+
 				if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_DEFAULT)
 				{
-					EC_HRES_LOG(HrSetCachedMode((LPWSTR)GetDefaultProfileName().c_str(), true, false, -1, tkOptions->serviceOptions->ulServiceMode == SERVICEMODE_DEFAULT, tkOptions->serviceOptions->ulServiceMode == SERVICEMODE_ALL, tkOptions->serviceOptions->ulCachedModeOwner == 1, tkOptions->serviceOptions->ulCachedModeShared == 1, tkOptions->serviceOptions->ulCachedModePublicFolder == 1, tkOptions->serviceOptions->iCachedModeMonths, tkOptions->iOutlookVersion), L"HrSetCachedMode");
+					EC_HRES_LOG(HrGetProfile((LPWSTR)GetDefaultProfileName().c_str(), &profInfo), L"Calling HrGetProfile");
 				}
 				else if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_ONE)
 				{
-					EC_HRES_LOG(HrSetCachedMode((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(), false, false, -1, tkOptions->serviceOptions->ulServiceMode == SERVICEMODE_DEFAULT, tkOptions->serviceOptions->ulServiceMode == SERVICEMODE_ALL,  tkOptions->serviceOptions->ulCachedModeOwner == 1, tkOptions->serviceOptions->ulCachedModeShared == 1, tkOptions->serviceOptions->ulCachedModePublicFolder == 1, tkOptions->serviceOptions->iCachedModeMonths, tkOptions->iOutlookVersion), L"HrSetCachedMode");
+					EC_HRES_LOG(HrGetProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(), &profInfo), L"Calling HrGetProfile");
+
 				}
-				
+				EC_HRES_LOG(HrCloneProfile(&profInfo), L"Calling HrCloneProfile");
+				break;
+			case ACTION_SIMPLECLONE:
+
+				MAPIAllocateBuffer(sizeof(ProfileInfo), (LPVOID*)lpProfInfo);
+				ZeroMemory(lpProfInfo, sizeof(ProfileInfo));
+
+				if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_DEFAULT)
+				{
+					EC_HRES_LOG(HrGetProfile((LPWSTR)GetDefaultProfileName().c_str(), &profInfo), L"Calling HrGetProfile");
+				}
+				else if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_ONE)
+				{
+					EC_HRES_LOG(HrGetProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(), &profInfo), L"Calling HrGetProfile");
+
+				}
+				EC_HRES_LOG(HrSimpleCloneProfile(&profInfo, tkOptions->profileOptions->bSetDefaultProfile), L"Calling HrCloneProfile");
+				break;
+			case ACTION_REMOVE:
+				if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_DEFAULT)
+				{
+					EC_HRES_LOG(HrDeleteProfile((LPWSTR)GetDefaultProfileName().c_str()), L"HrDeleteProfile");
+				}
+				else if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_ONE)
+				{
+					EC_HRES_LOG(HrDeleteProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str()), L"HrDeleteProfile");
+				}
+
+
 				break;
 			};
-			break;
-		case ACTION_LIST:
-			EC_HRES_LOG(HrListProfiles(tkOptions->profileOptions, tkOptions->wszExportPath), L"Calling HrListProfiles");
-			break;
-		case ACTION_CLONE:
 
-			MAPIAllocateBuffer(sizeof(ProfileInfo), (LPVOID*)lpProfInfo);
-			ZeroMemory(lpProfInfo, sizeof(ProfileInfo));
-
-			if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_DEFAULT)
-			{
-				EC_HRES_LOG(HrGetProfile((LPWSTR)GetDefaultProfileName().c_str(), &profInfo), L"Calling HrGetProfile");
-			}
-			else if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_ONE)
-			{
-				EC_HRES_LOG(HrGetProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(), &profInfo), L"Calling HrGetProfile");
-
-			}
-			EC_HRES_LOG(HrCloneProfile(&profInfo), L"Calling HrCloneProfile");
-			break;
-		case ACTION_SIMPLECLONE:
-
-			MAPIAllocateBuffer(sizeof(ProfileInfo), (LPVOID*)lpProfInfo);
-			ZeroMemory(lpProfInfo, sizeof(ProfileInfo));
-
-			if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_DEFAULT)
-			{
-				EC_HRES_LOG(HrGetProfile((LPWSTR)GetDefaultProfileName().c_str(), &profInfo), L"Calling HrGetProfile");
-			}
-			else if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_ONE)
-			{
-				EC_HRES_LOG(HrGetProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(), &profInfo), L"Calling HrGetProfile");
-
-			}
-			EC_HRES_LOG(HrSimpleCloneProfile(&profInfo, tkOptions->profileOptions->bSetDefaultProfile), L"Calling HrCloneProfile");
-			break;
-		case ACTION_REMOVE:
-			if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_DEFAULT)
-			{
-				EC_HRES_LOG(HrDeleteProfile((LPWSTR)GetDefaultProfileName().c_str()), L"HrDeleteProfile");
-			}
-			else if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_ONE)
-			{
-				EC_HRES_LOG(HrDeleteProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str()), L"HrDeleteProfile");
-			}
-
-
-			break;
-		};
-
+		}
 
 		// SOME LDAP AB LOGIC
 
@@ -1676,7 +1680,7 @@ void _tmain(int argc, _TCHAR* argv[])
 				tkOptions->addressBookOptions->szProfileName = GetDefaultProfileName();
 				if (tkOptions->addressBookOptions->szProfileName.empty())
 				{
-					printf("ERROR: No default profile found, please specify a valid profile name.");
+					wprintf(L"ERROR: No default profile found, please specify a valid profile name.");
 					return;
 				}
 
@@ -1685,7 +1689,7 @@ void _tmain(int argc, _TCHAR* argv[])
 			// Create a profile administration object.
 			EC_HRES_MSG(MAPIAdminProfiles(0,		// Bitmask of flags indicating options for the service entry function. 
 				&lpProfAdmin), L"Getting a profile admin interface pointer");					// Pointer to a pointer to the new profile administration object.
-			printf("Retrieved IProfAdmin interface pointer.\n");
+			wprintf(L"Retrieved IProfAdmin interface pointer.\n");
 
 			// Get access to a message service administration object for making changes to the message services in a profile. 
 			EC_HRES_MSG(lpProfAdmin->AdminServices(LPTSTR(tkOptions->addressBookOptions->szProfileName.c_str()),	// A pointer to the name of the profile to be modified. The lpszProfileName parameter must not be NULL.
@@ -1693,7 +1697,7 @@ void _tmain(int argc, _TCHAR* argv[])
 				NULL,																			// A handle of the parent window for any dialog boxes or windows that this method displays.
 				0,																				// A bitmask of flags that controls the retrieval of the message service administration object. The following flags can be set:
 				&lpSvcAdmin), L"Getting a service admin interface pointer");																	// A pointer to a pointer to a message service administration object.
-			printf("Retrieved IMsgServiceAdmin interface pointer.\n");
+			wprintf(L"Retrieved IMsgServiceAdmin interface pointer.\n");
 
 		switch (tkOptions->addressBookOptions->ulRunningMode)
 		{
@@ -1703,7 +1707,7 @@ void _tmain(int argc, _TCHAR* argv[])
 		case ADDRESSBOOK_UPDATE:
 			break;
 		case ADDRESSBOOK_LIST_ALL:
-				printf("Running in List mode.\n");
+			wprintf(L"Running in List mode.\n");
 				// Calling ListAllABServices to list all the existing Ldap AB Servies in the selected profile
 				EC_HRES(ListAllABServices(lpSvcAdmin));
 				break;
@@ -1711,6 +1715,9 @@ void _tmain(int argc, _TCHAR* argv[])
 		case ADDRESSBOOK_LIST_ONE:
 			break;
 		}
+
+
+#pragma region SomeAncientCodeFromYesterYear
 		//switch (tkOptions->ulScenario)
 		//{
 		//case SCENARIO_PROFILE:
@@ -1889,8 +1896,11 @@ void _tmain(int argc, _TCHAR* argv[])
 		//	}
 		//	break;
 		//}
+#pragma endregion
 		MAPIUninitialize();
 	}
+
+#pragma region SomeMoreStuff
 	//loggingMode = LoggingMode(tkOptions.ulLoggingMode);
 	//// Check the curren't process' bitness vs Outlook's bitness and only run it if matched to avoid MAPI dialog boxes.
 	//if (!IsCorrectBitness())
@@ -1995,6 +2005,7 @@ void _tmain(int argc, _TCHAR* argv[])
 			oss << L"Error " << std::dec << exception << L" encountered";
 		Logger::Write(logLevelError, oss.str());
 	}
+#pragma endregion
 
 Error:
 	goto Cleanup;

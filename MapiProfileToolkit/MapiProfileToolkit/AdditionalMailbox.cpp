@@ -396,7 +396,7 @@ HRESULT HrAddDelegateMailbox(BOOL bDefaultProfile,
 						rgval[4].ulPropTag = PR_PROFILE_USER_SMTP_EMAIL_ADDRESS_W;
 						rgval[4].Value.lpszW = (LPWSTR)wszSmtpAddress.c_str();
 
-						printf("Creating EMSDelegate provider.\n");
+						wprintf(L"Creating EMSDelegate provider.\n");
 						// Create the message service with the above properties.
 						hRes = lpProvAdmin->CreateProvider(LPWSTR("EMSDelegate"),
 							5,
@@ -442,7 +442,7 @@ HRESULT HrAddDelegateMailbox(BOOL bDefaultProfile,
 				rgval[4].ulPropTag = PR_PROFILE_USER_SMTP_EMAIL_ADDRESS_W;
 				rgval[4].Value.lpszW = (LPWSTR)wszSmtpAddress.c_str();
 
-				printf("Creating EMSDelegate provider.\n");
+				wprintf(L"Creating EMSDelegate provider.\n");
 				// Create the message service with the above properties.
 				hRes = lpProvAdmin->CreateProvider(LPWSTR("EMSDelegate"),
 					5,
@@ -467,12 +467,12 @@ HRESULT HrAddDelegateMailbox(BOOL bDefaultProfile,
 	goto cleanup;
 
 Error:
-	printf("ERROR: hRes = %0x\n", hRes);
+	wprintf(L"ERROR: hRes = %0x\n", hRes);
 
 cleanup:
 	// Clean up.
 	if (lpProfAdmin) lpProfAdmin->Release();
-	printf("Done cleaning up.\n");
+	wprintf(L"Done cleaning up.\n");
 	return hRes;
 }
 
@@ -598,7 +598,7 @@ HRESULT HrAddDelegateMailboxLegacy(BOOL bDefaultProfile,
 						rgval[3].ulPropTag = PR_PROFILE_SERVER_DN;
 						rgval[3].Value.lpszA = ConvertWideCharToMultiByte(lpszwServerDN);
 
-						printf("Creating EMSDelegate provider.\n");
+						wprintf(L"Creating EMSDelegate provider.\n");
 						// Create the message service with the above properties.
 						EC_HRES_MSG(lpProvAdmin->CreateProvider(LPWSTR("EMSDelegate"),
 							4,
@@ -638,7 +638,7 @@ HRESULT HrAddDelegateMailboxLegacy(BOOL bDefaultProfile,
 				rgval[3].ulPropTag = PR_PROFILE_SERVER_DN;
 				rgval[3].Value.lpszA = ConvertWideCharToMultiByte(lpszwServerDN);
 
-				printf("Creating EMSDelegate provider.\n");
+				wprintf(L"Creating EMSDelegate provider.\n");
 				// Create the message service with the above properties.
 				hRes = lpProvAdmin->CreateProvider(LPWSTR("EMSDelegate"),
 					4,
@@ -662,12 +662,12 @@ HRESULT HrAddDelegateMailboxLegacy(BOOL bDefaultProfile,
 	goto cleanup;
 
 Error:
-	printf("ERROR: hRes = %0x\n", hRes);
+	wprintf(L"ERROR: hRes = %0x\n", hRes);
 
 cleanup:
 	// Clean up.
 	if (lpProfAdmin) lpProfAdmin->Release();
-	printf("Done cleaning up.\n");
+	wprintf(L"Done cleaning up.\n");
 	return hRes;
 }
 
