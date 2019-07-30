@@ -157,14 +157,13 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 	ZeroMemory(pRunOpts, sizeof(RuntimeOptions));
 	int iThreeParam = 0;
 	pRunOpts->iOutlookVersion = GetOutlookVersion();
-	pRunOpts->ulActionType = ACTIONTYPE_STANDARD;
-	pRunOpts->ulLoggingMode = loggingModeConsole;
+	pRunOpts->loggingMode = LoggingMode::Console;
 
 	pRunOpts->profileOptions = new ProfileOptions();
-	pRunOpts->profileOptions->ulProfileMode = PROFILEMODE_DEFAULT;
+	pRunOpts->profileOptions->profileMode = ProfileMode::Default;
 	pRunOpts->serviceOptions = new ServiceOptions();
-	pRunOpts->serviceOptions->ulServiceMode = SERVICEMODE_DEFAULT;
-	pRunOpts->serviceOptions->ulConnectMode = CONNECT_MOH;
+	pRunOpts->serviceOptions->serviceMode = ServiceMode::Default;
+	pRunOpts->serviceOptions->connectMode = ConnectMode::RoH;
 	pRunOpts->mailboxOptions = new MailboxOptions();
 	pRunOpts->addressBookOptions = new AddressBookOptions();
 
@@ -178,7 +177,7 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 			std::wstring wszExportPath = argv[i + 1];
 			std::transform(wszExportPath.begin(), wszExportPath.end(), wszExportPath.begin(), ::tolower);
 			pRunOpts->wszExportPath = wszExportPath;
-			pRunOpts->bExportMode = EXPORTMODE_EXPORT;
+			pRunOpts->exportMode = ExportMode::Export;
 			i++;
 		}
 		else if ((wsArg == L"-addressbook") || (wsArg == L"-ab"))

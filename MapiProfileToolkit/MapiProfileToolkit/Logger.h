@@ -8,7 +8,7 @@
 // Log, version 0.1: a simple logging class
 enum LogLevel { logLevelInfo, logLevelWarning, logLevelError, logLevelSuccess, logLevelFailed, logLevelDebug };
 enum LogCallStatus { logCallStatusSuccess, logCallStatusError, logCallStatusNoFile, logCallStatusLoggingDisabled };
-enum LoggingMode { loggingModeNone, loggingModeConsole, loggingModeFile, loggingModeConsoleandFile };
+
 class Logger
 {
 public:

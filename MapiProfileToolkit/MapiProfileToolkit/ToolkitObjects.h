@@ -2,77 +2,90 @@
 
 #include "stdafx.h"
 
-#define PROFILEMODE_DEFAULT (ULONG)0 
-#define PROFILEMODE_ONE (ULONG)1
-#define PROFILEMODE_ALL (ULONG)2
 
-#define CONNECT_ROH (ULONG)1
-#define CONNECT_MOH (ULONG)2
 
-// 1 = List one; 2 = List all; 3 = Update; 4 = Create 
-#define ADDRESSBOOK_LIST_ONE (ULONG)1 
-#define ADDRESSBOOK_LIST_ALL (ULONG)2
-#define ADDRESSBOOK_UPDATE (ULONG)3
-#define ADDRESSBOOK_CREATE (ULONG)4
+#define Unspecified					= 0x00000000
+#define ProfileAdd					= 0x00000001
+#define ProfileClone				= 0x00000002
+#define ProfileEdit					= 0x00000004
+#define ProfileList					= 0x00000008
+#define ProfileListAll				= 0x00000010
+#define ProfileRemove				= 0x00000020
+#define ProfileRemoveAll			= 0x00000040
+#define ProfileUpdate				= 0x00000080
+#define ProviderAdd					= 0x00000100
+#define ProviderEdit				= 0x00000200
+#define ProviderList				= 0x00000400
+#define ProviderListAll				= 0x00000800
+#define ProviderRemove				= 0x00001000
+#define ProviderRemoveAll			= 0x00002000
+#define ProviderUpdate				= 0x00004000
+#define ServiceAdd					= 0x00008000
+#define ServiceEdit					= 0x00010000
+#define ServiceDisableCachedMode	= 0x00020000
+#define ServiceEnableCachedMode		= 0x00040000
+#define ServiceList					= 0x00080000
+#define ServiceListAll				= 0x00100000
+#define ServiceRemove				= 0x00200000
+#define ServiceRemoveAll			= 0x00400000
+#define ServiceUpdate				= 0x00800000
+#define PromoteDelegate				= 0x01000000
 
-enum 
-{ 
-	SCENARIO_PROFILE = 1,
-	SCENARIO_SERVICE,
-	SCENARIO_MAILBOX,
-	SCENARIO_DATAFILE,
-	SCENARIO_LDAP,
-	SCENARIO_CUSTOM
-};
-
-enum { ACTIONTYPE_STANDARD = 1, ACTIONTYPE_CUSTOM };
-
-enum { STANDARDACTION_ADD = 1, STANDARDACTION_REMOVE, STANDARDACTION_EDIT, STANDARDACTION_LIST };
-
-enum { ACTION_UNKNOWN = 0, ACTION_ADD = 1, ACTION_REMOVE, ACTION_EDIT, ACTION_LIST, ACTION_UPDATE, ACTION_PROMOTEDELEGATE, ACTION_ADDDELEGATE, ACTION_CLONE, ACTION_SIMPLECLONE, ACTION_ENABLECACHEDMODE};
-
-enum 
-{ 
-	CUSTOMACTION_PROMOTEMAILBOXTOSERVICE = 1, 
-	CUSTOMACTION_EDITCACHEDMODECONFIGURATION,
-	CUSTOMACTION_UPDATESMTPADDRESS,
-	CUSTOMACTION_CHANGEPSTLOCATION,
-	CUSTOMACTION_REMOVEORPHANEDDATAFILES
-};
-
-enum 
-{ 
-	SERVICEMODE_DEFAULT = 1, 
-	SERVICEMODE_ONE, 
-	SERVICEMODE_ALL 
-};
-
-enum
+enum ProfileMode
 {
-	SERVICETYPE_OTHER,
-	SERVICETYPE_MAILBOX,
-	SERVICETYPE_PST,
-	SERVICETYPE_ADDRESSBOOK
+	Unknown = 0,
+	Default,
+	Specific,
+	All
 };
 
-enum
+enum ConnectMode
 {
-	MAILBOXTYPE_PRIMARY = 1,
-	MAILBOXTYPE_DELEGATE,
-	MAILBOXTYPE_PUBLICFOLDER
+	Unknown = 0,
+	RoH,
+	MoH
 };
 
-enum 
-{ 
-	MAILBOXMODE_DEFAULT = 1, 
-	MAILBOXMODE_ONE, 
-	MAILBOXMODE_ALL 
+enum AddressBookAction
+{
+	Unknown = 0,
+	ListSpecific,
+	ListAll,
+	Update,
+	Create
 };
 
-enum 
+
+
+enum ServiceMode
+{
+	Unspecified,
+	Default,
+	Specific,
+	All
+};
+
+enum ServiceType
+{
+	Unknown,
+	Mailbox,
+	Pst,
+	AddressBook
+};
+
+enum ProviderType 
 { 
-	EXPORTMODE_NOEXPORT = 0, 
-	EXPORTMODE_EXPORT 
+	Unknown,
+	PrimaryMailbox,
+	Delegate,
+	PublicFolder
+};
+
+enum ExportMode
+{ 
+	Unknown,
+	Export,
+	NoExport
 };
 
 enum 
@@ -82,20 +95,20 @@ enum
 };
 
 // Make sure any changes in here are reflected in Logger.h as well
-enum 
+enum LoggingMode
 { 
-	LOGGINGMODE_NONE,
-	LOGGINGMODE_CONSOLE, 
-	LOGGINGMODE_FILE, 
-	LOGGINGODE_CONSOLE_AND_FILE
+	Unknown,
+	None,
+	Console,
+	File,
+	ConsoleAndFile
 };
 
 struct ProfileOptions
 {
-	ULONG ulProfileMode;					// pm
+	ProfileMode profileMode;					// pm
 	std::wstring wszProfileName;			// pn
 	bool bSetDefaultProfile;				// pd
-	ULONG ulProfileAction;
 };
 
 struct ServiceOptions
@@ -121,12 +134,11 @@ struct ServiceOptions
 	ULONG ulCachedModePublicFolder;			// scmpf	| 1 = disabled; 2 = enabled; 
 	ULONG ulCachedModeShared;				// scms		| 1 = disabled; 2 = enabled; 
 	ULONG ulConfigFlags;					// scfgf		| PR_PROFILE_CONFIG_FLAGS
-	ULONG ulConnectMode;					// scnctm		| ROH or MOH
+	ConnectMode connectMode;					// scnctm		| ROH or MOH
 	ULONG ulProfileMode;					// spm		| PROFILEMODE_DEFAULT = 1, PROFILEMODE_ONE = 2, PROFILEMODE_ALL = 3
 	ULONG ulResourceFlags;					// srf		| PR_RESOURCES_FLAGS
-	ULONG ulServiceType;
-	ULONG ulServiceAction;
-	ULONG ulServiceMode;
+	ServiceType serviceType;
+	ServiceMode serviceMode;
 };
 
 struct MailboxOptions
@@ -180,12 +192,10 @@ struct UpdateSmtpAddress
 };
 struct RuntimeOptions
 {
-	ULONG ulScenario;
-	ULONG ulActionType;
-	ULONG ulAction;
-	ULONG ulLoggingMode;
+	ToolkitAction toolkitAction;
+	LoggingMode loggingMode;
 	std::wstring wszExportPath;
-	BOOL bExportMode; // 0 = no export; 1 = export;
+	ExportMode exportMode; // 0 = no export; 1 = export;
 	std::wstring wszLogFilePath;
 	int iOutlookVersion;
 	ProfileOptions * profileOptions;
