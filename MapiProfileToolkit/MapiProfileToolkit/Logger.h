@@ -4,10 +4,8 @@
 #include <fstream>
 #include <string>
 #include <time.h>
-
+#include "ToolkitObjects.h"
 // Log, version 0.1: a simple logging class
-enum LogLevel { logLevelInfo, logLevelWarning, logLevelError, logLevelSuccess, logLevelFailed, logLevelDebug };
-enum LogCallStatus { logCallStatusSuccess, logCallStatusError, logCallStatusNoFile, logCallStatusLoggingDisabled };
 
 class Logger
 {
@@ -17,13 +15,7 @@ public:
 	static LogCallStatus Write(LogLevel llLevel, std::wstring szMessage);
 	static void SetLoggingMode(LoggingMode loggingMode);
 private:
-	~Logger()
-	{
-		if (m_bIsLogFileOpen)
-		{
-			m_ofsLogFile.close();
-		}
-	}
+	~Logger();
 	
 	static std::wofstream m_ofsLogFile;
 	static std::wstring m_szLogFilePath;

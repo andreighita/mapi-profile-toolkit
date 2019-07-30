@@ -20,7 +20,6 @@
 #include <MAPIUtil.h>
 #include "Profile.h"
 #include "MapiProfileToolkit.h"
-#include "ToolkitObjects.h"
 #include <iostream>
 #include <string>
 #include <utility>
@@ -29,6 +28,7 @@
 #include "RegistryHelper.h"
 #include "Logger.h"
 #include <vector>
+
 // Is64BitProcess
 // Returns true if 64 bit process or false if 32 bit.
 BOOL Is64BitProcess(void)
@@ -150,22 +150,23 @@ BOOL _cdecl IsCorrectBitness()
 	else return FALSE;
 }
 
-BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
+BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions* pRunOpts)
 {
 	std::vector<std::string> wszDiscardedArgs;
 	if (!pRunOpts) return FALSE;
 	ZeroMemory(pRunOpts, sizeof(RuntimeOptions));
+	pRunOpts->action = ACTION_UNSPECIFIED;
 	int iThreeParam = 0;
 	pRunOpts->iOutlookVersion = GetOutlookVersion();
-	pRunOpts->loggingMode = LoggingMode::Console;
+	pRunOpts->loggingMode = LoggingMode::LoggingModeConsole;
 
 	pRunOpts->profileOptions = new ProfileOptions();
-	pRunOpts->profileOptions->profileMode = ProfileMode::Default;
-	pRunOpts->serviceOptions = new ServiceOptions();
-	pRunOpts->serviceOptions->serviceMode = ServiceMode::Default;
-	pRunOpts->serviceOptions->connectMode = ConnectMode::RoH;
-	pRunOpts->mailboxOptions = new MailboxOptions();
-	pRunOpts->addressBookOptions = new AddressBookOptions();
+	pRunOpts->profileOptions->profileMode = ProfileMode::Mode_Default;
+	pRunOpts->profileOptions->serviceOptions = new ServiceOptions();
+	pRunOpts->profileOptions->serviceOptions->serviceMode = ServiceMode::Mode_Default;
+	pRunOpts->profileOptions->serviceOptions->connectMode = ConnectMode::ConnectMode_RpcOverHttp;
+	pRunOpts->profileOptions->serviceOptions->providerOptions = new ProviderOptions();
+	pRunOpts->profileOptions->serviceOptions->addressBookOptions = new AddressBookOptions();
 
 	for (int i = 1; i < argc; i++)
 	{
@@ -180,43 +181,11 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 			pRunOpts->exportMode = ExportMode::Export;
 			i++;
 		}
-		else if ((wsArg == L"-addressbook") || (wsArg == L"-ab"))
-		{
-			if (i + 1 < argc)
-			{
-				std::wstring wszValue = argv[i + 1];
-				std::transform(wszValue.begin(), wszValue.end(), wszValue.begin(), ::tolower);
-				if (wszValue == L"create")
-				{
-					pRunOpts->addressBookOptions->ulRunningMode = ADDRESSBOOK_CREATE;
-					i++;
-				}
-				else if (wszValue == L"update")
-				{
-					pRunOpts->addressBookOptions->ulRunningMode = ADDRESSBOOK_UPDATE;
-					i++;
-				}
-				else if (wszValue == L"listone")
-				{
-					pRunOpts->addressBookOptions->ulRunningMode = ADDRESSBOOK_LIST_ONE;
-					i++;
-				}
-				else if (wszValue == L"listall")
-				{
-					pRunOpts->addressBookOptions->ulRunningMode = ADDRESSBOOK_LIST_ALL;
-					i++;
-				}
-				else
-				{
-					return false;
-				}
-			}
-		}
 		else if ((wsArg == L"-addressbookdisplayname") || (wsArg == L"-abdn"))
 		{
 			if (i + 1 < argc)
 			{
-				pRunOpts->addressBookOptions->szABDisplayName = argv[i + 1];
+				pRunOpts->profileOptions->serviceOptions->addressBookOptions->wszABDisplayName = argv[i + 1];
 				i++;
 
 			}
@@ -225,7 +194,7 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 		{
 			if (i + 1 < argc)
 			{
-				pRunOpts->addressBookOptions->szABServerName = argv[i + 1];
+				pRunOpts->profileOptions->serviceOptions->addressBookOptions->wszABServerName = argv[i + 1];
 				i++;
 
 			}
@@ -234,7 +203,7 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 		{
 			if (i + 1 < argc)
 			{
-				pRunOpts->addressBookOptions->szConfigFilePath = argv[i + 1];
+				pRunOpts->profileOptions->serviceOptions->addressBookOptions->wszConfigFilePath = argv[i + 1];
 				i++;
 
 			}
@@ -247,32 +216,47 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 				std::transform(wszValue.begin(), wszValue.end(), wszValue.begin(), ::tolower);
 				if (wszValue == L"add")
 				{
-					pRunOpts->profileOptions->ulProfileAction = ACTION_ADD;
+					pRunOpts->action |= ACTION_PROFILE_ADD;
 					i++;
 				}
-				else if (wszValue == L"edit")
+				else if (wszValue == L"update")
 				{
-					pRunOpts->profileOptions->ulProfileAction = ACTION_EDIT;
+					pRunOpts->action |= ACTION_PROFILE_UPDATE;
 					i++;
 				}
 				else if (wszValue == L"remove")
 				{
-					pRunOpts->profileOptions->ulProfileAction = ACTION_REMOVE;
+					pRunOpts->action |= ACTION_PROFILE_REMOVE;
+					i++;
+				}
+				else if (wszValue == L"removeall")
+				{
+					pRunOpts->action |= ACTION_PROFILE_REMOVEALL;
 					i++;
 				}
 				else if (wszValue == L"list")
 				{
-					pRunOpts->profileOptions->ulProfileAction = ACTION_LIST;
+					pRunOpts->action |= ACTION_PROFILE_LIST;
+					i++;
+				}
+				else if (wszValue == L"listall")
+				{
+					pRunOpts->action |= ACTION_PROFILE_LISTALL;
 					i++;
 				}
 				else if (wszValue == L"clone")
 				{
-					pRunOpts->profileOptions->ulProfileAction = ACTION_CLONE;
+					pRunOpts->action |= ACTION_PROFILE_CLONE;
 					i++;
 				}
-				else if (wszValue == L"simpleclone")
+				else if (wszValue == L"promotedelegates")
 				{
-					pRunOpts->profileOptions->ulProfileAction = ACTION_SIMPLECLONE;
+					pRunOpts->action |= ACTION_PROFILE_PROMOTEDELEGATES;
+					i++;
+				}
+				else if (wszValue == L"setdefault")
+				{
+					pRunOpts->action |= ACTION_PROFILE_SETDEFAULT;
 					i++;
 				}
 				else
@@ -289,19 +273,19 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 				std::transform(wszValue.begin(), wszValue.end(), wszValue.begin(), ::tolower);
 				if (wszValue == L"default")
 				{
-					pRunOpts->profileOptions->ulProfileMode = PROFILEMODE_DEFAULT;
+					pRunOpts->profileOptions->profileMode = ProfileMode::Mode_Default;
 					i++;
 
 				}
-				else if (wszValue == L"one")
+				else if (wszValue == L"specific")
 				{
-					pRunOpts->profileOptions->ulProfileMode = PROFILEMODE_ONE;
+					pRunOpts->profileOptions->profileMode = ProfileMode::Mode_Specific;
 					i++;
 
 				}
 				else if (wszValue == L"all")
 				{
-					pRunOpts->profileOptions->ulProfileMode = PROFILEMODE_ALL;
+					pRunOpts->profileOptions->profileMode = ProfileMode::Mode_All;
 					i++;
 
 				}
@@ -313,7 +297,7 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 			if (i + 1 < argc)
 			{
 				pRunOpts->profileOptions->wszProfileName = argv[i + 1];
-				pRunOpts->profileOptions->ulProfileMode = PROFILEMODE_ONE;
+				pRunOpts->profileOptions->profileMode = ProfileMode::Mode_Specific;
 				i++;
 
 			}
@@ -331,35 +315,39 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 				std::transform(wszValue.begin(), wszValue.end(), wszValue.begin(), ::tolower);
 				if (wszValue == L"add")
 				{
-					pRunOpts->serviceOptions->ulServiceAction = ACTION_ADD;
-					i++;
-				}
-				else if (wszValue == L"edit")
-				{
-					pRunOpts->serviceOptions->ulServiceAction = ACTION_EDIT;
-					i++;
-				}
-				else if (wszValue == L"remove")
-				{
-					pRunOpts->serviceOptions->ulServiceAction = ACTION_REMOVE;
-					i++;
-				}
-				else if (wszValue == L"list")
-				{
-					pRunOpts->serviceOptions->ulServiceAction = ACTION_LIST;
+					pRunOpts->action |= ACTION_SERVICE_ADD;
 					i++;
 				}
 				else if (wszValue == L"update")
 				{
-					pRunOpts->serviceOptions->ulServiceAction = ACTION_UPDATE;
+					pRunOpts->action |= ACTION_SERVICE_UPDATE;
 					i++;
 				}
-				else if (wszValue == L"enablecachedmode")
+				else if (wszValue == L"remove")
 				{
-					pRunOpts->serviceOptions->ulServiceAction = ACTION_ENABLECACHEDMODE;
+					pRunOpts->action |= ACTION_SERVICE_REMOVE;
 					i++;
 				}
-
+				else if (wszValue == L"removeall")
+				{
+					pRunOpts->action |= ACTION_SERVICE_REMOVEALL;
+					i++;
+				}
+				else if (wszValue == L"list")
+				{
+					pRunOpts->action |= ACTION_SERVICE_LIST;
+					i++;
+				}
+				else if (wszValue == L"listall")
+				{
+					pRunOpts->action |= ACTION_SERVICE_LISTALL;
+					i++;
+				}
+				else if (wszValue == L"setcachedmode")
+				{
+					pRunOpts->action |= ACTION_SERVICE_SETCACHEDMODE;
+					i++;
+				}
 				else
 				{
 					return false;
@@ -374,17 +362,17 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 				std::transform(wszValue.begin(), wszValue.end(), wszValue.begin(), ::tolower);
 				if (wszValue == L"mailbox")
 				{
-					pRunOpts->serviceOptions->ulServiceType = SERVICETYPE_MAILBOX;
+					pRunOpts->profileOptions->serviceOptions->serviceType = ServiceType::ServiceType_Mailbox;
 					i++;
 				}
 				else if (wszValue == L"pst")
 				{
-					pRunOpts->serviceOptions->ulServiceType = SERVICETYPE_PST;
+					pRunOpts->profileOptions->serviceOptions->serviceType = ServiceType::ServiceType_Pst;
 					i++;
 				}
 				else if (wszValue == L"addressbook")
 				{
-					pRunOpts->serviceOptions->ulServiceType = SERVICETYPE_ADDRESSBOOK;
+					pRunOpts->profileOptions->serviceOptions->serviceType = ServiceType::ServiceType_AddressBook;
 					i++;
 				}
 				else
@@ -401,19 +389,19 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 				std::transform(wszValue.begin(), wszValue.end(), wszValue.begin(), ::tolower);
 				if (wszValue == L"default")
 				{
-					pRunOpts->serviceOptions->ulServiceMode = SERVICEMODE_DEFAULT;
+					pRunOpts->profileOptions->serviceOptions->serviceMode = ServiceMode::Mode_Default;
 					i++;
 
 				}
-				else if (wszValue == L"one")
+				else if (wszValue == L"specific")
 				{
-					pRunOpts->serviceOptions->ulServiceMode = SERVICEMODE_ONE;
+					pRunOpts->profileOptions->serviceOptions->serviceMode = ServiceMode::Mode_Specific;
 					i++;
 
 				}
 				else if (wszValue == L"all")
 				{
-					pRunOpts->serviceOptions->ulServiceMode = SERVICEMODE_ALL;
+					pRunOpts->profileOptions->serviceOptions->serviceMode = ServiceMode::Mode_All;
 					i++;
 
 				}
@@ -428,29 +416,35 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 				std::transform(wszValue.begin(), wszValue.end(), wszValue.begin(), ::tolower);
 				if (wszValue == L"add")
 				{
-					pRunOpts->mailboxOptions->ulMailboxAction = ACTION_ADD;
+					pRunOpts->action |= ACTION_PROVIDER_ADD;
 					i++;
 				}
-				else if (wszValue == L"edit")
+				else if (wszValue == L"update")
 				{
-					pRunOpts->mailboxOptions->ulMailboxAction = ACTION_EDIT;
+					pRunOpts->action |= ACTION_PROVIDER_UPDATE;
 					i++;
 				}
 				else if (wszValue == L"remove")
 				{
-					pRunOpts->mailboxOptions->ulMailboxAction = ACTION_REMOVE;
+					pRunOpts->action |= ACTION_PROVIDER_REMOVE;
+					i++;
+				}
+				else if (wszValue == L"removeall")
+				{
+					pRunOpts->action |= ACTION_PROVIDER_REMOVEALL;
 					i++;
 				}
 				else if (wszValue == L"list")
 				{
-					pRunOpts->mailboxOptions->ulMailboxAction = ACTION_LIST;
+					pRunOpts->action |= ACTION_PROVIDER_LIST;
 					i++;
 				}
-				else if (wszValue == L"promotedelegates")
+				else if (wszValue == L"listall")
 				{
-					pRunOpts->mailboxOptions->ulMailboxAction = ACTION_PROMOTEDELEGATE;
+					pRunOpts->action |= ACTION_PROVIDER_LIST;
 					i++;
 				}
+
 				else
 				{
 					return false;
@@ -465,17 +459,17 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 				std::transform(wszValue.begin(), wszValue.end(), wszValue.begin(), ::tolower);
 				if (wszValue == L"primary")
 				{
-					pRunOpts->mailboxOptions->ulMailboxType = MAILBOXTYPE_PRIMARY;
+					pRunOpts->profileOptions->serviceOptions->providerOptions->providerType = ProviderType::PrimaryMailbox;
 					i++;
 				}
 				else if (wszValue == L"delegate")
 				{
-					pRunOpts->mailboxOptions->ulMailboxType = MAILBOXTYPE_DELEGATE;
+					pRunOpts->profileOptions->serviceOptions->providerOptions->providerType = ProviderType::Delegate;
 					i++;
 				}
 				else if (wszValue == L"publicfolder")
 				{
-					pRunOpts->mailboxOptions->ulMailboxType = MAILBOXTYPE_PUBLICFOLDER;
+					pRunOpts->profileOptions->serviceOptions->providerOptions->providerType = ProviderType::PublicFolder;
 					i++;
 				}
 				else
@@ -486,14 +480,14 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 		}
 		else if ((wsArg == L"-setdefaultservice") || (wsArg == L"-sds"))
 		{
-			pRunOpts->serviceOptions->bSetDefaultservice = true;
+			pRunOpts->profileOptions->serviceOptions->bSetDefaultservice = true;
 
 		}
 		else if ((wsArg == L"-cachedmodemonths") || (wsArg == L"-cmm"))
 		{
 			if (i + 1 < argc)
 			{
-				pRunOpts->serviceOptions->iCachedModeMonths = _wtoi(argv[i + 1]);
+				pRunOpts->profileOptions->serviceOptions->iCachedModeMonths = _wtoi(argv[i + 1]);
 				i++;
 
 			}
@@ -502,7 +496,7 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 		{
 			if (i + 1 < argc)
 			{
-				pRunOpts->serviceOptions->iServiceIndex = _wtoi(argv[i + 1]);
+				pRunOpts->profileOptions->serviceOptions->iServiceIndex = _wtoi(argv[i + 1]);
 				i++;
 
 			}
@@ -511,7 +505,7 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 		{
 			if (i + 1 < argc)
 			{
-				pRunOpts->serviceOptions->wszAddressBookExternalUrl = argv[i + 1];
+				pRunOpts->profileOptions->serviceOptions->wszAddressBookExternalUrl = argv[i + 1];
 				i++;
 
 			}
@@ -520,7 +514,7 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 		{
 			if (i + 1 < argc)
 			{
-				pRunOpts->serviceOptions->wszAddressBookInternalUrl = argv[i + 1];
+				pRunOpts->profileOptions->serviceOptions->wszAddressBookInternalUrl = argv[i + 1];
 				i++;
 
 			}
@@ -529,7 +523,7 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 		{
 			if (i + 1 < argc)
 			{
-				pRunOpts->serviceOptions->wszAutodiscoverUrl = argv[i + 1];
+				pRunOpts->profileOptions->serviceOptions->wszAutodiscoverUrl = argv[i + 1];
 				i++;
 
 			}
@@ -538,8 +532,8 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 		{
 			if (i + 1 < argc)
 			{
-				pRunOpts->serviceOptions->wszMailboxDisplayName = argv[i + 1];
-				pRunOpts->mailboxOptions->wszMailboxDisplayName = argv[i + 1];
+				pRunOpts->profileOptions->serviceOptions->wszMailboxDisplayName = argv[i + 1];
+				pRunOpts->profileOptions->serviceOptions->providerOptions->wszMailboxDisplayName = argv[i + 1];
 				i++;
 
 			}
@@ -548,8 +542,8 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 		{
 			if (i + 1 < argc)
 			{
-				pRunOpts->serviceOptions->wszMailboxLegacyDN = argv[i + 1];
-				pRunOpts->mailboxOptions->wszMailboxLegacyDN = argv[i + 1];
+				pRunOpts->profileOptions->serviceOptions->wszMailboxLegacyDN = argv[i + 1];
+				pRunOpts->profileOptions->serviceOptions->providerOptions->wszMailboxLegacyDN = argv[i + 1];
 				i++;
 
 			}
@@ -558,8 +552,8 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 		{
 			if (i + 1 < argc)
 			{
-				pRunOpts->serviceOptions->wszMailStoreExternalUrl = argv[i + 1];
-				pRunOpts->mailboxOptions->wszMailStoreExternalUrl = argv[i + 1];
+				pRunOpts->profileOptions->serviceOptions->wszMailStoreExternalUrl = argv[i + 1];
+				pRunOpts->profileOptions->serviceOptions->providerOptions->wszMailStoreExternalUrl = argv[i + 1];
 				i++;
 
 			}
@@ -568,8 +562,8 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 		{
 			if (i + 1 < argc)
 			{
-				pRunOpts->serviceOptions->wszMailStoreInternalUrl = argv[i + 1];
-				pRunOpts->mailboxOptions->wszMailStoreExternalUrl = argv[i + 1];
+				pRunOpts->profileOptions->serviceOptions->wszMailStoreInternalUrl = argv[i + 1];
+				pRunOpts->profileOptions->serviceOptions->providerOptions->wszMailStoreExternalUrl = argv[i + 1];
 				i++;
 
 			}
@@ -578,8 +572,8 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 		{
 			if (i + 1 < argc)
 			{
-				pRunOpts->serviceOptions->wszRohProxyServer = argv[i + 1];
-				pRunOpts->mailboxOptions->wszRohProxyServer = argv[i + 1];
+				pRunOpts->profileOptions->serviceOptions->wszRohProxyServer = argv[i + 1];
+				pRunOpts->profileOptions->serviceOptions->providerOptions->wszRohProxyServer = argv[i + 1];
 				i++;
 			}
 		}
@@ -587,7 +581,7 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 		{
 			if (i + 1 < argc)
 			{
-				pRunOpts->mailboxOptions->ulRohProxyServerFlags = _wtoi(argv[i + 1]);
+				pRunOpts->profileOptions->serviceOptions->providerOptions->ulRohProxyServerFlags = _wtoi(argv[i + 1]);
 				i++;
 			}
 		}
@@ -595,7 +589,7 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 		{
 			if (i + 1 < argc)
 			{
-				pRunOpts->mailboxOptions->ulRohProxyServerAuthPackage = _wtoi(argv[i + 1]);
+				pRunOpts->profileOptions->serviceOptions->providerOptions->ulRohProxyServerAuthPackage = _wtoi(argv[i + 1]);
 				i++;
 			}
 		}
@@ -603,8 +597,8 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 		{
 			if (i + 1 < argc)
 			{
-				pRunOpts->serviceOptions->wszServerDisplayName = argv[i + 1];
-				pRunOpts->mailboxOptions->wszServerDisplayName = argv[i + 1];
+				pRunOpts->profileOptions->serviceOptions->wszServerDisplayName = argv[i + 1];
+				pRunOpts->profileOptions->serviceOptions->providerOptions->wszServerDisplayName = argv[i + 1];
 				i++;
 
 			}
@@ -613,8 +607,8 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 		{
 			if (i + 1 < argc)
 			{
-				pRunOpts->serviceOptions->wszServerLegacyDN = argv[i + 1];
-				pRunOpts->mailboxOptions->wszServerLegacyDN = argv[i + 1];
+				pRunOpts->profileOptions->serviceOptions->wszServerLegacyDN = argv[i + 1];
+				pRunOpts->profileOptions->serviceOptions->providerOptions->wszServerLegacyDN = argv[i + 1];
 				i++;
 
 			}
@@ -623,8 +617,8 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 		{
 			if (i + 1 < argc)
 			{
-				pRunOpts->serviceOptions->wszSmtpAddress = argv[i + 1];
-				pRunOpts->mailboxOptions->wszSmtpAddress = argv[i + 1];
+				pRunOpts->profileOptions->serviceOptions->wszSmtpAddress = argv[i + 1];
+				pRunOpts->profileOptions->serviceOptions->providerOptions->wszSmtpAddress = argv[i + 1];
 				i++;
 
 			}
@@ -633,7 +627,7 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 		{
 			if (i + 1 < argc)
 			{
-				pRunOpts->serviceOptions->wszUnresolvedServer = argv[i + 1];
+				pRunOpts->profileOptions->serviceOptions->wszUnresolvedServer = argv[i + 1];
 				i++;
 
 			}
@@ -642,31 +636,31 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 		{
 			if (i + 1 < argc)
 			{
-				pRunOpts->serviceOptions->wszUnresolvedUser = argv[i + 1];
+				pRunOpts->profileOptions->serviceOptions->wszUnresolvedUser = argv[i + 1];
 				i++;
 
 			}
 		}
 		else if ((wsArg == L"-cachedmodeowner") || (wsArg == L"-cmo"))
 		{
-			pRunOpts->serviceOptions->ulCachedModeOwner = true;
+			pRunOpts->profileOptions->serviceOptions->cachedModeOwner = CachedMode::Enabled;
 
 		}
 		else if ((wsArg == L"-cachedmodepublicfolder") || (wsArg == L"-cmpf"))
 		{
-			pRunOpts->serviceOptions->ulCachedModePublicFolder = true;
+			pRunOpts->profileOptions->serviceOptions->cachedModePublicFolders = CachedMode::Enabled;
 
 		}
 		else if ((wsArg == L"-cachedmodeshared") || (wsArg == L"-cms"))
 		{
-			pRunOpts->serviceOptions->ulCachedModeShared = true;
+			pRunOpts->profileOptions->serviceOptions->cachedModeShared = CachedMode::Enabled;
 
 		}
 		else if ((wsArg == L"-configflags") || (wsArg == L"-cf"))
 		{
 			if (i + 1 < argc)
 			{
-				pRunOpts->serviceOptions->ulConfigFlags = _wtol(argv[i + 1]);
+				pRunOpts->profileOptions->serviceOptions->ulConfigFlags = _wtol(argv[i + 1]);
 				i++;
 
 			}
@@ -679,13 +673,13 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 				std::transform(wszValue.begin(), wszValue.end(), wszValue.begin(), ::tolower);
 				if (wszValue == L"roh")
 				{
-					pRunOpts->serviceOptions->ulConnectMode = CONNECT_ROH;
+					pRunOpts->profileOptions->serviceOptions->connectMode = ConnectMode::ConnectMode_RpcOverHttp;
 					i++;
 
 				}
 				if (wszValue == L"moh")
 				{
-					pRunOpts->serviceOptions->ulConnectMode = CONNECT_MOH;
+					pRunOpts->profileOptions->serviceOptions->connectMode = ConnectMode::ConnectMode_MapiOverHttp;
 					i++;
 
 				}
@@ -695,7 +689,7 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 		{
 			if (i + 1 < argc)
 			{
-				pRunOpts->serviceOptions->ulResourceFlags = _wtol(argv[i + 1]);
+				pRunOpts->profileOptions->serviceOptions->ulResourceFlags = _wtol(argv[i + 1]);
 				i++;
 
 			}
@@ -708,13 +702,13 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 				std::transform(wszValue.begin(), wszValue.end(), wszValue.begin(), ::tolower);
 				if (wszValue == L"enable")
 				{
-					pRunOpts->serviceOptions->ulCachedModeOwner = CACHEDMODE_ENABLED;
+					pRunOpts->profileOptions->serviceOptions->cachedModeOwner = CachedMode::Enabled;
 					i++;
 
 				}
 				if (wszValue == L"disable")
 				{
-					pRunOpts->serviceOptions->ulCachedModeOwner = CACHEDMODE_DISABLED;
+					pRunOpts->profileOptions->serviceOptions->cachedModeOwner = CachedMode::Disabled;
 					i++;
 
 				}
@@ -728,13 +722,13 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 				std::transform(wszValue.begin(), wszValue.end(), wszValue.begin(), ::tolower);
 				if (wszValue == L"enable")
 				{
-					pRunOpts->serviceOptions->ulCachedModeShared = CACHEDMODE_ENABLED;
+					pRunOpts->profileOptions->serviceOptions->cachedModeShared = CachedMode::Enabled;
 					i++;
 
 				}
 				if (wszValue == L"disable")
 				{
-					pRunOpts->serviceOptions->ulCachedModeShared = CACHEDMODE_DISABLED;
+					pRunOpts->profileOptions->serviceOptions->cachedModeShared = CachedMode::Disabled;
 					i++;
 
 				}
@@ -748,13 +742,13 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 				std::transform(wszValue.begin(), wszValue.end(), wszValue.begin(), ::tolower);
 				if (wszValue == L"enable")
 				{
-					pRunOpts->serviceOptions->ulCachedModePublicFolder = CACHEDMODE_ENABLED;
+					pRunOpts->profileOptions->serviceOptions->cachedModePublicFolders = CachedMode::Enabled;
 					i++;
 
 				}
 				if (wszValue == L"disable")
 				{
-					pRunOpts->serviceOptions->ulCachedModePublicFolder = CACHEDMODE_DISABLED;
+					pRunOpts->profileOptions->serviceOptions->cachedModePublicFolders = CachedMode::Disabled;
 					i++;
 
 				}
@@ -762,18 +756,26 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 		}
 		else return false;
 	}
-	if (ADDRESSBOOK_CREATE == pRunOpts->addressBookOptions->ulRunningMode)
+
+	// Address Book specific validation
+	if VALUECHECK(pRunOpts->profileOptions->serviceOptions->serviceType, ServiceType::ServiceType_AddressBook)
 	{
-		if (pRunOpts->addressBookOptions->szConfigFilePath.empty())
+		if FLAGCHECK(pRunOpts->action, ACTION_SERVICE_ADD)
 		{
-			return false;
-		}
-	}
-	else if ((ADDRESSBOOK_UPDATE == pRunOpts->addressBookOptions->ulRunningMode) || (ADDRESSBOOK_LIST_ONE == pRunOpts->addressBookOptions->ulRunningMode))
-	{
-		if (pRunOpts->addressBookOptions->szABDisplayName.empty())
-		{
-			return false;
+			if (pRunOpts->profileOptions->serviceOptions->addressBookOptions->wszConfigFilePath.empty())
+			{
+				return false;
+			}
+			else if (FLAGCHECK(pRunOpts->action, ACTION_SERVICE_UPDATE) ||
+				FLAGCHECK(pRunOpts->action, ACTION_SERVICE_LIST) ||
+				FLAGCHECK(pRunOpts->action, ACTION_SERVICE_REMOVE))
+			{
+				if (pRunOpts->profileOptions->serviceOptions->addressBookOptions->wszABDisplayName.empty())
+				{
+					return false;
+				}
+
+			}
 		}
 	}
 	return true;
@@ -1421,41 +1423,41 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 
 void DisplayUsage()
 {
-	wprintf(L"ProfileToolkit - Profile Examination Tool\n");
-	wprintf(L"    Lists profile settings and optionally enables or disables cached exchange \n");
-	wprintf(L"    mode.\n");
-	wprintf(L"\n");
-	wprintf(L"Usage: ProfileToolkit [-?] [-pm <all, one, default>] [-pn profilename] \n");
-	wprintf(L"       [-si serviceIndex] [-cmo <enable, disable>] [-cms <enable, disable>] \n");
-	wprintf(L"       [-cmp <enable, disable>]	[-cmm <0, 1, 3, 6, 12, 24>] [-ep exportpath]\n");
-	wprintf(L"\n");
-	wprintf(L"Usage: ProfileToolkit [-?] [-profile <all, one, default>] [-profilename profilename] \n");
-	wprintf(L"       [-si serviceIndex] [-cmo <enable, disable>] [-cms <enable, disable>] \n");
-	wprintf(L"       [-cmp <enable, disable>]	[-cmm <0, 1, 3, 6, 12, 24>] [-ep exportpath]\n");
-	wprintf(L"       [-addressbook <create, update, listall, listone>] [-addressbookdisplayname <displayname>] \n");
-	wprintf(L"       [-addressbookservername <servername>] [-addressbookconfigfilepath <configfilepath>] \n");
-	wprintf(L"\n");
-	wprintf(L"Options:\n");
-	wprintf(L"    -profile:                  \"all\" to process all profiles.\n");
-	wprintf(L"							   \"default\" to process the default profile.\n");
-	wprintf(L"                               \"one\" to process a specific profile. Prifile Name needs to be \n");
-	wprintf(L"                               specified using -pn.\n");
-	wprintf(L"                               Default profile will be used if -pm is not used.\n");
-	wprintf(L"   -profilename:               Name of the profile to process.\n");
-	wprintf(L"                               Default profile will be used if -pn is not used.\n");
-	wprintf(L"\n");
-	wprintf(L"   -addressbook:               \"create\" to create a new address book service.\n");
-	wprintf(L"                               \"update\" to update an existing address book service. The display name.\n");
-	wprintf(L"                               of the address book to update needs to be specified using -addressbookdisplayname.\n");
-	wprintf(L"                               \"listall\" Tto list all address book services in the profile. \n");
-	wprintf(L"                               \"listone\" to list an existing address book service. The display name.\n");
-	wprintf(L"                               of the address book to list needs to be specified using -addressbookdisplayname.\n");
-	wprintf(L"   -addressbookdisplayname:    The display name of the address book to create, update or list.\n");
-	wprintf(L"   -addressbookservername:     The display name of the LDAP server configure in the address book.\n");
-	wprintf(L"   -addressbookconfigfilepath: The display name of the LDAP server configure in the address book.\n");
-	wprintf(L"   -profilename:               Name of the profile to process.\n");
-	wprintf(L"                               Default profile will be used if -pn is not used.\n");
-	wprintf(L"\n");
+	std::wprintf(L"ProfileToolkit - Profile Examination Tool\n");
+	std::wprintf(L"    Lists profile settings and optionally enables or disables cached exchange \n");
+	std::wprintf(L"    mode.\n");
+	std::wprintf(L"\n");
+	std::wprintf(L"Usage: ProfileToolkit [-?] [-pm <all, one, default>] [-pn profilename] \n");
+	std::wprintf(L"       [-si serviceIndex] [-cmo <enable, disable>] [-cms <enable, disable>] \n");
+	std::wprintf(L"       [-cmp <enable, disable>]	[-cmm <0, 1, 3, 6, 12, 24>] [-ep exportpath]\n");
+	std::wprintf(L"\n");
+	std::wprintf(L"Usage: ProfileToolkit [-?] [-profile <all, one, default>] [-profilename profilename] \n");
+	std::wprintf(L"       [-si serviceIndex] [-cmo <enable, disable>] [-cms <enable, disable>] \n");
+	std::wprintf(L"       [-cmp <enable, disable>]	[-cmm <0, 1, 3, 6, 12, 24>] [-ep exportpath]\n");
+	std::wprintf(L"       [-addressbook <create, update, listall, listone>] [-addressbookdisplayname <displayname>] \n");
+	std::wprintf(L"       [-addressbookservername <servername>] [-addressbookconfigfilepath <configfilepath>] \n");
+	std::wprintf(L"\n");
+	std::wprintf(L"Options:\n");
+	std::wprintf(L"    -profile:                  \"all\" to process all profiles.\n");
+	std::wprintf(L"							   \"default\" to process the default profile.\n");
+	std::wprintf(L"                               \"one\" to process a specific profile. Prifile Name needs to be \n");
+	std::wprintf(L"                               specified using -pn.\n");
+	std::wprintf(L"                               Default profile will be used if -pm is not used.\n");
+	std::wprintf(L"   -profilename:               Name of the profile to process.\n");
+	std::wprintf(L"                               Default profile will be used if -pn is not used.\n");
+	std::wprintf(L"\n");
+	std::wprintf(L"   -addressbook:               \"create\" to create a new address book service.\n");
+	std::wprintf(L"                               \"update\" to update an existing address book service. The display name.\n");
+	std::wprintf(L"                               of the address book to update needs to be specified using -addressbookdisplayname.\n");
+	std::wprintf(L"                               \"listall\" Tto list all address book services in the profile. \n");
+	std::wprintf(L"                               \"listone\" to list an existing address book service. The display name.\n");
+	std::wprintf(L"                               of the address book to list needs to be specified using -addressbookdisplayname.\n");
+	std::wprintf(L"   -addressbookdisplayname:    The display name of the address book to create, update or list.\n");
+	std::wprintf(L"   -addressbookservername:     The display name of the LDAP server configure in the address book.\n");
+	std::wprintf(L"   -addressbookconfigfilepath: The display name of the LDAP server configure in the address book.\n");
+	std::wprintf(L"   -profilename:               Name of the profile to process.\n");
+	std::wprintf(L"                               Default profile will be used if -pn is not used.\n");
+	std::wprintf(L"\n");
 	//wprintf(L"       -si:    Index of the account to process from previous export.\n");
 	//wprintf(L"       	       Must be used in conjunction with -pm one -pn profile or -pm default.\n");
 	//wprintf(L"\n");
@@ -1474,7 +1476,7 @@ void DisplayUsage()
 	//wprintf(L"\n");
 	//wprintf(L"       -ep:    exportPath for exporting settings to disk.\n");
 	//wprintf(L"\n");
-	wprintf(L"       -?      Displays this usage information.\n");
+	std::wprintf(L"       -?      Displays this usage information.\n");
 }
 
 LoggingMode loggingMode;
@@ -1488,12 +1490,12 @@ void _tmain(int argc, _TCHAR* argv[])
 	HRESULT hRes = S_OK;
 
 	// Using the toolkip options to manage the runtime options
-	RuntimeOptions * tkOptions = new RuntimeOptions();
+	RuntimeOptions* tkOptions = new RuntimeOptions();
 
 	// Parse the command line arguments
 	if (!ValidateScenario(argc, argv, tkOptions))
 	{
-		if (tkOptions->ulLoggingMode != loggingModeNone)
+		if (tkOptions->loggingMode != LoggingMode::LoggingModeNone)
 		{
 			DisplayUsage();
 		}
@@ -1501,403 +1503,412 @@ void _tmain(int argc, _TCHAR* argv[])
 	}
 	else
 	{
-		if (!tkOptions->addressBookOptions->szConfigFilePath.empty())
+		if (!tkOptions->profileOptions->serviceOptions->addressBookOptions->wszConfigFilePath.empty())
 		{
 			// If a path was specified 
-			if (!PathFileExists(LPCWSTR(tkOptions->addressBookOptions->szConfigFilePath.c_str())))
+			if (!PathFileExists(LPCWSTR(tkOptions->profileOptions->serviceOptions->addressBookOptions->wszConfigFilePath.c_str())))
 			{
-				wprintf(L"WARNING: The specified file \"%s\" does not exsits.\n", LPTSTR(tkOptions->addressBookOptions->szConfigFilePath.c_str()));
+				std::wprintf(L"WARNING: The specified file \"%s\" does not exsits.\n", LPTSTR(tkOptions->profileOptions->serviceOptions->addressBookOptions->wszConfigFilePath.c_str()));
 				return;
 			}
 		}
 	}
-	Logger::SetLoggingMode((LoggingMode)tkOptions->ulLoggingMode);
+	Logger::SetLoggingMode((LoggingMode)tkOptions->loggingMode);
 
-	loggingMode = (LoggingMode)tkOptions->ulLoggingMode;
+	loggingMode = (LoggingMode)tkOptions->loggingMode;
 	ProfileInfo profInfo;
-	ProfileInfo * lpProfInfo = &profInfo; 
+	ProfileInfo* lpProfInfo = &profInfo;
 
 	MAPIINIT_0  MAPIINIT = { 0, MAPI_MULTITHREAD_NOTIFICATIONS };
 	if (SUCCEEDED(MAPIInitialize(&MAPIINIT)))
 	{
 		ULONG ulProfileCount = GetProfileCount();
-		ProfileInfo * profileInfo = new ProfileInfo[ulProfileCount];
+		ProfileInfo* profileInfo = new ProfileInfo[ulProfileCount];
 		//HrGetProfiles(ulProfileCount, profileInfo);
 
-		if (ACTION_UNKNOWN != tkOptions->profileOptions->ulProfileAction)
+		if (!FLAGCHECK(tkOptions->action, ACTION_UNSPECIFIED))
 		{
 
-			switch (tkOptions->profileOptions->ulProfileAction)
+			// Do we want to ADD a new profile?
+			if FLAGCHECK(tkOptions->action, ACTION_PROFILE_ADD)
 			{
-			case ACTION_ADD:
 				EC_HRES_MSG(HrCreateProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str()), L"Calling HrCreateProfile");
-				if (tkOptions->serviceOptions->ulServiceAction == ACTION_ADD)
-					EC_HRES_LOG(HrCreateMsemsService(PROFILEMODE_ONE,
+
+				// Do we also want to add a service?
+				if FLAGCHECK(tkOptions->action, ACTION_SERVICE_ADD)
+					EC_HRES_LOG(HrCreateMsemsService(tkOptions->profileOptions->profileMode,
 					(LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(),
 						tkOptions->iOutlookVersion,
-						tkOptions->serviceOptions), L"Calling HrCreateMsemsService");
-				break;
-			case ACTION_EDIT:
-				if (tkOptions->profileOptions->bSetDefaultProfile)
+						tkOptions->profileOptions->serviceOptions), L"Calling HrCreateMsemsService");
+			}
+
+			if FLAGCHECK(tkOptions->action, ACTION_PROFILE_SETDEFAULT)
+			{
+				HrSetDefaultProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str());
+			}
+
+			if FLAGCHECK(tkOptions->action, ACTION_PROFILE_UPDATE)
+			{
+				// Are we adding a service?
+				if FLAGCHECK(tkOptions->action, ACTION_SERVICE_ADD)
 				{
-					HrSetDefaultProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str());
-				}
-				switch (tkOptions->serviceOptions->ulServiceAction)
-				{
-				case ACTION_ADD:
-					EC_HRES_LOG(HrCreateMsemsService(tkOptions->profileOptions->ulProfileMode == PROFILEMODE_DEFAULT,
+					EC_HRES_LOG(HrCreateMsemsService(tkOptions->profileOptions->profileMode,
 						(LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(),
 						tkOptions->iOutlookVersion,
-						tkOptions->serviceOptions), L"Calling HrCreateMsemsService");
-				case ACTION_EDIT:
+						tkOptions->profileOptions->serviceOptions), L"Calling HrCreateMsemsService");
+				}
 
-					switch (tkOptions->mailboxOptions->ulMailboxAction)
+				if FLAGCHECK(tkOptions->action, ACTION_SERVICE_UPDATE)
+				{
+					if FLAGCHECK(tkOptions->action, ACTION_PROVIDER_ADD)
 					{
-					case ACTION_ADD:
-						EC_HRES_LOG(HrAddDelegateMailbox(tkOptions->profileOptions->ulProfileMode,
-							(LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(),
-							tkOptions->serviceOptions->ulServiceMode == SERVICEMODE_DEFAULT,
-							tkOptions->serviceOptions->iServiceIndex,
-							tkOptions->iOutlookVersion,
-							tkOptions->mailboxOptions), L"Calling HrAddDelegateMailbox");
-						break;
-					case ACTION_EDIT:
-					case ACTION_REMOVE:
-						break;
-					case ACTION_PROMOTEDELEGATE:
-						EC_HRES_LOG(HrPromoteDelegates((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(),
-							tkOptions->profileOptions->ulProfileMode == PROFILEMODE_DEFAULT,
-							tkOptions->profileOptions->ulProfileMode == PROFILEMODE_ALL,
-							tkOptions->serviceOptions->iServiceIndex,
-							tkOptions->serviceOptions->ulServiceMode == SERVICEMODE_DEFAULT,
-							tkOptions->serviceOptions->ulServiceMode == SERVICEMODE_ALL,
-							tkOptions->iOutlookVersion,
-							tkOptions->serviceOptions->ulConnectMode), L"Calling HrPromoteDelegates");
-						// If Caching options were specified then update the cached mode configuration accordingly
-						if ((tkOptions->serviceOptions->ulCachedModeOwner > 0) || (tkOptions->serviceOptions->ulCachedModeShared > 0) || (tkOptions->serviceOptions->ulCachedModePublicFolder > 0))
+						if VALUECHECK(tkOptions->profileOptions->serviceOptions->providerOptions->providerType, ProviderType::Delegate)
 						{
-							// This is not yet implemented
+							EC_HRES_LOG(HrAddDelegateMailbox(tkOptions->profileOptions->profileMode,
+								(LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(),
+								tkOptions->profileOptions->serviceOptions->serviceMode,
+								tkOptions->profileOptions->serviceOptions->iServiceIndex,
+								tkOptions->iOutlookVersion,
+								tkOptions->profileOptions->serviceOptions->providerOptions), L"Calling HrAddDelegateMailbox");
 						}
-						break;
-					case ACTION_ADDDELEGATE:
-
-					case ACTION_LIST:
-
-						break;
-					};
-
-				case ACTION_UPDATE:
-					break;
-				case ACTION_LIST:
-					break;
-				case ACTION_ENABLECACHEDMODE:
-					if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_DEFAULT)
-					{
-						EC_HRES_LOG(HrSetCachedMode((LPWSTR)GetDefaultProfileName().c_str(), true, false, -1, tkOptions->serviceOptions->ulServiceMode == SERVICEMODE_DEFAULT, tkOptions->serviceOptions->ulServiceMode == SERVICEMODE_ALL, tkOptions->serviceOptions->ulCachedModeOwner == 1, tkOptions->serviceOptions->ulCachedModeShared == 1, tkOptions->serviceOptions->ulCachedModePublicFolder == 1, tkOptions->serviceOptions->iCachedModeMonths, tkOptions->iOutlookVersion), L"HrSetCachedMode");
 					}
-					else if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_ONE)
-					{
-						EC_HRES_LOG(HrSetCachedMode((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(), false, false, -1, tkOptions->serviceOptions->ulServiceMode == SERVICEMODE_DEFAULT, tkOptions->serviceOptions->ulServiceMode == SERVICEMODE_ALL, tkOptions->serviceOptions->ulCachedModeOwner == 1, tkOptions->serviceOptions->ulCachedModeShared == 1, tkOptions->serviceOptions->ulCachedModePublicFolder == 1, tkOptions->serviceOptions->iCachedModeMonths, tkOptions->iOutlookVersion), L"HrSetCachedMode");
-					}
+				}
 
-					break;
-				};
-				break;
-			case ACTION_LIST:
+				if FLAGCHECK(tkOptions->action, ACTION_PROFILE_PROMOTEDELEGATES)
+				{
+					EC_HRES_LOG(HrPromoteDelegates((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(),
+						VALUECHECK(tkOptions->profileOptions->profileMode, ProfileMode::Mode_Default),
+						VALUECHECK(tkOptions->profileOptions->profileMode, ProfileMode::Mode_All),
+						tkOptions->profileOptions->serviceOptions->iServiceIndex,
+						VALUECHECK(tkOptions->profileOptions->serviceOptions->serviceMode, ServiceMode::Mode_Default),
+						VALUECHECK(tkOptions->profileOptions->serviceOptions->serviceMode, ServiceMode::Mode_All),
+						tkOptions->iOutlookVersion,
+						tkOptions->profileOptions->serviceOptions->connectMode), L"Calling HrPromoteDelegates");
+					// If Caching options were specified then update the cached mode configuration accordingly
+					// To do: add cached mode support
+				}
+
+				if FLAGCHECK(tkOptions->action, ACTION_SERVICE_SETCACHEDMODE)
+					if VALUECHECK(tkOptions->profileOptions->profileMode, ProfileMode::Mode_Default)
+					{
+						EC_HRES_LOG(HrSetCachedMode((LPWSTR)GetDefaultProfileName().c_str(), true, false, -1,
+							VALUECHECK(tkOptions->profileOptions->serviceOptions->serviceMode, ServiceMode::Mode_Default),
+							VALUECHECK(tkOptions->profileOptions->serviceOptions->serviceMode, ServiceMode::Mode_All),
+							VALUECHECK(tkOptions->profileOptions->serviceOptions->cachedModeOwner, CachedMode::Enabled),
+							VALUECHECK(tkOptions->profileOptions->serviceOptions->cachedModeShared, CachedMode::Enabled),
+							VALUECHECK(tkOptions->profileOptions->serviceOptions->cachedModePublicFolders, CachedMode::Enabled),
+							tkOptions->profileOptions->serviceOptions->iCachedModeMonths, tkOptions->iOutlookVersion), L"HrSetCachedMode");
+					}
+					else if VALUECHECK(tkOptions->profileOptions->profileMode, ProfileMode::Mode_Specific)
+					{
+						EC_HRES_LOG(HrSetCachedMode((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(), false, false, -1,
+							VALUECHECK(tkOptions->profileOptions->serviceOptions->serviceMode, ServiceMode::Mode_Default),
+							VALUECHECK(tkOptions->profileOptions->serviceOptions->serviceMode, ServiceMode::Mode_All),
+							VALUECHECK(tkOptions->profileOptions->serviceOptions->cachedModeOwner, CachedMode::Enabled),
+							VALUECHECK(tkOptions->profileOptions->serviceOptions->cachedModeShared, CachedMode::Enabled),
+							VALUECHECK(tkOptions->profileOptions->serviceOptions->cachedModePublicFolders, CachedMode::Enabled),
+							tkOptions->profileOptions->serviceOptions->iCachedModeMonths, tkOptions->iOutlookVersion), L"HrSetCachedMode");
+					}
+					else if VALUECHECK(tkOptions->profileOptions->profileMode, ProfileMode::Mode_All)
+					{
+						Logger::Write(LogLevel::logLevelFailed, L"Functionality not yet implemented");
+					}
+			}
+
+
+			if FLAGCHECK(tkOptions->action, ACTION_PROFILE_LISTALL)
+			{
 				EC_HRES_LOG(HrListProfiles(tkOptions->profileOptions, tkOptions->wszExportPath), L"Calling HrListProfiles");
-				break;
-			case ACTION_CLONE:
+			}
 
+			if FLAGCHECK(tkOptions->action, ACTION_PROFILE_CLONE)
+			{
 				MAPIAllocateBuffer(sizeof(ProfileInfo), (LPVOID*)lpProfInfo);
 				ZeroMemory(lpProfInfo, sizeof(ProfileInfo));
 
-				if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_DEFAULT)
+				if VALUECHECK(tkOptions->profileOptions->profileMode, ProfileMode::Mode_Default)
 				{
 					EC_HRES_LOG(HrGetProfile((LPWSTR)GetDefaultProfileName().c_str(), &profInfo), L"Calling HrGetProfile");
 				}
-				else if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_ONE)
-				{
+				else if VALUECHECK(tkOptions->profileOptions->profileMode, ProfileMode::Mode_Specific)
 					EC_HRES_LOG(HrGetProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(), &profInfo), L"Calling HrGetProfile");
 
-				}
-				EC_HRES_LOG(HrCloneProfile(&profInfo), L"Calling HrCloneProfile");
-				break;
-			case ACTION_SIMPLECLONE:
+			}
+			EC_HRES_LOG(HrCloneProfile(&profInfo), L"Calling HrCloneProfile");
 
-				MAPIAllocateBuffer(sizeof(ProfileInfo), (LPVOID*)lpProfInfo);
-				ZeroMemory(lpProfInfo, sizeof(ProfileInfo));
 
-				if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_DEFAULT)
-				{
-					EC_HRES_LOG(HrGetProfile((LPWSTR)GetDefaultProfileName().c_str(), &profInfo), L"Calling HrGetProfile");
-				}
-				else if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_ONE)
-				{
-					EC_HRES_LOG(HrGetProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(), &profInfo), L"Calling HrGetProfile");
-
-				}
-				EC_HRES_LOG(HrSimpleCloneProfile(&profInfo, tkOptions->profileOptions->bSetDefaultProfile), L"Calling HrCloneProfile");
-				break;
-			case ACTION_REMOVE:
-				if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_DEFAULT)
+			if FLAGCHECK(tkOptions->action, ACTION_PROFILE_REMOVE)
+			{
+				if VALUECHECK(tkOptions->profileOptions->profileMode, ProfileMode::Mode_Default)
 				{
 					EC_HRES_LOG(HrDeleteProfile((LPWSTR)GetDefaultProfileName().c_str()), L"HrDeleteProfile");
 				}
-				else if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_ONE)
+				else if VALUECHECK(tkOptions->profileOptions->profileMode, ProfileMode::Mode_Specific)
 				{
 					EC_HRES_LOG(HrDeleteProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str()), L"HrDeleteProfile");
 				}
 
 
-				break;
 			};
 
-		}
-
-		// SOME LDAP AB LOGIC
-
-			LPPROFADMIN lpProfAdmin = NULL;		// profile administration object pointer
-			LPSERVICEADMIN lpSvcAdmin = NULL;	// service administration object pointer
-			MAPIUID mapiUid = { 0 };			// MAPIUID structure
-			LPMAPIUID lpMapiUid = &mapiUid;		// pointer to a MAPIUID structure
-			BOOL fValidPath = false;
-			BOOL fServiceExists = false;
-			// Create a new ABProvider instance and set the service name to EMABLT (Address Book service)
-			ABProvider pABProvider = { 0 };
-			pABProvider.lpszServiceName = L"EMABLT";
-
-			// Make sure the file path is valid and parse the XML to populate the ABProvider parameters
-			if (!tkOptions->addressBookOptions->szConfigFilePath.empty())
+			if VALUECHECK(tkOptions->profileOptions->serviceOptions->serviceType, ServiceType::ServiceType_AddressBook)
 			{
-				fValidPath = true;
-				EC_HRES_MSG(ParseConfigXml(LPTSTR(tkOptions->addressBookOptions->szConfigFilePath.c_str()), &pABProvider), L"Parsing AB config file");
-			}
 
-			// If we're processing the default profile then fetch the name of it and populate that in the runtime options.
-			if (tkOptions->addressBookOptions->ulProfileMode == PROFILEMODE_DEFAULT)
-			{
-				tkOptions->addressBookOptions->szProfileName = GetDefaultProfileName();
-				if (tkOptions->addressBookOptions->szProfileName.empty())
+				// SOME LDAP AB LOGIC
+
+				LPPROFADMIN lpProfAdmin = NULL;		// profile administration object pointer
+				LPSERVICEADMIN lpSvcAdmin = NULL;	// service administration object pointer
+				MAPIUID mapiUid = { 0 };			// MAPIUID structure
+				LPMAPIUID lpMapiUid = &mapiUid;		// pointer to a MAPIUID structure
+				BOOL fValidPath = false;
+				BOOL fServiceExists = false;
+				// Create a new ABProvider instance and set the service name to EMABLT (Address Book service)
+				ABProvider pABProvider = { 0 };
+				pABProvider.lpszServiceName = L"EMABLT";
+
+				// Make sure the file path is valid and parse the XML to populate the ABProvider parameters
+				if (!tkOptions->profileOptions->serviceOptions->addressBookOptions->wszConfigFilePath.empty())
 				{
-					wprintf(L"ERROR: No default profile found, please specify a valid profile name.");
-					return;
+					fValidPath = true;
+					EC_HRES_MSG(ParseConfigXml(LPTSTR(tkOptions->profileOptions->serviceOptions->addressBookOptions->wszConfigFilePath.c_str()), &pABProvider), L"Parsing AB config file");
+				}
+
+				// If we're processing the default profile then fetch the name of it and populate that in the runtime options.
+				if VALUECHECK(tkOptions->profileOptions->profileMode, ProfileMode::Mode_Default)
+				{
+					tkOptions->profileOptions->wszProfileName = GetDefaultProfileName();
+					if (tkOptions->profileOptions->wszProfileName.empty())
+					{
+						wprintf(L"ERROR: No default profile found, please specify a valid profile name.");
+						return;
+					}
+
+				}
+
+				// Create a profile administration object.
+				EC_HRES_MSG(MAPIAdminProfiles(0,		// Bitmask of flags indicating options for the service entry function. 
+					&lpProfAdmin), L"Getting a profile admin interface pointer");					// Pointer to a pointer to the new profile administration object.
+				wprintf(L"Retrieved IProfAdmin interface pointer.\n");
+
+				// Get access to a message service administration object for making changes to the message services in a profile. 
+				EC_HRES_MSG(lpProfAdmin->AdminServices(LPTSTR(tkOptions->profileOptions->wszProfileName.c_str()),	// A pointer to the name of the profile to be modified. The lpszProfileName parameter must not be NULL.
+					NULL,																			// Always NULL. 
+					NULL,																			// A handle of the parent window for any dialog boxes or windows that this method displays.
+					0,																				// A bitmask of flags that controls the retrieval of the message service administration object. The following flags can be set:
+					&lpSvcAdmin), L"Getting a service admin interface pointer");																	// A pointer to a pointer to a message service administration object.
+				wprintf(L"Retrieved IMsgServiceAdmin interface pointer.\n");
+
+				if FLAGCHECK(tkOptions->action, ACTION_SERVICE_ADD)
+				{
+
+				}
+
+				if FLAGCHECK(tkOptions->action, ACTION_SERVICE_UPDATE)
+				{
+
+				}
+
+				if FLAGCHECK(tkOptions->action, ACTION_SERVICE_LISTALL)
+				{
+					wprintf(L"Running in List mode.\n");
+					// Calling ListAllABServices to list all the existing Ldap AB Servies in the selected profile
+					EC_HRES(ListAllABServices(lpSvcAdmin));
+				}
+
+				if FLAGCHECK(tkOptions->action, ACTION_SERVICE_LIST)
+				{
+
 				}
 
 			}
-
-			// Create a profile administration object.
-			EC_HRES_MSG(MAPIAdminProfiles(0,		// Bitmask of flags indicating options for the service entry function. 
-				&lpProfAdmin), L"Getting a profile admin interface pointer");					// Pointer to a pointer to the new profile administration object.
-			wprintf(L"Retrieved IProfAdmin interface pointer.\n");
-
-			// Get access to a message service administration object for making changes to the message services in a profile. 
-			EC_HRES_MSG(lpProfAdmin->AdminServices(LPTSTR(tkOptions->addressBookOptions->szProfileName.c_str()),	// A pointer to the name of the profile to be modified. The lpszProfileName parameter must not be NULL.
-				NULL,																			// Always NULL. 
-				NULL,																			// A handle of the parent window for any dialog boxes or windows that this method displays.
-				0,																				// A bitmask of flags that controls the retrieval of the message service administration object. The following flags can be set:
-				&lpSvcAdmin), L"Getting a service admin interface pointer");																	// A pointer to a pointer to a message service administration object.
-			wprintf(L"Retrieved IMsgServiceAdmin interface pointer.\n");
-
-		switch (tkOptions->addressBookOptions->ulRunningMode)
-		{
-		case ADDRESSBOOK_CREATE:
-
-			break;
-		case ADDRESSBOOK_UPDATE:
-			break;
-		case ADDRESSBOOK_LIST_ALL:
-			wprintf(L"Running in List mode.\n");
-				// Calling ListAllABServices to list all the existing Ldap AB Servies in the selected profile
-				EC_HRES(ListAllABServices(lpSvcAdmin));
-				break;
-			break;
-		case ADDRESSBOOK_LIST_ONE:
-			break;
 		}
+	}
+
 
 
 #pragma region SomeAncientCodeFromYesterYear
-		//switch (tkOptions->ulScenario)
-		//{
-		//case SCENARIO_PROFILE:
-		//	if (tkOptions->ulActionType == ACTIONTYPE_STANDARD)
-		//	{
-		//		if (tkOptions->ulAction == STANDARDACTION_ADD)
-		//		{
-		//			// this only works with the default profile for now
-		//			HrCreateProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str());
+	//switch (tkOptions->ulScenario)
+	//{
+	//case SCENARIO_PROFILE:
+	//	if (tkOptions->ulActionType == ACTIONTYPE_STANDARD)
+	//	{
+	//		if (tkOptions->ulAction == STANDARDACTION_ADD)
+	//		{
+	//			// this only works with the default profile for now
+	//			HrCreateProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str());
 
-		//		}
+	//		}
 
-		//		else if (tkOptions->ulAction == STANDARDACTION_LIST)
-		//		{
+	//		else if (tkOptions->ulAction == STANDARDACTION_LIST)
+	//		{
 
-		//			if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_ALL)
-		//			{
-		//				ULONG ulProfileCount = GetProfileCount();
-		//				ProfileInfo * profileInfo = new ProfileInfo[ulProfileCount];
-		//				ZeroMemory(profileInfo, sizeof(ProfileInfo) * ulProfileCount);
-		//				Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for all profiles");
-		//				EC_HRES_MSG(HrGetProfiles(ulProfileCount, profileInfo), L"Calling HrGetProfiles");
-		//				if (tkOptions->wszExportPath != L"")
-		//				{
-		//					Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for all profiles");
-		//					ExportXML(ulProfileCount, profileInfo, tkOptions->wszExportPath);
-		//				}
-		//				else
-		//				{
-		//					Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for all profiles");
-		//					ExportXML(ulProfileCount, profileInfo, L"");
-		//				}
+	//			if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_ALL)
+	//			{
+	//				ULONG ulProfileCount = GetProfileCount();
+	//				ProfileInfo * profileInfo = new ProfileInfo[ulProfileCount];
+	//				ZeroMemory(profileInfo, sizeof(ProfileInfo) * ulProfileCount);
+	//				Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for all profiles");
+	//				EC_HRES_MSG(HrGetProfiles(ulProfileCount, profileInfo), L"Calling HrGetProfiles");
+	//				if (tkOptions->wszExportPath != L"")
+	//				{
+	//					Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for all profiles");
+	//					ExportXML(ulProfileCount, profileInfo, tkOptions->wszExportPath);
+	//				}
+	//				else
+	//				{
+	//					Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for all profiles");
+	//					ExportXML(ulProfileCount, profileInfo, L"");
+	//				}
 
-		//			}
-		//			if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_ONE)
-		//			{
-		//				ProfileInfo * pProfileInfo = new ProfileInfo();
-		//				Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for profile: " + tkOptions->profileOptions->wszProfileName);
-		//				EC_HRES_MSG(HrGetProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(), pProfileInfo), L"Calling HrGetProfile");
-		//				if (tkOptions->wszExportPath != L"")
-		//				{
-		//					Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for profile");
-		//					ExportXML(1, pProfileInfo, tkOptions->wszExportPath);
-		//				}
-		//				else
-		//				{
-		//					Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for profile");
-		//					ExportXML(1, pProfileInfo, L"");
-		//				}
+	//			}
+	//			if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_ONE)
+	//			{
+	//				ProfileInfo * pProfileInfo = new ProfileInfo();
+	//				Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for profile: " + tkOptions->profileOptions->wszProfileName);
+	//				EC_HRES_MSG(HrGetProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(), pProfileInfo), L"Calling HrGetProfile");
+	//				if (tkOptions->wszExportPath != L"")
+	//				{
+	//					Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for profile");
+	//					ExportXML(1, pProfileInfo, tkOptions->wszExportPath);
+	//				}
+	//				else
+	//				{
+	//					Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for profile");
+	//					ExportXML(1, pProfileInfo, L"");
+	//				}
 
-		//			}
-		//			if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_DEFAULT)
-		//			{
-		//				std::wstring szDefaultProfileName = GetDefaultProfileName();
-		//				if (!szDefaultProfileName.empty())
-		//				{
-		//					tkOptions->profileOptions->wszProfileName = szDefaultProfileName;
-		//				}
+	//			}
+	//			if (tkOptions->profileOptions->ulProfileMode == PROFILEMODE_DEFAULT)
+	//			{
+	//				std::wstring szDefaultProfileName = GetDefaultProfileName();
+	//				if (!szDefaultProfileName.empty())
+	//				{
+	//					tkOptions->profileOptions->wszProfileName = szDefaultProfileName;
+	//				}
 
-		//				ProfileInfo * pProfileInfo = new ProfileInfo();
-		//				Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for default profile: " + tkOptions->profileOptions->wszProfileName);
-		//				EC_HRES_MSG(HrGetProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(), pProfileInfo), L"Calling HrGetProfile");
-		//				if (tkOptions->wszExportPath != L"")
-		//				{
-		//					Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for default profile");
-		//					ExportXML(1, pProfileInfo, tkOptions->wszExportPath);
-		//				}
-		//				else
-		//				{
-		//					Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for default profile");
-		//					ExportXML(1, pProfileInfo, L"");
-		//				}
-		//			}
-		//		}
-		//	}
-		//	break;
-		//case SCENARIO_SERVICE:
-		//	if (tkOptions->ulActionType == ACTIONTYPE_STANDARD)
-		//	{
-		//		if (tkOptions->ulAction == STANDARDACTION_ADD)
-		//		{
-		//			if (tkOptions->iOutlookVersion == 2007)
-		//			{
-		//				HrCreateMsemsServiceLegacyUnresolved((tkOptions->serviceOptions->ulProfileMode == PROFILEMODE_DEFAULT),
-		//					(LPWSTR)tkOptions->serviceOptions->wszProfileName.c_str(),
-		//					(LPWSTR)tkOptions->serviceOptions->wszMailboxLegacyDN.c_str(),
-		//					(LPWSTR)tkOptions->serviceOptions->wszServerDisplayName.c_str());
-		//			}
-		//			else if ((tkOptions->iOutlookVersion == 2010) || (tkOptions->iOutlookVersion == 2013))
-		//			{
-		//				// this only works with the default profile for now
-		//				if (tkOptions->serviceOptions->ulConnectMode == CONNECT_ROH)
-		//				{
-		//					HrCreateMsemsServiceROH((tkOptions->serviceOptions->ulProfileMode == PROFILEMODE_DEFAULT),
-		//						(LPWSTR)tkOptions->serviceOptions->wszProfileName.c_str(),
-		//						(LPWSTR)tkOptions->serviceOptions->wszSmtpAddress.c_str(),
-		//						(LPWSTR)tkOptions->serviceOptions->wszMailboxLegacyDN.c_str(),
-		//						(LPWSTR)tkOptions->serviceOptions->wszUnresolvedServer.c_str(),
-		//						(LPWSTR)tkOptions->serviceOptions->wszRohProxyServer.c_str(),
-		//						(LPWSTR)tkOptions->serviceOptions->wszServerLegacyDN.c_str(),
-		//						(LPWSTR)tkOptions->serviceOptions->wszAutodiscoverUrl.c_str());
-		//				}
-		//				else if (tkOptions->serviceOptions->ulConnectMode == CONNECT_MOH)
-		//				{
-		//					HrCreateMsemsServiceMOH((tkOptions->serviceOptions->ulProfileMode == PROFILEMODE_DEFAULT),
-		//						(LPWSTR)tkOptions->serviceOptions->wszProfileName.c_str(),
-		//						(LPWSTR)tkOptions->serviceOptions->wszSmtpAddress.c_str(),
-		//						(LPWSTR)tkOptions->serviceOptions->wszMailboxLegacyDN.c_str(),
-		//						(LPWSTR)tkOptions->serviceOptions->wszServerLegacyDN.c_str(),
-		//						(LPWSTR)tkOptions->serviceOptions->wszMailStoreInternalUrl.c_str(),
-		//						(LPWSTR)tkOptions->serviceOptions->wszMailStoreExternalUrl.c_str(),
-		//						(LPWSTR)tkOptions->serviceOptions->wszAddressBookInternalUrl.c_str(),
-		//						(LPWSTR)tkOptions->serviceOptions->wszAddressBookExternalUrl.c_str());
-		//				}
-		//				else
-		//				{
+	//				ProfileInfo * pProfileInfo = new ProfileInfo();
+	//				Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for default profile: " + tkOptions->profileOptions->wszProfileName);
+	//				EC_HRES_MSG(HrGetProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(), pProfileInfo), L"Calling HrGetProfile");
+	//				if (tkOptions->wszExportPath != L"")
+	//				{
+	//					Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for default profile");
+	//					ExportXML(1, pProfileInfo, tkOptions->wszExportPath);
+	//				}
+	//				else
+	//				{
+	//					Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for default profile");
+	//					ExportXML(1, pProfileInfo, L"");
+	//				}
+	//			}
+	//		}
+	//	}
+	//	break;
+	//case SCENARIO_SERVICE:
+	//	if (tkOptions->ulActionType == ACTIONTYPE_STANDARD)
+	//	{
+	//		if (tkOptions->ulAction == STANDARDACTION_ADD)
+	//		{
+	//			if (tkOptions->iOutlookVersion == 2007)
+	//			{
+	//				HrCreateMsemsServiceLegacyUnresolved((tkOptions->profileOptions->serviceOptions->ulProfileMode == PROFILEMODE_DEFAULT),
+	//					(LPWSTR)tkOptions->profileOptions->serviceOptions->wszProfileName.c_str(),
+	//					(LPWSTR)tkOptions->profileOptions->serviceOptions->wszMailboxLegacyDN.c_str(),
+	//					(LPWSTR)tkOptions->profileOptions->serviceOptions->wszServerDisplayName.c_str());
+	//			}
+	//			else if ((tkOptions->iOutlookVersion == 2010) || (tkOptions->iOutlookVersion == 2013))
+	//			{
+	//				// this only works with the default profile for now
+	//				if (tkOptions->profileOptions->serviceOptions->ulConnectMode == CONNECT_ROH)
+	//				{
+	//					HrCreateMsemsServiceROH((tkOptions->profileOptions->serviceOptions->ulProfileMode == PROFILEMODE_DEFAULT),
+	//						(LPWSTR)tkOptions->profileOptions->serviceOptions->wszProfileName.c_str(),
+	//						(LPWSTR)tkOptions->profileOptions->serviceOptions->wszSmtpAddress.c_str(),
+	//						(LPWSTR)tkOptions->profileOptions->serviceOptions->wszMailboxLegacyDN.c_str(),
+	//						(LPWSTR)tkOptions->profileOptions->serviceOptions->wszUnresolvedServer.c_str(),
+	//						(LPWSTR)tkOptions->profileOptions->serviceOptions->wszRohProxyServer.c_str(),
+	//						(LPWSTR)tkOptions->profileOptions->serviceOptions->wszServerLegacyDN.c_str(),
+	//						(LPWSTR)tkOptions->profileOptions->serviceOptions->wszAutodiscoverUrl.c_str());
+	//				}
+	//				else if (tkOptions->profileOptions->serviceOptions->ulConnectMode == CONNECT_MOH)
+	//				{
+	//					HrCreateMsemsServiceMOH((tkOptions->profileOptions->serviceOptions->ulProfileMode == PROFILEMODE_DEFAULT),
+	//						(LPWSTR)tkOptions->profileOptions->serviceOptions->wszProfileName.c_str(),
+	//						(LPWSTR)tkOptions->profileOptions->serviceOptions->wszSmtpAddress.c_str(),
+	//						(LPWSTR)tkOptions->profileOptions->serviceOptions->wszMailboxLegacyDN.c_str(),
+	//						(LPWSTR)tkOptions->profileOptions->serviceOptions->wszServerLegacyDN.c_str(),
+	//						(LPWSTR)tkOptions->profileOptions->serviceOptions->wszMailStoreInternalUrl.c_str(),
+	//						(LPWSTR)tkOptions->profileOptions->serviceOptions->wszMailStoreExternalUrl.c_str(),
+	//						(LPWSTR)tkOptions->profileOptions->serviceOptions->wszAddressBookInternalUrl.c_str(),
+	//						(LPWSTR)tkOptions->profileOptions->serviceOptions->wszAddressBookExternalUrl.c_str());
+	//				}
+	//				else
+	//				{
 
-		//				}
-		//			}
-		//			else // default to the 2016 logic
-		//			{
-		//				// this only works with the default profile for now
-		//				HrCreateMsemsServiceModern((tkOptions->serviceOptions->ulProfileMode == PROFILEMODE_DEFAULT),
-		//					(LPWSTR)tkOptions->serviceOptions->wszProfileName.c_str(),
-		//					(LPWSTR)tkOptions->serviceOptions->wszSmtpAddress.c_str(),
-		//					(LPWSTR)tkOptions->serviceOptions->wszMailboxDisplayName.c_str());
-		//			}
-		//		}
-		//	}
-		//	break;
-		//case SCENARIO_MAILBOX:
-		//	if (tkOptions->ulActionType == ACTIONTYPE_STANDARD)
-		//	{
-		//		if (tkOptions->ulAction == STANDARDACTION_ADD)
-		//		{
-		//			if (tkOptions->iOutlookVersion == 2007)
-		//			{
-		//				// this only works with the default profile for now
-		//				HrAddDelegateMailboxLegacy((tkOptions->mailboxOptions->ulProfileMode == PROFILEMODE_DEFAULT),
-		//					(LPWSTR)tkOptions->mailboxOptions->wszProfileName.c_str(),
-		//					tkOptions->mailboxOptions->bDefaultService,
-		//					tkOptions->mailboxOptions->ulServiceIndex,
-		//					(LPWSTR)tkOptions->mailboxOptions->wszMailboxDisplayName.c_str(),
-		//					(LPWSTR)tkOptions->mailboxOptions->wszMailboxLegacyDN.c_str(),
-		//					(LPWSTR)tkOptions->mailboxOptions->wszServerDisplayName.c_str(),
-		//					(LPWSTR)tkOptions->mailboxOptions->wszServerLegacyDN.c_str());
-		//			}
-		//			else if ((tkOptions->iOutlookVersion == 2010) || (tkOptions->iOutlookVersion == 2013))
-		//			{
-		//				// this only works with the default profile for now
-		//				HrAddDelegateMailbox((tkOptions->mailboxOptions->ulProfileMode == PROFILEMODE_DEFAULT),
-		//					(LPWSTR)tkOptions->mailboxOptions->wszProfileName.c_str(),
-		//					tkOptions->mailboxOptions->bDefaultService,
-		//					tkOptions->mailboxOptions->ulServiceIndex,
-		//					(LPWSTR)tkOptions->mailboxOptions->wszMailboxDisplayName.c_str(),
-		//					(LPWSTR)tkOptions->mailboxOptions->wszMailboxLegacyDN.c_str(),
-		//					(LPWSTR)tkOptions->mailboxOptions->wszServerDisplayName.c_str(),
-		//					(LPWSTR)tkOptions->mailboxOptions->wszServerLegacyDN.c_str(),
-		//					(LPWSTR)tkOptions->mailboxOptions->wszSmtpAddress.c_str(),
-		//					NULL,
-		//					0,
-		//					0,
-		//					NULL);
-		//			}
-		//			else // default to the 2016 logic
-		//			{
-		//				// this only works with the default profile for now
-		//				HrAddDelegateMailboxModern((tkOptions->mailboxOptions->ulProfileMode == PROFILEMODE_DEFAULT),
-		//					(LPWSTR)tkOptions->mailboxOptions->wszProfileName.c_str(),
-		//					tkOptions->mailboxOptions->bDefaultService,
-		//					tkOptions->mailboxOptions->ulServiceIndex,
-		//					(LPWSTR)tkOptions->mailboxOptions->wszMailboxDisplayName.c_str(),
-		//					(LPWSTR)tkOptions->mailboxOptions->wszSmtpAddress.c_str());
-		//			}
-		//		}
-		//	}
-		//	break;
-		//}
+	//				}
+	//			}
+	//			else // default to the 2016 logic
+	//			{
+	//				// this only works with the default profile for now
+	//				HrCreateMsemsServiceModern((tkOptions->profileOptions->serviceOptions->ulProfileMode == PROFILEMODE_DEFAULT),
+	//					(LPWSTR)tkOptions->profileOptions->serviceOptions->wszProfileName.c_str(),
+	//					(LPWSTR)tkOptions->profileOptions->serviceOptions->wszSmtpAddress.c_str(),
+	//					(LPWSTR)tkOptions->profileOptions->serviceOptions->wszMailboxDisplayName.c_str());
+	//			}
+	//		}
+	//	}
+	//	break;
+	//case SCENARIO_MAILBOX:
+	//	if (tkOptions->ulActionType == ACTIONTYPE_STANDARD)
+	//	{
+	//		if (tkOptions->ulAction == STANDARDACTION_ADD)
+	//		{
+	//			if (tkOptions->iOutlookVersion == 2007)
+	//			{
+	//				// this only works with the default profile for now
+	//				HrAddDelegateMailboxLegacy((tkOptions->mailboxOptions->ulProfileMode == PROFILEMODE_DEFAULT),
+	//					(LPWSTR)tkOptions->mailboxOptions->wszProfileName.c_str(),
+	//					tkOptions->mailboxOptions->bDefaultService,
+	//					tkOptions->mailboxOptions->ulServiceIndex,
+	//					(LPWSTR)tkOptions->mailboxOptions->wszMailboxDisplayName.c_str(),
+	//					(LPWSTR)tkOptions->mailboxOptions->wszMailboxLegacyDN.c_str(),
+	//					(LPWSTR)tkOptions->mailboxOptions->wszServerDisplayName.c_str(),
+	//					(LPWSTR)tkOptions->mailboxOptions->wszServerLegacyDN.c_str());
+	//			}
+	//			else if ((tkOptions->iOutlookVersion == 2010) || (tkOptions->iOutlookVersion == 2013))
+	//			{
+	//				// this only works with the default profile for now
+	//				HrAddDelegateMailbox((tkOptions->mailboxOptions->ulProfileMode == PROFILEMODE_DEFAULT),
+	//					(LPWSTR)tkOptions->mailboxOptions->wszProfileName.c_str(),
+	//					tkOptions->mailboxOptions->bDefaultService,
+	//					tkOptions->mailboxOptions->ulServiceIndex,
+	//					(LPWSTR)tkOptions->mailboxOptions->wszMailboxDisplayName.c_str(),
+	//					(LPWSTR)tkOptions->mailboxOptions->wszMailboxLegacyDN.c_str(),
+	//					(LPWSTR)tkOptions->mailboxOptions->wszServerDisplayName.c_str(),
+	//					(LPWSTR)tkOptions->mailboxOptions->wszServerLegacyDN.c_str(),
+	//					(LPWSTR)tkOptions->mailboxOptions->wszSmtpAddress.c_str(),
+	//					NULL,
+	//					0,
+	//					0,
+	//					NULL);
+	//			}
+	//			else // default to the 2016 logic
+	//			{
+	//				// this only works with the default profile for now
+	//				HrAddDelegateMailboxModern((tkOptions->mailboxOptions->ulProfileMode == PROFILEMODE_DEFAULT),
+	//					(LPWSTR)tkOptions->mailboxOptions->wszProfileName.c_str(),
+	//					tkOptions->mailboxOptions->bDefaultService,
+	//					tkOptions->mailboxOptions->ulServiceIndex,
+	//					(LPWSTR)tkOptions->mailboxOptions->wszMailboxDisplayName.c_str(),
+	//					(LPWSTR)tkOptions->mailboxOptions->wszSmtpAddress.c_str());
+	//			}
+	//		}
+	//	}
+	//	break;
+	//}
 #pragma endregion
-		MAPIUninitialize();
-	}
+	MAPIUninitialize();
+
+
 
 #pragma region SomeMoreStuff
 	//loggingMode = LoggingMode(tkOptions.ulLoggingMode);
@@ -1909,116 +1920,116 @@ void _tmain(int argc, _TCHAR* argv[])
 	//}
 	//Logger::Write(logLevelSuccess, L"Bitness matched.", loggingMode);
 
-	try
-	{
-		//MAPIINIT_0  MAPIINIT = { 0, MAPI_MULTITHREAD_NOTIFICATIONS };
-		//if (SUCCEEDED(MAPIInitialize(&MAPIINIT)))
-		//{
-		//	Logger::Write(logLevelSuccess, L"MAPI Initialised", loggingMode);
-		//	//switch (tkOptions.ulScenario)
-		//	//{
-		//	//case SCENARIO_PROFILE:
-		//	//	switch (tkOptions.profileOptions->ulProfileMode)
-		//	//	{
-		//	//	case PROFILEMODE_ALL:
-		//	//			ULONG ulProfileCount = GetProfileCount(loggingMode);
-		//	//			ProfileInfo * profileInfo = new ProfileInfo[ulProfileCount];
-		//	//			ZeroMemory(profileInfo, sizeof(ProfileInfo) * ulProfileCount);
-		//	//			Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for all profiles", loggingMode);
-		//	//			EC_HRES_MSG(GetProfiles(ulProfileCount, profileInfo, loggingMode), loggingMode);
-		//	//			if (tkOptions.wszExportPath != L"")
-		//	//			{
-		//	//				Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for all profiles", loggingMode);
-		//	//				ExportXML(ulProfileCount, profileInfo, tkOptions.wszExportPath, loggingMode);
-		//	//			}
-		//	//			else
-		//	//			{
-		//	//				Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for all profiles", loggingMode);
-		//	//				ExportXML(ulProfileCount, profileInfo, L"", loggingMode);
-		//	//			}
-		//	//		
-		//	//		break;
-		//	//	case PROFILEMODE_ONE:
-		//	//		
-		//	//			ProfileInfo profileInfo;
-		//	//			Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for profile: " + tkOptions.profileOptions->wszProfileName, loggingMode);
-		//	//			EC_HRES_MSG(GetProfile((LPWSTR)tkOptions.profileOptions->wszProfileName.c_str(), &profileInfo, loggingMode), loggingMode);
-		//	//			if (tkOptions.wszExportPath != L"")
-		//	//			{
-		//	//				Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for profile", loggingMode);
-		//	//				ExportXML(1, &profileInfo, tkOptions.szExportPath, loggingMode);
-		//	//			}
-		//	//			else
-		//	//			{
-		//	//				Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for profile", loggingMode);
-		//	//				ExportXML(1, &profileInfo, L"", loggingMode);
-		//	//			}
-		//	//		break;
-		//	//	case PROFILEMODE_DEFAULT:
-		//	//		std::wstring szDefaultProfileName = GetDefaultProfileName(loggingMode);
-		//	//		if (!szDefaultProfileName.empty())
-		//	//		{
-		//	//			tkOptions.szProfileName = szDefaultProfileName;
-		//	//		}
-		//	//		if (tkOptions.ulReadWriteMode == READWRITEMODE_READ)
-		//	//		{
-		//	//			ProfileInfo profileInfo;
-		//	//			Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for default profile: " + tkOptions.szProfileName, loggingMode);
-		//	//			EC_HRES_MSG(GetProfile((LPWSTR)tkOptions.szProfileName.c_str(), &profileInfo, loggingMode), loggingMode);
-		//	//			if (tkOptions.szExportPath != L"")
-		//	//			{
-		//	//				Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for default profile", loggingMode);
-		//	//				ExportXML(1, &profileInfo, tkOptions.szExportPath, loggingMode);
-		//	//			}
-		//	//			else
-		//	//			{
-		//	//				Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for default profile", loggingMode);
-		//	//				ExportXML(1, &profileInfo, L"", loggingMode);
-		//	//			}
-		//	//		}
-		//	//		else if (tkOptions.ulReadWriteMode == READWRITEMODE_WRITE)
-		//	//		{
-		//	//			Logger::Write(logLevelInfo, L"Updating cached mode configuration on default profile: " + tkOptions.szProfileName, loggingMode);
-		//	//			EC_HRES_MSG(UpdateCachedModeConfig((LPSTR)tkOptions.szProfileName.c_str(), tkOptions.ulServiceIndex, tkOptions.ulCachedModeOwner, tkOptions.ulCachedModeShared, tkOptions.ulCachedModePublicFolder, tkOptions.iCachedModeMonths, loggingMode), loggingMode);
-		//	//		}
-		//	//		break;
-		//	//	}
-		//	//	break;
-		//	//case RUNNINGMODE_PST:
-		//	//	if (tkOptions.szPstOldPath.empty())
-		//	//	{
-		//	//		EC_HRES_MSG(UpdatePstPath((LPWSTR)tkOptions.szProfileName.c_str(), (LPWSTR)tkOptions.szPstNewPath.c_str(), tkOptions.bPstMoveFiles, loggingMode), loggingMode);
-		//	//	}
-		//	//	else
-		//	//	{
-		//	//		EC_HRES_MSG(UpdatePstPath((LPWSTR)tkOptions.szProfileName.c_str(), (LPWSTR)tkOptions.szPstOldPath.c_str(), (LPWSTR)tkOptions.szPstNewPath.c_str(), tkOptions.bPstMoveFiles, loggingMode), loggingMode);
-		//	//	}
-		//	//	break;
-		//	//};
-		//	//MAPIUninitialize();
-		//}
-	}
-	catch (int exception)
-	{
-		std::wostringstream oss; \
-			oss << L"Error " << std::dec << exception << L" encountered";
-		Logger::Write(logLevelError, oss.str());
-	}
+	//try
+	//{
+	//	//MAPIINIT_0  MAPIINIT = { 0, MAPI_MULTITHREAD_NOTIFICATIONS };
+	//	//if (SUCCEEDED(MAPIInitialize(&MAPIINIT)))
+	//	//{
+	//	//	Logger::Write(logLevelSuccess, L"MAPI Initialised", loggingMode);
+	//	//	//switch (tkOptions.ulScenario)
+	//	//	//{
+	//	//	//case SCENARIO_PROFILE:
+	//	//	//	switch (tkOptions.profileOptions->ulProfileMode)
+	//	//	//	{
+	//	//	//	case PROFILEMODE_ALL:
+	//	//	//			ULONG ulProfileCount = GetProfileCount(loggingMode);
+	//	//	//			ProfileInfo * profileInfo = new ProfileInfo[ulProfileCount];
+	//	//	//			ZeroMemory(profileInfo, sizeof(ProfileInfo) * ulProfileCount);
+	//	//	//			Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for all profiles", loggingMode);
+	//	//	//			EC_HRES_MSG(GetProfiles(ulProfileCount, profileInfo, loggingMode), loggingMode);
+	//	//	//			if (tkOptions.wszExportPath != L"")
+	//	//	//			{
+	//	//	//				Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for all profiles", loggingMode);
+	//	//	//				ExportXML(ulProfileCount, profileInfo, tkOptions.wszExportPath, loggingMode);
+	//	//	//			}
+	//	//	//			else
+	//	//	//			{
+	//	//	//				Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for all profiles", loggingMode);
+	//	//	//				ExportXML(ulProfileCount, profileInfo, L"", loggingMode);
+	//	//	//			}
+	//	//	//		
+	//	//	//		break;
+	//	//	//	case PROFILEMODE_ONE:
+	//	//	//		
+	//	//	//			ProfileInfo profileInfo;
+	//	//	//			Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for profile: " + tkOptions.profileOptions->wszProfileName, loggingMode);
+	//	//	//			EC_HRES_MSG(GetProfile((LPWSTR)tkOptions.profileOptions->wszProfileName.c_str(), &profileInfo, loggingMode), loggingMode);
+	//	//	//			if (tkOptions.wszExportPath != L"")
+	//	//	//			{
+	//	//	//				Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for profile", loggingMode);
+	//	//	//				ExportXML(1, &profileInfo, tkOptions.szExportPath, loggingMode);
+	//	//	//			}
+	//	//	//			else
+	//	//	//			{
+	//	//	//				Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for profile", loggingMode);
+	//	//	//				ExportXML(1, &profileInfo, L"", loggingMode);
+	//	//	//			}
+	//	//	//		break;
+	//	//	//	case PROFILEMODE_DEFAULT:
+	//	//	//		std::wstring szDefaultProfileName = GetDefaultProfileName(loggingMode);
+	//	//	//		if (!szDefaultProfileName.empty())
+	//	//	//		{
+	//	//	//			tkOptions.szProfileName = szDefaultProfileName;
+	//	//	//		}
+	//	//	//		if (tkOptions.ulReadWriteMode == READWRITEMODE_READ)
+	//	//	//		{
+	//	//	//			ProfileInfo profileInfo;
+	//	//	//			Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for default profile: " + tkOptions.szProfileName, loggingMode);
+	//	//	//			EC_HRES_MSG(GetProfile((LPWSTR)tkOptions.szProfileName.c_str(), &profileInfo, loggingMode), loggingMode);
+	//	//	//			if (tkOptions.szExportPath != L"")
+	//	//	//			{
+	//	//	//				Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for default profile", loggingMode);
+	//	//	//				ExportXML(1, &profileInfo, tkOptions.szExportPath, loggingMode);
+	//	//	//			}
+	//	//	//			else
+	//	//	//			{
+	//	//	//				Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for default profile", loggingMode);
+	//	//	//				ExportXML(1, &profileInfo, L"", loggingMode);
+	//	//	//			}
+	//	//	//		}
+	//	//	//		else if (tkOptions.ulReadWriteMode == READWRITEMODE_WRITE)
+	//	//	//		{
+	//	//	//			Logger::Write(logLevelInfo, L"Updating cached mode configuration on default profile: " + tkOptions.szProfileName, loggingMode);
+	//	//	//			EC_HRES_MSG(UpdateCachedModeConfig((LPSTR)tkOptions.szProfileName.c_str(), tkOptions.ulServiceIndex, tkOptions.ulCachedModeOwner, tkOptions.ulCachedModeShared, tkOptions.ulCachedModePublicFolder, tkOptions.iCachedModeMonths, loggingMode), loggingMode);
+	//	//	//		}
+	//	//	//		break;
+	//	//	//	}
+	//	//	//	break;
+	//	//	//case RUNNINGMODE_PST:
+	//	//	//	if (tkOptions.szPstOldPath.empty())
+	//	//	//	{
+	//	//	//		EC_HRES_MSG(UpdatePstPath((LPWSTR)tkOptions.szProfileName.c_str(), (LPWSTR)tkOptions.szPstNewPath.c_str(), tkOptions.bPstMoveFiles, loggingMode), loggingMode);
+	//	//	//	}
+	//	//	//	else
+	//	//	//	{
+	//	//	//		EC_HRES_MSG(UpdatePstPath((LPWSTR)tkOptions.szProfileName.c_str(), (LPWSTR)tkOptions.szPstOldPath.c_str(), (LPWSTR)tkOptions.szPstNewPath.c_str(), tkOptions.bPstMoveFiles, loggingMode), loggingMode);
+	//	//	//	}
+	//	//	//	break;
+	//	//	//};
+	//	//	//MAPIUninitialize();
+	//	//}
+	//}
+	//catch (int exception)
+	//{
+	//	std::wostringstream oss; \
+	//		oss << L"Error " << std::dec << exception << L" encountered";
+	//	Logger::Write(logLevelError, oss.str());
+	//}
 #pragma endregion
 
-Error:
-	goto Cleanup;
-Cleanup:
-	// Free up memory
+	Error:
+		 goto Cleanup;
+	 Cleanup:
+		 // Free up memory
 
-	return;
+		 return;
 }
 
 
 HRESULT HrListProfiles(ProfileOptions * pProfileOptions, std::wstring wszExportPath)
 {
 	HRESULT hRes = S_OK;
-	if (pProfileOptions->ulProfileMode == PROFILEMODE_ALL)
+	if VALUECHECK(pProfileOptions->profileMode, ProfileMode::Mode_All)
 	{
 		ULONG ulProfileCount = GetProfileCount();
 		ProfileInfo * profileInfo = new ProfileInfo[ulProfileCount];
@@ -2037,7 +2048,7 @@ HRESULT HrListProfiles(ProfileOptions * pProfileOptions, std::wstring wszExportP
 		}
 
 	}
-	if (pProfileOptions->ulProfileMode == PROFILEMODE_ONE)
+	else if VALUECHECK(pProfileOptions->profileMode, ProfileMode::Mode_Specific)
 	{
 		ProfileInfo * pProfileInfo = new ProfileInfo();
 		Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for profile: " + pProfileOptions->wszProfileName);
@@ -2054,7 +2065,7 @@ HRESULT HrListProfiles(ProfileOptions * pProfileOptions, std::wstring wszExportP
 		}
 
 	}
-	if (pProfileOptions->ulProfileMode == PROFILEMODE_DEFAULT)
+	else if VALUECHECK(pProfileOptions->profileMode, ProfileMode::Mode_Default)
 	{
 		std::wstring szDefaultProfileName = GetDefaultProfileName();
 		if (!szDefaultProfileName.empty())

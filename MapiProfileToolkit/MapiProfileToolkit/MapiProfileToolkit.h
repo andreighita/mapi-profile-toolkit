@@ -26,5 +26,5 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts);
 BOOL ValidateScenario2(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts);
 BOOL ParseArgsProfile(int argc, _TCHAR* argv[], ProfileOptions * profileOptions);
 BOOL ParseArgsService(int argc, _TCHAR* argv[], ServiceOptions * serviceOptions);
-BOOL ParseArgsMailbox(int argc, _TCHAR* argv[], MailboxOptions * mailboxOptions);
+BOOL ParseArgsMailbox(int argc, _TCHAR* argv[], ProviderOptions * mailboxOptions);
 HRESULT HrListProfiles(ProfileOptions * pProfileOptions, std::wstring wszExportPath);

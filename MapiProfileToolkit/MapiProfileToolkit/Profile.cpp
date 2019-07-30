@@ -336,7 +336,7 @@ HRESULT HrCloneProfile(ProfileInfo * profileInfo)
 		{
 			MAPIUID uidService = { 0 };
 			LPMAPIUID lpServiceUid = &uidService;
-			if (profileInfo->profileServices[i].ulServiceType == SERVICETYPE_MAILBOX)
+			if (profileInfo->profileServices[i].serviceType == ServiceType::ServiceType_Mailbox)
 			{
 				Logger::Write(logLevelInfo, L"Adding exchange mailbox: " + profileInfo->profileServices[i].exchangeAccountInfo->wszEmailAddress);
 				EC_HRES_MSG(HrCreateMsemsServiceModernExt(false, // sort this out later
@@ -366,7 +366,7 @@ HRESULT HrCloneProfile(ProfileInfo * profileInfo)
 				}
 				uiServiceIndex++;
 			}
-			else if (profileInfo->profileServices[i].ulServiceType == SERVICETYPE_PST)
+			else if (profileInfo->profileServices[i].serviceType == ServiceType::ServiceType_Pst)
 			{
 				Logger::Write(logLevelInfo, L"Adding PST file: " + profileInfo->profileServices[i].pstInfo->wszPstPath);
 				EC_HRES_MSG(HrCreatePstService(lpServiceAdmin,
@@ -407,7 +407,7 @@ HRESULT HrSimpleCloneProfile(ProfileInfo * profileInfo, bool bSetDefaultProfile)
 		{
 			MAPIUID uidService = { 0 };
 			LPMAPIUID lpServiceUid = &uidService;
-			if (profileInfo->profileServices[i].ulServiceType == SERVICETYPE_MAILBOX)
+			if (profileInfo->profileServices[i].serviceType == ServiceType::ServiceType_Mailbox)
 			{
 				Logger::Write(logLevelInfo, L"Adding exchange mailbox: " + profileInfo->profileServices[i].exchangeAccountInfo->wszEmailAddress);
 				
@@ -453,7 +453,7 @@ VOID PrintProfile(ProfileInfo * profileInfo)
 			wprintf(L" -> [%i] Service resource flags: %#x\n", i, profileInfo->profileServices[i].ulResourceFlags);
 			MAPIUID uidService = { 0 };
 			LPMAPIUID lpServiceUid = &uidService;
-			if (profileInfo->profileServices[i].ulServiceType == SERVICETYPE_MAILBOX)
+			if (profileInfo->profileServices[i].serviceType == ServiceType::ServiceType_Mailbox)
 			{
 				wprintf(L" -> [%i] Service type: %ls\n", i, L"Exchange Mailbox");
 				wprintf(L" -> [%i] E-mail address: %ls\n", i, profileInfo->profileServices[i].exchangeAccountInfo->wszEmailAddress.c_str());
@@ -477,7 +477,7 @@ VOID PrintProfile(ProfileInfo * profileInfo)
 					}
 				}
 			}
-			else if (profileInfo->profileServices[i].ulServiceType == SERVICETYPE_PST)
+			else if (profileInfo->profileServices[i].serviceType == ServiceType::ServiceType_Pst)
 			{
 				wprintf(L" -> [%i] Service type: %ls\n", i, L"PST");
 				wprintf(L" -> [%i] Display name: %ls\n", i, profileInfo->profileServices[i].pstInfo->wszDisplayName.c_str());
@@ -606,7 +606,7 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo)
 				profileInfo->profileServices[i].wszServiceName = ConvertWideCharToStdWstring(ConvertMultiByteToWideChar(lpSvcRows->aRow[i].lpProps[iServiceName].Value.lpszA));
 				profileInfo->profileServices[i].ulResourceFlags = lpSvcRows->aRow[i].lpProps[iServiceResFlags].Value.l;
 				profileInfo->profileServices[i].wszDisplayName = lpSvcRows->aRow[i].lpProps[iDisplayNameW].Value.lpszW;
-				profileInfo->profileServices[i].ulServiceType = SERVICETYPE_OTHER;;
+				profileInfo->profileServices[i].serviceType = ServiceType::ServiceType_Unknown;;
 				if (profileInfo->profileServices[i].ulResourceFlags & SERVICE_DEFAULT_STORE)
 				{
 					profileInfo->profileServices[i].bDefaultStore = true;
@@ -615,7 +615,7 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo)
 				if (0 == strcmp(lpSvcRows->aRow[i].lpProps[iServiceName].Value.lpszA, "MSEMS"))
 				{
 					profileInfo->profileServices[i].exchangeAccountInfo = new ExchangeAccountInfo();
-					profileInfo->profileServices[i].ulServiceType = SERVICETYPE_MAILBOX;
+					profileInfo->profileServices[i].serviceType = ServiceType::ServiceType_Mailbox;
 					LPPROVIDERADMIN lpProvAdmin = NULL;
 
 					if (SUCCEEDED(lpServiceAdmin->AdminProviders((LPMAPIUID)lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb,
@@ -1144,7 +1144,7 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo)
 					profileInfo->profileServices[i].pstInfo->wszDisplayName = std::wstring(L" ");
 					profileInfo->profileServices[i].pstInfo->wszPstPath = std::wstring(L" ");
 					profileInfo->profileServices[i].pstInfo->ulPstConfigFlags = 0;
-					profileInfo->profileServices[i].ulServiceType = SERVICETYPE_PST;
+					profileInfo->profileServices[i].serviceType = ServiceType::ServiceType_Pst;
 
 					LPPROVIDERADMIN lpProvAdmin = NULL;
 
@@ -1543,29 +1543,29 @@ HRESULT ListAllABServices(LPSERVICEADMIN lpSvcAdmin)
 			if (lpsPropValues)
 			{
 				wprintf(L"Listing entry #%i:\n", i);
-				wprintf(L"  Display Name        : %s\n", lpsPropValues[iDisplayName].Value.lpszA);
-				wprintf(L"  Ldap Server Name    : %s\n", lpsPropValues[iAbServerName].Value.lpszA);
-				wprintf(L"  Ldap Server Port    : %s\n", lpsPropValues[iAbServerPort].Value.lpszA);
-				wprintf(L"  Username            : %s\n", lpsPropValues[iAbUsername].Value.lpszA);
-				wprintf(L"  Search Base         : %s\n", lpsPropValues[iAbSearchBase].Value.lpszA);
-				wprintf(L"  Search Timeout      : %s\n", lpsPropValues[iAbSearchTimeout].Value.lpszA);
-				wprintf(L"  Maximum entries     : %s\n", lpsPropValues[iAbMaxEntries].Value.lpszA);
+				wprintf(L"  Display Name        : %s\n", lpsPropValues[iDisplayName].Value.lpszW);
+				wprintf(L"  Ldap Server Name    : %s\n", lpsPropValues[iAbServerName].Value.lpszW);
+				wprintf(L"  Ldap Server Port    : %s\n", lpsPropValues[iAbServerPort].Value.lpszW);
+				wprintf(L"  Username            : %s\n", lpsPropValues[iAbUsername].Value.lpszW);
+				wprintf(L"  Search Base         : %s\n", lpsPropValues[iAbSearchBase].Value.lpszW);
+				wprintf(L"  Search Timeout      : %s\n", lpsPropValues[iAbSearchTimeout].Value.lpszW);
+				wprintf(L"  Maximum entries     : %s\n", lpsPropValues[iAbMaxEntries].Value.lpszW);
 				if (lpsPropValues[iAbUseSSL].Value.b)
-					wprintf(L"  Use SSL             : %s", "true\n");
+					wprintf(L"  Use SSL             : true\n");
 				else
-					wprintf(L"  Use SSL             : %s", "false\n");
+					wprintf(L"  Use SSL             : false\n");
 				if (lpsPropValues[iAbRequireSpa].Value.b)
-					wprintf(L"  Use SSL             : %s", "true\n");
+					wprintf(L"  Use SSL             : true\n");
 				else
-					wprintf(L"  Use SSL             : %s", "false\n");
+					wprintf(L"  Use SSL             : false\n");
 				if (lpsPropValues[AbEnableBrowsing].Value.b)
-					wprintf(L"  Use SSL             : %s", "true\n");
+					wprintf(L"  Use SSL             : true\n");
 				else
-					wprintf(L"  Use SSL             : %s", "false\n");
+					wprintf(L"  Use SSL             : false\n");
 				if (lpsPropValues[iAbDefaultSearchBase].Value.i == 1)
-					wprintf(L"  Use SSL             : %s", "true\n");
+					wprintf(L"  Use SSL             : true\n");
 				else
-					wprintf(L"  Use SSL             : %s", "false\n");
+					wprintf(L"  Use SSL             : false\n");
 			}
 			else
 				wprintf(L"Unable to retrieve Ldap AB properties.\n");

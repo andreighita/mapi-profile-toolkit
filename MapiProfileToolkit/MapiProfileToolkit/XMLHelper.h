@@ -272,7 +272,7 @@ void ExportXML(ULONG cProfileInfo, ProfileInfo * profileInfo, std::wstring szExp
 
 			for (unsigned int j = 0; j < profileInfo[i].ulServiceCount; j++)
 			{
-				if (SERVICETYPE_MAILBOX == profileInfo[i].profileServices[j].ulServiceType)
+				if (ServiceType::ServiceType_Mailbox == profileInfo[i].profileServices[j].serviceType)
 				{
 					// create child node for each service
 					IXMLDOMElement *pServiceNode = NULL;
@@ -411,7 +411,7 @@ void ExportXML(ULONG cProfileInfo, ProfileInfo * profileInfo, std::wstring szExp
 
 					SAFE_RELEASE(pServiceNode);
 				}
-				if (profileInfo[i].profileServices[j].ulServiceType == SERVICETYPE_PST)
+				if (profileInfo[i].profileServices[j].serviceType == ServiceType::ServiceType_Pst)
 				{
 					// create child node for each service
 					IXMLDOMElement *pServiceNode = NULL;

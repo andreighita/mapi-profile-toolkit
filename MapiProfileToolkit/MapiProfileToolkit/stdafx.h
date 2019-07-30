@@ -51,6 +51,10 @@
 																		} \
 									} while (0)
 
+#define FLAGCHECK(variable, flag) (flag == (variable & flag))
+
+#define VALUECHECK(variable, value) (value == variable)
+
 std::wstring ConvertStringToWstring(std::string & szString);
 LPWSTR ConvertStdStringToWideChar(std::string szValue);
 

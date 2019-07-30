@@ -7,7 +7,7 @@
 #include <MAPIUtil.h>
 #include "Profile.h"
 
-HRESULT HrCreateMsemsService(ULONG ulProifileMode, LPWSTR lpwszProfileName, int iOutlookVersion, ServiceOptions* pServiceOptions);
+HRESULT HrCreateMsemsService(ProfileMode profileMode, LPWSTR lpwszProfileName, int iOutlookVersion, ServiceOptions* pServiceOptions);
 
 HRESULT HrCreateMsemsServiceOneProfile(LPWSTR lpwszProfileName, int iOutlookVersion, ServiceOptions* pServiceOptions);
 

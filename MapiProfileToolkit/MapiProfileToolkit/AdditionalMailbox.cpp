@@ -185,30 +185,30 @@ Cleanup:
 
 
 
-HRESULT HrAddDelegateMailbox(ULONG ulProifileMode, LPWSTR lpwszProfileName, ULONG ulServiceMode, int iServiceIndex, int iOutlookVersion, MailboxOptions* pMailboxOptions)
+HRESULT HrAddDelegateMailbox(ProfileMode profileMode, LPWSTR lpwszProfileName, ServiceMode serviceMode, int iServiceIndex, int iOutlookVersion, ProviderOptions * pMailboxOptions)
 {
 	HRESULT hRes = S_OK;
 
-	if (ulProifileMode == PROFILEMODE_DEFAULT)
+	if VALUECHECK(profileMode, ProfileMode::Mode_Default)
 	{
-		EC_HRES_MSG(HrAddDelegateMailboxOneProfile((LPWSTR)GetDefaultProfileName().c_str(), iOutlookVersion, ulServiceMode, iServiceIndex, pMailboxOptions), L"Calling HrAddDelegateMailboxOneProfile");
+		EC_HRES_MSG(HrAddDelegateMailboxOneProfile((LPWSTR)GetDefaultProfileName().c_str(), iOutlookVersion, serviceMode, iServiceIndex, pMailboxOptions), L"Calling HrAddDelegateMailboxOneProfile");
 
 	}
-	else if (ulProifileMode == PROFILEMODE_ALL)
+	else if VALUECHECK(profileMode, ProfileMode::Mode_All)
 	{
 		ULONG ulProfileCount = GetProfileCount();
 		ProfileInfo* profileInfo = new ProfileInfo[ulProfileCount];
 		hRes = HrGetProfiles(ulProfileCount, profileInfo);
 		for (ULONG i = 0; i <= ulProfileCount; i++)
 		{
-			EC_HRES_MSG(HrAddDelegateMailboxOneProfile((LPWSTR)profileInfo[i].wszProfileName.c_str(), iOutlookVersion, ulServiceMode, iServiceIndex, pMailboxOptions), L"Calling HrAddDelegateMailboxOneProfile");
+			EC_HRES_MSG(HrAddDelegateMailboxOneProfile((LPWSTR)profileInfo[i].wszProfileName.c_str(), iOutlookVersion, serviceMode, iServiceIndex, pMailboxOptions), L"Calling HrAddDelegateMailboxOneProfile");
 		}
 	}
 	else
 	{
-		if (ulProifileMode == PROFILEMODE_ONE)
+		if VALUECHECK(profileMode, ProfileMode::Mode_Specific)
 		{
-			EC_HRES_MSG(HrAddDelegateMailboxOneProfile(lpwszProfileName, iOutlookVersion, ulServiceMode, iServiceIndex, pMailboxOptions), L"Calling HrAddDelegateMailboxOneProfile");
+			EC_HRES_MSG(HrAddDelegateMailboxOneProfile(lpwszProfileName, iOutlookVersion, serviceMode, iServiceIndex, pMailboxOptions), L"Calling HrAddDelegateMailboxOneProfile");
 		}
 		else
 			Logger::Write(logLevelError, L"The specified profile name is invalid or no profile name was specified.\n");
@@ -218,7 +218,7 @@ Error:
 	return hRes;
 }
 
-HRESULT HrAddDelegateMailboxOneProfile(LPWSTR lpwszProfileName, int iOutlookVersion, ULONG ulServiceMode, int iServiceIndex, MailboxOptions* pMailboxOptions)
+HRESULT HrAddDelegateMailboxOneProfile(LPWSTR lpwszProfileName, int iOutlookVersion, ServiceMode serviceMode, int iServiceIndex, ProviderOptions * pMailboxOptions)
 {
 	HRESULT hRes = S_OK;
 	switch (iOutlookVersion)
@@ -226,7 +226,7 @@ HRESULT HrAddDelegateMailboxOneProfile(LPWSTR lpwszProfileName, int iOutlookVers
 	case 2007:
 		EC_HRES_MSG(HrAddDelegateMailboxLegacy(FALSE,
 			lpwszProfileName,
-			SERVICEMODE_DEFAULT,
+			VALUECHECK(serviceMode, ServiceMode::Mode_Default),
 			iServiceIndex,
 			(LPWSTR)pMailboxOptions->wszMailboxDisplayName.c_str(),
 			(LPWSTR)pMailboxOptions->wszMailboxLegacyDN.c_str(),
@@ -237,7 +237,7 @@ HRESULT HrAddDelegateMailboxOneProfile(LPWSTR lpwszProfileName, int iOutlookVers
 	case 2013:
 		EC_HRES_MSG(HrAddDelegateMailbox(FALSE,
 			lpwszProfileName,
-			ulServiceMode == SERVICEMODE_DEFAULT,
+			VALUECHECK(serviceMode, ServiceMode::Mode_Default),
 			iServiceIndex,
 			(LPWSTR)pMailboxOptions->wszMailboxDisplayName.c_str(),
 			(LPWSTR)pMailboxOptions->wszMailboxLegacyDN.c_str(),
@@ -252,7 +252,7 @@ HRESULT HrAddDelegateMailboxOneProfile(LPWSTR lpwszProfileName, int iOutlookVers
 	case 2016:
 		EC_HRES_MSG(HrAddDelegateMailboxModern(FALSE,
 			lpwszProfileName,
-			ulServiceMode == SERVICEMODE_DEFAULT,
+			VALUECHECK(serviceMode, ServiceMode::Mode_Default),
 			iServiceIndex,
 			(LPWSTR)pMailboxOptions->wszMailboxDisplayName.c_str(),
 			(LPWSTR)pMailboxOptions->wszSmtpAddress.c_str()), L"Calling HrCreateMsemsServiceModern");
@@ -671,7 +671,7 @@ cleanup:
 	return hRes;
 }
 
-HRESULT HrPromoteDelegates(LPWSTR lpwszProfileName, BOOL bDefaultProfile, BOOL bAllProfiles, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, int iOutlookVersion, ULONG ulConnectMode)
+HRESULT HrPromoteDelegates(LPWSTR lpwszProfileName, BOOL bDefaultProfile, BOOL bAllProfiles, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, int iOutlookVersion, ConnectMode connectMode)
 {
 	HRESULT hRes = S_OK;
 
@@ -679,7 +679,7 @@ HRESULT HrPromoteDelegates(LPWSTR lpwszProfileName, BOOL bDefaultProfile, BOOL b
 	{
 		ProfileInfo* profileInfo = new ProfileInfo();
 		EC_HRES_MSG(HrGetProfile((LPWSTR)GetDefaultProfileName().c_str(), profileInfo), L"Calling GetProfile");
-		EC_HRES_MSG(HrPromoteDelegatesOneProfile((LPWSTR)profileInfo->wszProfileName.c_str(), profileInfo, iServiceIndex, bDefaultService, bAllServices, iOutlookVersion, ulConnectMode), L"Calling HrPromoteDelegatesOneProfile");
+		EC_HRES_MSG(HrPromoteDelegatesOneProfile((LPWSTR)profileInfo->wszProfileName.c_str(), profileInfo, iServiceIndex, bDefaultService, bAllServices, iOutlookVersion, connectMode), L"Calling HrPromoteDelegatesOneProfile");
 
 	}
 	else if (bAllProfiles)
@@ -689,7 +689,7 @@ HRESULT HrPromoteDelegates(LPWSTR lpwszProfileName, BOOL bDefaultProfile, BOOL b
 		hRes = HrGetProfiles(ulProfileCount, profileInfo);
 		for (ULONG i = 0; i <= ulProfileCount; i++)
 		{
-			EC_HRES_MSG(HrPromoteDelegatesOneProfile((LPWSTR)profileInfo[i].wszProfileName.c_str(), &profileInfo[i], iServiceIndex, bDefaultService, bAllServices, iOutlookVersion, ulConnectMode), L"Calling HrPromoteDelegatesOneProfile");
+			EC_HRES_MSG(HrPromoteDelegatesOneProfile((LPWSTR)profileInfo[i].wszProfileName.c_str(), &profileInfo[i], iServiceIndex, bDefaultService, bAllServices, iOutlookVersion, connectMode), L"Calling HrPromoteDelegatesOneProfile");
 		}
 	}
 	else
@@ -698,7 +698,7 @@ HRESULT HrPromoteDelegates(LPWSTR lpwszProfileName, BOOL bDefaultProfile, BOOL b
 		{
 			ProfileInfo* profileInfo = new ProfileInfo();
 			hRes = HrGetProfile(lpwszProfileName, profileInfo);
-			EC_HRES_MSG(HrPromoteDelegatesOneProfile((LPWSTR)profileInfo->wszProfileName.c_str(), profileInfo, iServiceIndex, bDefaultService, bAllServices, iOutlookVersion, ulConnectMode), L"Calling HrPromoteDelegatesOneProfile");
+			EC_HRES_MSG(HrPromoteDelegatesOneProfile((LPWSTR)profileInfo->wszProfileName.c_str(), profileInfo, iServiceIndex, bDefaultService, bAllServices, iOutlookVersion, connectMode), L"Calling HrPromoteDelegatesOneProfile");
 
 		}
 		else
@@ -709,7 +709,7 @@ Error:
 	return hRes;
 }
 
-HRESULT HrPromoteDelegatesOneProfile(LPWSTR lpwszProfileName, ProfileInfo* pProfileInfo, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, int iOutlookVersion, ULONG ulConnectMode)
+HRESULT HrPromoteDelegatesOneProfile(LPWSTR lpwszProfileName, ProfileInfo* pProfileInfo, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, int iOutlookVersion, ConnectMode connectMode)
 {
 	HRESULT hRes = S_OK;
 
@@ -719,13 +719,13 @@ HRESULT HrPromoteDelegatesOneProfile(LPWSTR lpwszProfileName, ProfileInfo* pProf
 		{
 			if (pProfileInfo->profileServices[i].bDefaultStore)
 			{
-				if (pProfileInfo->profileServices[i].ulServiceType == SERVICETYPE_MAILBOX)
+				if (pProfileInfo->profileServices[i].serviceType == ServiceType::ServiceType_Mailbox)
 				{
 					for (ULONG j = 0; j <= pProfileInfo->profileServices[i].exchangeAccountInfo->ulMailboxCount; j++)
 					{
 						if ((pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulProfileType == PROFILE_DELEGATE) && (pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].bIsOnlineArchive == false))
 						{
-							EC_HRES_MSG(HrPromoteOneDelegate(lpwszProfileName, iOutlookVersion, ulConnectMode, pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j]), L"Calling HrPromoteDelegate");
+							EC_HRES_MSG(HrPromoteOneDelegate(lpwszProfileName, iOutlookVersion, connectMode, pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j]), L"Calling HrPromoteDelegate");
 						}
 					}
 				}
@@ -733,26 +733,26 @@ HRESULT HrPromoteDelegatesOneProfile(LPWSTR lpwszProfileName, ProfileInfo* pProf
 		}
 		else if (iServiceIndex != -1)
 		{
-			if (pProfileInfo->profileServices[iServiceIndex].ulServiceType == SERVICETYPE_MAILBOX)
+			if (pProfileInfo->profileServices[iServiceIndex].serviceType == ServiceType::ServiceType_Mailbox)
 			{
 				for (ULONG j = 0; j <= pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->ulMailboxCount; j++)
 				{
 					if ((pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->accountMailboxes[j].ulProfileType == PROFILE_DELEGATE) && (pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->accountMailboxes[j].bIsOnlineArchive == false))
 					{
-						EC_HRES_MSG(HrPromoteOneDelegate(lpwszProfileName, iOutlookVersion, ulConnectMode, pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->accountMailboxes[j]), L"Calling HrPromoteDelegate");
+						EC_HRES_MSG(HrPromoteOneDelegate(lpwszProfileName, iOutlookVersion, connectMode, pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->accountMailboxes[j]), L"Calling HrPromoteDelegate");
 					}
 				}
 			}
 		}
 		else if (bAllServices)
 		{
-			if (pProfileInfo->profileServices[i].ulServiceType == SERVICETYPE_MAILBOX)
+			if (pProfileInfo->profileServices[i].serviceType == ServiceType::ServiceType_Mailbox)
 			{
 				for (ULONG j = 0; j <= pProfileInfo->profileServices[i].exchangeAccountInfo->ulMailboxCount; j++)
 				{
 					if ((pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulProfileType == PROFILE_DELEGATE) && (pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].bIsOnlineArchive == false))
 					{
-						EC_HRES_MSG(HrPromoteOneDelegate(lpwszProfileName, iOutlookVersion, ulConnectMode, pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j]), L"Calling HrPromoteDelegate");
+						EC_HRES_MSG(HrPromoteOneDelegate(lpwszProfileName, iOutlookVersion, connectMode, pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j]), L"Calling HrPromoteDelegate");
 					}
 				}
 			}
@@ -764,7 +764,7 @@ Error:
 	return hRes;
 }
 
-HRESULT HrPromoteOneDelegate(LPWSTR lpwszProfileName, int iOutlookVersion, ULONG ulConnectMode, MailboxInfo mailboxInfo)
+HRESULT HrPromoteOneDelegate(LPWSTR lpwszProfileName, int iOutlookVersion, ConnectMode connectMode, MailboxInfo mailboxInfo)
 {
 	HRESULT hRes = S_OK;
 	switch (iOutlookVersion)
@@ -783,7 +783,7 @@ HRESULT HrPromoteOneDelegate(LPWSTR lpwszProfileName, int iOutlookVersion, ULONG
 		break;
 	case 2010:
 	case 2013:
-		if (ulConnectMode == CONNECT_ROH)
+		if (connectMode == ConnectMode::ConnectMode_RpcOverHttp)
 		{
 			// This id a bit of a hack since delegate mailboxes don't need to have the personalised server name in the delegate provider
 			// I'm just creating these based on the legacyDN and the MailStore so best check that those have value
@@ -816,7 +816,7 @@ HRESULT HrPromoteOneDelegate(LPWSTR lpwszProfileName, int iOutlookVersion, ULONG
 				Logger::Write(logLevelError, L"Not enough information in the profile for ROH mailbox.");
 		}
 		// best not be used for now as I haven't sorted it out
-		else if (ulConnectMode == CONNECT_MOH)
+		else if (connectMode == ConnectMode::ConnectMode_MapiOverHttp)
 		{
 			Logger::Write(logLevelError, L"Validating delegate information.");
 			if (((mailboxInfo.wszMailStoreInternalUrl != L"") || (mailboxInfo.wszMailStoreExternalUrl != L"")) && (mailboxInfo.wszProfileMailbox != L""))
