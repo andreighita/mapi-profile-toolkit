@@ -44,24 +44,6 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="ToolkitObjects.h" />
     <ClInclude Include="targetver.h" />
-    <ClInclude Include="ADHelper.h">
-      <Filter>Active Directory</Filter>
-    </ClInclude>
-    <ClInclude Include="AccountFunctions.h">
-      <Filter>OutlookAccount</Filter>
-    </ClInclude>
-    <ClInclude Include="AccountHelper.h">
-      <Filter>OutlookAccount</Filter>
-    </ClInclude>
-    <ClInclude Include="AccountMgmt.h">
-      <Filter>OutlookAccount</Filter>
-    </ClInclude>
-    <ClInclude Include="AccountObjects.h">
-      <Filter>OutlookAccount</Filter>
-    </ClInclude>
-    <ClInclude Include="RegistryHelper.h">
-      <Filter>Registry</Filter>
-    </ClInclude>
     <ClInclude Include="XMLHelper.h">
       <Filter>XML</Filter>
     </ClInclude>
@@ -83,26 +65,8 @@
     <ClInclude Include="EdkMdb.h" />
     <ClInclude Include="abhelp.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="CachedMode.h">
-      <Filter>MAPI\Profile</Filter>
-    </ClInclude>
-    <ClInclude Include="PST.h">
-      <Filter>MAPI\Profile</Filter>
-    </ClInclude>
-    <ClInclude Include="AdditionalMailbox.h">
-      <Filter>MAPI\Profile</Filter>
-    </ClInclude>
-    <ClInclude Include="ExchangeAccount.h">
-      <Filter>MAPI\Profile</Filter>
-    </ClInclude>
-    <ClInclude Include="LdapAb.h">
-      <Filter>MAPI\Profile</Filter>
-    </ClInclude>
     <ClInclude Include="ExtraMAPIDefs.h">
       <Filter>MAPI</Filter>
-    </ClInclude>
-    <ClInclude Include="Profile.h">
-      <Filter>MAPI\Profile</Filter>
     </ClInclude>
     <ClInclude Include="AddressBook\LdapABManager.h">
       <Filter>AddressBook</Filter>
@@ -113,51 +77,87 @@
     <ClInclude Include="AddressBook\ABProviderObjects.h">
       <Filter>AddressBook</Filter>
     </ClInclude>
+    <ClInclude Include="Profile\Profile.h">
+      <Filter>MAPI\Profile</Filter>
+    </ClInclude>
+    <ClInclude Include="Profile\PST.h">
+      <Filter>MAPI\Profile</Filter>
+    </ClInclude>
+    <ClInclude Include="Profile\LdapAb.h">
+      <Filter>MAPI\Profile</Filter>
+    </ClInclude>
+    <ClInclude Include="Profile\ExchangeAccount.h">
+      <Filter>MAPI\Profile</Filter>
+    </ClInclude>
+    <ClInclude Include="Profile\CachedMode.h">
+      <Filter>MAPI\Profile</Filter>
+    </ClInclude>
+    <ClInclude Include="Profile\AdditionalMailbox.h">
+      <Filter>MAPI\Profile</Filter>
+    </ClInclude>
+    <ClInclude Include="Account\AccountFunctions.h">
+      <Filter>OutlookAccount</Filter>
+    </ClInclude>
+    <ClInclude Include="Account\AccountHelper.h">
+      <Filter>OutlookAccount</Filter>
+    </ClInclude>
+    <ClInclude Include="Account\AccountMgmt.h">
+      <Filter>OutlookAccount</Filter>
+    </ClInclude>
+    <ClInclude Include="Account\AccountObjects.h">
+      <Filter>OutlookAccount</Filter>
+    </ClInclude>
+    <ClInclude Include="Misc\Registry\RegistryHelper.h">
+      <Filter>Registry</Filter>
+    </ClInclude>
+    <ClInclude Include="Misc\ADSI\ADHelper.h">
+      <Filter>Active Directory</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MapiProfileToolkit.cpp" />
     <ClCompile Include="stdafx.cpp" />
-    <ClCompile Include="ADHelper.cpp">
-      <Filter>Active Directory</Filter>
-    </ClCompile>
-    <ClCompile Include="AccountFunctions.cpp">
-      <Filter>OutlookAccount</Filter>
-    </ClCompile>
-    <ClCompile Include="AccountHelper.cpp">
-      <Filter>OutlookAccount</Filter>
-    </ClCompile>
-    <ClCompile Include="RegistryHelper.cpp">
-      <Filter>Registry</Filter>
-    </ClCompile>
     <ClCompile Include="Logger.cpp">
       <Filter>Logger</Filter>
     </ClCompile>
     <ClCompile Include="StringOperations.cpp">
       <Filter>Utility</Filter>
     </ClCompile>
-    <ClCompile Include="CachedMode.cpp">
-      <Filter>MAPI\Profile</Filter>
-    </ClCompile>
-    <ClCompile Include="PST.cpp">
-      <Filter>MAPI\Profile</Filter>
-    </ClCompile>
-    <ClCompile Include="AdditionalMailbox.cpp">
-      <Filter>MAPI\Profile</Filter>
-    </ClCompile>
-    <ClCompile Include="ExchangeAccount.cpp">
-      <Filter>MAPI\Profile</Filter>
-    </ClCompile>
-    <ClCompile Include="LdapAb.cpp">
-      <Filter>MAPI\Profile</Filter>
-    </ClCompile>
-    <ClCompile Include="Profile.cpp">
-      <Filter>MAPI\Profile</Filter>
-    </ClCompile>
     <ClCompile Include="AddressBook\LdapABManager.cpp">
       <Filter>AddressBook</Filter>
     </ClCompile>
     <ClCompile Include="AddressBook\ConfigXmlParser.cpp">
       <Filter>AddressBook</Filter>
+    </ClCompile>
+    <ClCompile Include="Profile\Profile.cpp">
+      <Filter>MAPI\Profile</Filter>
+    </ClCompile>
+    <ClCompile Include="Profile\PST.cpp">
+      <Filter>MAPI\Profile</Filter>
+    </ClCompile>
+    <ClCompile Include="Profile\LdapAb.cpp">
+      <Filter>MAPI\Profile</Filter>
+    </ClCompile>
+    <ClCompile Include="Profile\ExchangeAccount.cpp">
+      <Filter>MAPI\Profile</Filter>
+    </ClCompile>
+    <ClCompile Include="Profile\CachedMode.cpp">
+      <Filter>MAPI\Profile</Filter>
+    </ClCompile>
+    <ClCompile Include="Profile\AdditionalMailbox.cpp">
+      <Filter>MAPI\Profile</Filter>
+    </ClCompile>
+    <ClCompile Include="Account\AccountFunctions.cpp">
+      <Filter>OutlookAccount</Filter>
+    </ClCompile>
+    <ClCompile Include="Account\AccountHelper.cpp">
+      <Filter>OutlookAccount</Filter>
+    </ClCompile>
+    <ClCompile Include="Misc\Registry\RegistryHelper.cpp">
+      <Filter>Registry</Filter>
+    </ClCompile>
+    <ClCompile Include="Misc\ADSI\ADHelper.cpp">
+      <Filter>Active Directory</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
