@@ -1,6 +1,6 @@
 #pragma once
 
-#include "stdafx.h"
+#include "../stdafx.h"
 #include <MAPIX.h>
 #define USES_IID_IMAPISession
 #include <windows.h>

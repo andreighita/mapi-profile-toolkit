@@ -746,17 +746,17 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions* pRunOpts)
 	}
 
 	// Address Book specific validation
-	if VALUECHECK(pRunOpts->profileOptions->serviceOptions->serviceType, ServiceType::ServiceType_AddressBook)
+	if VCHK(pRunOpts->profileOptions->serviceOptions->serviceType, ServiceType::ServiceType_AddressBook)
 	{
-		if FLAGCHECK(pRunOpts->action, ACTION_SERVICE_ADD)
+		if FCHK(pRunOpts->action, ACTION_SERVICE_ADD)
 		{
 			if (pRunOpts->profileOptions->serviceOptions->addressBookOptions->wszConfigFilePath.empty())
 			{
 				return false;
 			}
-			else if (FLAGCHECK(pRunOpts->action, ACTION_SERVICE_UPDATE) ||
-				FLAGCHECK(pRunOpts->action, ACTION_SERVICE_LIST) ||
-				FLAGCHECK(pRunOpts->action, ACTION_SERVICE_REMOVE))
+			else if (FCHK(pRunOpts->action, ACTION_SERVICE_UPDATE) ||
+				FCHK(pRunOpts->action, ACTION_SERVICE_LIST) ||
+				FCHK(pRunOpts->action, ACTION_SERVICE_REMOVE))
 			{
 				if (pRunOpts->profileOptions->serviceOptions->addressBookOptions->wszABDisplayName.empty())
 				{
@@ -1514,31 +1514,31 @@ void _tmain(int argc, _TCHAR* argv[])
 		ProfileInfo* profileInfo = new ProfileInfo[ulProfileCount];
 		//HrGetProfiles(ulProfileCount, profileInfo);
 
-		if (!FLAGCHECK(tkOptions->action, ACTION_UNSPECIFIED))
+		if (!FCHK(tkOptions->action, ACTION_UNSPECIFIED))
 		{
 
 			// Do we want to ADD a new profile?
-			if FLAGCHECK(tkOptions->action, ACTION_PROFILE_ADD)
+			if FCHK(tkOptions->action, ACTION_PROFILE_ADD)
 			{
 				EC_HRES_MSG(HrCreateProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str()), L"Calling HrCreateProfile");
 
 				// Do we also want to add a service?
-				if FLAGCHECK(tkOptions->action, ACTION_SERVICE_ADD)
+				if FCHK(tkOptions->action, ACTION_SERVICE_ADD)
 					EC_HRES_LOG(HrCreateMsemsService(tkOptions->profileOptions->profileMode,
 					(LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(),
 						tkOptions->iOutlookVersion,
 						tkOptions->profileOptions->serviceOptions), L"Calling HrCreateMsemsService");
 			}
 
-			if FLAGCHECK(tkOptions->action, ACTION_PROFILE_SETDEFAULT)
+			if FCHK(tkOptions->action, ACTION_PROFILE_SETDEFAULT)
 			{
 				HrSetDefaultProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str());
 			}
 
-			if FLAGCHECK(tkOptions->action, ACTION_PROFILE_UPDATE)
+			if FCHK(tkOptions->action, ACTION_PROFILE_UPDATE)
 			{
 				// Are we adding a service?
-				if FLAGCHECK(tkOptions->action, ACTION_SERVICE_ADD)
+				if FCHK(tkOptions->action, ACTION_SERVICE_ADD)
 				{
 					EC_HRES_LOG(HrCreateMsemsService(tkOptions->profileOptions->profileMode,
 						(LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(),
@@ -1546,11 +1546,11 @@ void _tmain(int argc, _TCHAR* argv[])
 						tkOptions->profileOptions->serviceOptions), L"Calling HrCreateMsemsService");
 				}
 
-				if FLAGCHECK(tkOptions->action, ACTION_SERVICE_UPDATE)
+				if FCHK(tkOptions->action, ACTION_SERVICE_UPDATE)
 				{
-					if FLAGCHECK(tkOptions->action, ACTION_PROVIDER_ADD)
+					if FCHK(tkOptions->action, ACTION_PROVIDER_ADD)
 					{
-						if VALUECHECK(tkOptions->profileOptions->serviceOptions->providerOptions->providerType, ProviderType::Delegate)
+						if VCHK(tkOptions->profileOptions->serviceOptions->providerOptions->providerType, ProviderType::Delegate)
 						{
 							EC_HRES_LOG(HrAddDelegateMailbox(tkOptions->profileOptions->profileMode,
 								(LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(),
@@ -1562,84 +1562,82 @@ void _tmain(int argc, _TCHAR* argv[])
 					}
 				}
 
-				if FLAGCHECK(tkOptions->action, ACTION_PROFILE_PROMOTEDELEGATES)
+				if FCHK(tkOptions->action, ACTION_PROFILE_PROMOTEDELEGATES)
 				{
 					EC_HRES_LOG(HrPromoteDelegates((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(),
-						VALUECHECK(tkOptions->profileOptions->profileMode, ProfileMode::Mode_Default),
-						VALUECHECK(tkOptions->profileOptions->profileMode, ProfileMode::Mode_All),
+						VCHK(tkOptions->profileOptions->profileMode, ProfileMode::Mode_Default),
+						VCHK(tkOptions->profileOptions->profileMode, ProfileMode::Mode_All),
 						tkOptions->profileOptions->serviceOptions->iServiceIndex,
-						VALUECHECK(tkOptions->profileOptions->serviceOptions->serviceMode, ServiceMode::Mode_Default),
-						VALUECHECK(tkOptions->profileOptions->serviceOptions->serviceMode, ServiceMode::Mode_All),
+						VCHK(tkOptions->profileOptions->serviceOptions->serviceMode, ServiceMode::Mode_Default),
+						VCHK(tkOptions->profileOptions->serviceOptions->serviceMode, ServiceMode::Mode_All),
 						tkOptions->iOutlookVersion,
 						tkOptions->profileOptions->serviceOptions->connectMode), L"Calling HrPromoteDelegates");
 					// If Caching options were specified then update the cached mode configuration accordingly
 					// To do: add cached mode support
 				}
 
-				if FLAGCHECK(tkOptions->action, ACTION_SERVICE_SETCACHEDMODE)
-					if VALUECHECK(tkOptions->profileOptions->profileMode, ProfileMode::Mode_Default)
+				if FCHK(tkOptions->action, ACTION_SERVICE_SETCACHEDMODE)
+					if VCHK(tkOptions->profileOptions->profileMode, ProfileMode::Mode_Default)
 					{
 						EC_HRES_LOG(HrSetCachedMode((LPWSTR)GetDefaultProfileName().c_str(), true, false, -1,
-							VALUECHECK(tkOptions->profileOptions->serviceOptions->serviceMode, ServiceMode::Mode_Default),
-							VALUECHECK(tkOptions->profileOptions->serviceOptions->serviceMode, ServiceMode::Mode_All),
-							VALUECHECK(tkOptions->profileOptions->serviceOptions->cachedModeOwner, CachedMode::Enabled),
-							VALUECHECK(tkOptions->profileOptions->serviceOptions->cachedModeShared, CachedMode::Enabled),
-							VALUECHECK(tkOptions->profileOptions->serviceOptions->cachedModePublicFolders, CachedMode::Enabled),
+							VCHK(tkOptions->profileOptions->serviceOptions->serviceMode, ServiceMode::Mode_Default),
+							VCHK(tkOptions->profileOptions->serviceOptions->serviceMode, ServiceMode::Mode_All),
+							VCHK(tkOptions->profileOptions->serviceOptions->cachedModeOwner, CachedMode::Enabled),
+							VCHK(tkOptions->profileOptions->serviceOptions->cachedModeShared, CachedMode::Enabled),
+							VCHK(tkOptions->profileOptions->serviceOptions->cachedModePublicFolders, CachedMode::Enabled),
 							tkOptions->profileOptions->serviceOptions->iCachedModeMonths, tkOptions->iOutlookVersion), L"HrSetCachedMode");
 					}
-					else if VALUECHECK(tkOptions->profileOptions->profileMode, ProfileMode::Mode_Specific)
+					else if VCHK(tkOptions->profileOptions->profileMode, ProfileMode::Mode_Specific)
 					{
 						EC_HRES_LOG(HrSetCachedMode((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(), false, false, -1,
-							VALUECHECK(tkOptions->profileOptions->serviceOptions->serviceMode, ServiceMode::Mode_Default),
-							VALUECHECK(tkOptions->profileOptions->serviceOptions->serviceMode, ServiceMode::Mode_All),
-							VALUECHECK(tkOptions->profileOptions->serviceOptions->cachedModeOwner, CachedMode::Enabled),
-							VALUECHECK(tkOptions->profileOptions->serviceOptions->cachedModeShared, CachedMode::Enabled),
-							VALUECHECK(tkOptions->profileOptions->serviceOptions->cachedModePublicFolders, CachedMode::Enabled),
+							VCHK(tkOptions->profileOptions->serviceOptions->serviceMode, ServiceMode::Mode_Default),
+							VCHK(tkOptions->profileOptions->serviceOptions->serviceMode, ServiceMode::Mode_All),
+							VCHK(tkOptions->profileOptions->serviceOptions->cachedModeOwner, CachedMode::Enabled),
+							VCHK(tkOptions->profileOptions->serviceOptions->cachedModeShared, CachedMode::Enabled),
+							VCHK(tkOptions->profileOptions->serviceOptions->cachedModePublicFolders, CachedMode::Enabled),
 							tkOptions->profileOptions->serviceOptions->iCachedModeMonths, tkOptions->iOutlookVersion), L"HrSetCachedMode");
 					}
-					else if VALUECHECK(tkOptions->profileOptions->profileMode, ProfileMode::Mode_All)
+					else if VCHK(tkOptions->profileOptions->profileMode, ProfileMode::Mode_All)
 					{
 						Logger::Write(LogLevel::logLevelFailed, L"Functionality not yet implemented");
 					}
 			}
 
 
-			if FLAGCHECK(tkOptions->action, ACTION_PROFILE_LISTALL)
+			if FCHK(tkOptions->action, ACTION_PROFILE_LISTALL)
 			{
 				EC_HRES_LOG(HrListProfiles(tkOptions->profileOptions, tkOptions->wszExportPath), L"Calling HrListProfiles");
 			}
 
-			if FLAGCHECK(tkOptions->action, ACTION_PROFILE_CLONE)
+			if FCHK(tkOptions->action, ACTION_PROFILE_CLONE)
 			{
 				MAPIAllocateBuffer(sizeof(ProfileInfo), (LPVOID*)lpProfInfo);
 				ZeroMemory(lpProfInfo, sizeof(ProfileInfo));
 
-				if VALUECHECK(tkOptions->profileOptions->profileMode, ProfileMode::Mode_Default)
+				if VCHK(tkOptions->profileOptions->profileMode, ProfileMode::Mode_Default)
 				{
 					EC_HRES_LOG(HrGetProfile((LPWSTR)GetDefaultProfileName().c_str(), &profInfo), L"Calling HrGetProfile");
 				}
-				else if VALUECHECK(tkOptions->profileOptions->profileMode, ProfileMode::Mode_Specific)
+				else if VCHK(tkOptions->profileOptions->profileMode, ProfileMode::Mode_Specific)
 					EC_HRES_LOG(HrGetProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(), &profInfo), L"Calling HrGetProfile");
 
 			}
 			EC_HRES_LOG(HrCloneProfile(&profInfo), L"Calling HrCloneProfile");
 
 
-			if FLAGCHECK(tkOptions->action, ACTION_PROFILE_REMOVE)
+			if FCHK(tkOptions->action, ACTION_PROFILE_REMOVE)
 			{
-				if VALUECHECK(tkOptions->profileOptions->profileMode, ProfileMode::Mode_Default)
+				if VCHK(tkOptions->profileOptions->profileMode, ProfileMode::Mode_Default)
 				{
 					EC_HRES_LOG(HrDeleteProfile((LPWSTR)GetDefaultProfileName().c_str()), L"HrDeleteProfile");
 				}
-				else if VALUECHECK(tkOptions->profileOptions->profileMode, ProfileMode::Mode_Specific)
+				else if VCHK(tkOptions->profileOptions->profileMode, ProfileMode::Mode_Specific)
 				{
 					EC_HRES_LOG(HrDeleteProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str()), L"HrDeleteProfile");
 				}
-
-
 			};
 
-			if VALUECHECK(tkOptions->profileOptions->serviceOptions->serviceType, ServiceType::ServiceType_AddressBook)
+			if VCHK(tkOptions->profileOptions->serviceOptions->serviceType, ServiceType::ServiceType_AddressBook)
 			{
 
 				// SOME LDAP AB LOGIC
@@ -1662,7 +1660,7 @@ void _tmain(int argc, _TCHAR* argv[])
 				}
 
 				// If we're processing the default profile then fetch the name of it and populate that in the runtime options.
-				if VALUECHECK(tkOptions->profileOptions->profileMode, ProfileMode::Mode_Default)
+				if VCHK(tkOptions->profileOptions->profileMode, ProfileMode::Mode_Default)
 				{
 					tkOptions->profileOptions->wszProfileName = GetDefaultProfileName();
 					if (tkOptions->profileOptions->wszProfileName.empty())
@@ -1670,7 +1668,6 @@ void _tmain(int argc, _TCHAR* argv[])
 						wprintf(L"ERROR: No default profile found, please specify a valid profile name.");
 						return;
 					}
-
 				}
 
 				// Create a profile administration object.
@@ -1686,26 +1683,75 @@ void _tmain(int argc, _TCHAR* argv[])
 					&lpSvcAdmin), L"Getting a service admin interface pointer");																	// A pointer to a pointer to a message service administration object.
 				wprintf(L"Retrieved IMsgServiceAdmin interface pointer.\n");
 
-				if FLAGCHECK(tkOptions->action, ACTION_SERVICE_ADD)
+				if FCHK(tkOptions->action, ACTION_SERVICE_ADD)
 				{
+					wprintf(L"Running in Create mode.\n");
+					if (fValidPath)
+					{
+						// Calling CheckABServiceExists to retrieve a pointer to a MAPIUID for an existing AB service that matches the
+						// display name (and optionally, the ldap server name) supplied
+						EC_HRES(CheckABServiceExists(lpSvcAdmin, pABProvider.lpszDisplayName, pABProvider.lpszServerName, &mapiUid, &fServiceExists));
+						if (!fServiceExists)
+							// If no existing service is found then call CreateAbService to create the new service
+							EC_HRES(CreateABService(lpSvcAdmin, &pABProvider));
+						else
+							wprintf(L"The specified AB already exists.\n");
+					}
+					else
+						wprintf(L"ERROR: Invalid input file or invalid file path.");
 
 				}
 
-				if FLAGCHECK(tkOptions->action, ACTION_SERVICE_UPDATE)
+				if FCHK(tkOptions->action, ACTION_SERVICE_UPDATE)
 				{
-
+									wprintf(L"Running in Update mode.\n");
+				if (fValidPath)
+				{
+					if (!tkOptions->profileOptions->serviceOptions->addressBookOptions->wszABServerName.empty())
+					{
+						// Calling CheckABServiceExists to retrieve a pointer to a MAPIUID for an existing AB service that matches the
+						// display name (and optionally, the ldap server name) supplied
+						EC_HRES(CheckABServiceExists(lpSvcAdmin, LPTSTR(tkOptions->profileOptions->serviceOptions->addressBookOptions->wszABDisplayName.c_str()), LPTSTR(tkOptions->profileOptions->serviceOptions->addressBookOptions->wszABServerName.c_str()), &mapiUid, &fServiceExists));
+					}
+					else
+						// Calling CheckABServiceExists to retrieve a pointer to a MAPIUID for an existing AB service that matches the
+						// display name (and optionally, the ldap server name) supplied
+						EC_HRES(CheckABServiceExists(lpSvcAdmin, LPTSTR(tkOptions->profileOptions->serviceOptions->addressBookOptions->wszABDisplayName.c_str()), &mapiUid, &fServiceExists));
+					if (fServiceExists)
+						// If the searched for service is found then call UpdateABService to update the service properties
+						EC_HRES(UpdateABService(lpSvcAdmin, &pABProvider, lpMapiUid));
+					else
+						wprintf(L"The specified AB doesn't exist.\n");
+				}
+				else
+					wprintf(L"ERROR: Invalid input file or invalid file path.");
 				}
 
-				if FLAGCHECK(tkOptions->action, ACTION_SERVICE_LISTALL)
+				if FCHK(tkOptions->action, ACTION_SERVICE_LISTALL)
 				{
 					wprintf(L"Running in List mode.\n");
 					// Calling ListAllABServices to list all the existing Ldap AB Servies in the selected profile
 					EC_HRES(ListAllABServices(lpSvcAdmin));
 				}
 
-				if FLAGCHECK(tkOptions->action, ACTION_SERVICE_LIST)
+				if FCHK(tkOptions->action, ACTION_SERVICE_REMOVE)
 				{
-
+									wprintf(L"Running in Remove mode.\n");
+				if (!tkOptions->profileOptions->serviceOptions->addressBookOptions->wszABServerName.empty())
+				{
+					// Calling CheckABServiceExists to retrieve a pointer to a MAPIUID for an existing AB service that matches the
+					// display name (and optionally, the ldap server name) supplied
+					EC_HRES(CheckABServiceExists(lpSvcAdmin, LPTSTR(tkOptions->profileOptions->serviceOptions->addressBookOptions->wszABDisplayName.c_str()), LPTSTR(tkOptions->profileOptions->serviceOptions->addressBookOptions->wszABServerName.c_str()), &mapiUid, &fServiceExists));
+				}
+				else
+					// Calling CheckABServiceExists to retrieve a pointer to a MAPIUID for an existing AB service that matches the
+					// display name (and optionally, the ldap server name) supplied
+					EC_HRES(CheckABServiceExists(lpSvcAdmin, LPTSTR(tkOptions->profileOptions->serviceOptions->addressBookOptions->wszABDisplayName.c_str()), &mapiUid, &fServiceExists));
+				if (fServiceExists)
+					// If the searched for service is found then call RemoveABService to update the service properties
+					EC_HRES(RemoveABService(lpSvcAdmin, lpMapiUid));
+				else
+					wprintf(L"The specified AB doesn't exist.\n");
 				}
 
 			}
@@ -2017,7 +2063,7 @@ void _tmain(int argc, _TCHAR* argv[])
 HRESULT HrListProfiles(ProfileOptions * pProfileOptions, std::wstring wszExportPath)
 {
 	HRESULT hRes = S_OK;
-	if VALUECHECK(pProfileOptions->profileMode, ProfileMode::Mode_All)
+	if VCHK(pProfileOptions->profileMode, ProfileMode::Mode_All)
 	{
 		ULONG ulProfileCount = GetProfileCount();
 		ProfileInfo * profileInfo = new ProfileInfo[ulProfileCount];
@@ -2036,7 +2082,7 @@ HRESULT HrListProfiles(ProfileOptions * pProfileOptions, std::wstring wszExportP
 		}
 
 	}
-	else if VALUECHECK(pProfileOptions->profileMode, ProfileMode::Mode_Specific)
+	else if VCHK(pProfileOptions->profileMode, ProfileMode::Mode_Specific)
 	{
 		ProfileInfo * pProfileInfo = new ProfileInfo();
 		Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for profile: " + pProfileOptions->wszProfileName);
@@ -2053,7 +2099,7 @@ HRESULT HrListProfiles(ProfileOptions * pProfileOptions, std::wstring wszExportP
 		}
 
 	}
-	else if VALUECHECK(pProfileOptions->profileMode, ProfileMode::Mode_Default)
+	else if VCHK(pProfileOptions->profileMode, ProfileMode::Mode_Default)
 	{
 		std::wstring szDefaultProfileName = GetDefaultProfileName();
 		if (!szDefaultProfileName.empty())

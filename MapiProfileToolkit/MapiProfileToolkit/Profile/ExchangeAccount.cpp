@@ -6,12 +6,12 @@ HRESULT HrCreateMsemsService(ProfileMode profileMode, LPWSTR lpwszProfileName, i
 {
 	HRESULT hRes = S_OK;
 
-	if VALUECHECK(profileMode, ProfileMode::Mode_Default)
+	if VCHK(profileMode, ProfileMode::Mode_Default)
 	{
 		EC_HRES_MSG(HrCreateMsemsServiceOneProfile((LPWSTR)GetDefaultProfileName().c_str(), iOutlookVersion, pServiceOptions), L"Calling HrCreateMsemsServiceOneProfile");
 
 	}
-	if VALUECHECK(profileMode, ProfileMode::Mode_All)
+	if VCHK(profileMode, ProfileMode::Mode_All)
 	{
 		ULONG ulProfileCount = GetProfileCount();
 		ProfileInfo* profileInfo = new ProfileInfo[ulProfileCount];
@@ -23,7 +23,7 @@ HRESULT HrCreateMsemsService(ProfileMode profileMode, LPWSTR lpwszProfileName, i
 	}
 	else
 	{
-		if VALUECHECK(profileMode, ProfileMode::Mode_Specific)
+		if VCHK(profileMode, ProfileMode::Mode_Specific)
 		{
 			EC_HRES_MSG(HrCreateMsemsServiceOneProfile(lpwszProfileName, iOutlookVersion, pServiceOptions), L"Calling HrCreateMsemsServiceOneProfile");
 		}
@@ -45,7 +45,7 @@ HRESULT HrCreateMsemsServiceOneProfile(LPWSTR lpwszProfileName, int iOutlookVers
 		break;
 	case 2010:
 
-		if VALUECHECK(pServiceOptions->connectMode, ConnectMode::ConnectMode_RpcOverHttp)
+		if VCHK(pServiceOptions->connectMode, ConnectMode::ConnectMode_RpcOverHttp)
 		{
 			// This id a bit of a hack since delegate mailboxes don't need to have the personalised server name in the delegate provider
 			// I'm just creating these based on the legacyDN and the MailStore so best check that those have value
@@ -62,7 +62,7 @@ HRESULT HrCreateMsemsServiceOneProfile(LPWSTR lpwszProfileName, int iOutlookVers
 				(LPWSTR)pServiceOptions->wszAutodiscoverUrl.c_str()), L"Calling HrCreateMsemsServiceROH");
 		}
 		// best not be used for now as I haven't sorted it out
-		if VALUECHECK(pServiceOptions->connectMode, ConnectMode::ConnectMode_MapiOverHttp)
+		if VCHK(pServiceOptions->connectMode, ConnectMode::ConnectMode_MapiOverHttp)
 		{
 			Logger::Write(logLevelError, L"Validating delegate information.");
 			if (((pServiceOptions->wszMailStoreInternalUrl != L"") || (pServiceOptions->wszMailStoreExternalUrl != L"")) && (pServiceOptions->wszMailboxLegacyDN != L""))
@@ -100,7 +100,7 @@ HRESULT HrCreateMsemsServiceOneProfile(LPWSTR lpwszProfileName, int iOutlookVers
 
 		break;
 	case 2013:
-		if VALUECHECK(pServiceOptions->connectMode, ConnectMode::ConnectMode_RpcOverHttp)
+		if VCHK(pServiceOptions->connectMode, ConnectMode::ConnectMode_RpcOverHttp)
 		{
 			// This id a bit of a hack since delegate mailboxes don't need to have the personalised server name in the delegate provider
 			// I'm just creating these based on the legacyDN and the MailStore so best check that those have value
@@ -117,7 +117,7 @@ HRESULT HrCreateMsemsServiceOneProfile(LPWSTR lpwszProfileName, int iOutlookVers
 				(LPWSTR)pServiceOptions->wszAutodiscoverUrl.c_str()), L"Calling HrCreateMsemsServiceROH");
 		}
 		// best not be used for now as I haven't sorted it out
-		if VALUECHECK(pServiceOptions->connectMode, ConnectMode::ConnectMode_MapiOverHttp)
+		if VCHK(pServiceOptions->connectMode, ConnectMode::ConnectMode_MapiOverHttp)
 		{
 			Logger::Write(logLevelError, L"Validating delegate information.");
 			if (((pServiceOptions->wszMailStoreInternalUrl != L"") || (pServiceOptions->wszMailStoreExternalUrl != L"")) && (pServiceOptions->wszMailboxLegacyDN != L""))

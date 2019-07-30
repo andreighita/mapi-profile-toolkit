@@ -11,8 +11,8 @@
 * or construct procedures to meet your specific requirements.
 */
 
-#include "..\stdafx.h"
-#include "..\Profile.h"
+#include "../stdafx.h"
+#include "../Profile/Profile.h"
 #include "ConfigXmlParser.h"
 
 

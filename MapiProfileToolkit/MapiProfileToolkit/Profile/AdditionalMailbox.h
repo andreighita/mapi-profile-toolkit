@@ -2,11 +2,7 @@
 
 #include "../stdafx.h"
 #include "Profile.h"
-#include "Misc/Utility/StringOperations.h"
-#include "ToolkitObjects.h"
-#include "MAPIObjects.h"
-#include <MAPIUtil.h>
-#include "ExtraMAPIDefs.h"
+#include "../Misc/Utility/StringOperations.h"
 
 // HrAddDelegateMailboxModern
 // Adds a delegate mailbox to a given service. The property set is one for Outlook 2016 where all is needed is:

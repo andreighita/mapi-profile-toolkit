@@ -1,4 +1,4 @@
-
+#include "StringOperations.h"
 
 std::string ConvertMultiByteToStdString(LPSTR lpStr)
 {

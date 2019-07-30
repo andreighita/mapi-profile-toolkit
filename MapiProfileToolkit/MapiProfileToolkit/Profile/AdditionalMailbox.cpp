@@ -189,12 +189,12 @@ HRESULT HrAddDelegateMailbox(ProfileMode profileMode, LPWSTR lpwszProfileName, S
 {
 	HRESULT hRes = S_OK;
 
-	if VALUECHECK(profileMode, ProfileMode::Mode_Default)
+	if VCHK(profileMode, ProfileMode::Mode_Default)
 	{
 		EC_HRES_MSG(HrAddDelegateMailboxOneProfile((LPWSTR)GetDefaultProfileName().c_str(), iOutlookVersion, serviceMode, iServiceIndex, pMailboxOptions), L"Calling HrAddDelegateMailboxOneProfile");
 
 	}
-	else if VALUECHECK(profileMode, ProfileMode::Mode_All)
+	else if VCHK(profileMode, ProfileMode::Mode_All)
 	{
 		ULONG ulProfileCount = GetProfileCount();
 		ProfileInfo* profileInfo = new ProfileInfo[ulProfileCount];
@@ -206,7 +206,7 @@ HRESULT HrAddDelegateMailbox(ProfileMode profileMode, LPWSTR lpwszProfileName, S
 	}
 	else
 	{
-		if VALUECHECK(profileMode, ProfileMode::Mode_Specific)
+		if VCHK(profileMode, ProfileMode::Mode_Specific)
 		{
 			EC_HRES_MSG(HrAddDelegateMailboxOneProfile(lpwszProfileName, iOutlookVersion, serviceMode, iServiceIndex, pMailboxOptions), L"Calling HrAddDelegateMailboxOneProfile");
 		}
@@ -226,7 +226,7 @@ HRESULT HrAddDelegateMailboxOneProfile(LPWSTR lpwszProfileName, int iOutlookVers
 	case 2007:
 		EC_HRES_MSG(HrAddDelegateMailboxLegacy(FALSE,
 			lpwszProfileName,
-			VALUECHECK(serviceMode, ServiceMode::Mode_Default),
+			VCHK(serviceMode, ServiceMode::Mode_Default),
 			iServiceIndex,
 			(LPWSTR)pMailboxOptions->wszMailboxDisplayName.c_str(),
 			(LPWSTR)pMailboxOptions->wszMailboxLegacyDN.c_str(),
@@ -237,7 +237,7 @@ HRESULT HrAddDelegateMailboxOneProfile(LPWSTR lpwszProfileName, int iOutlookVers
 	case 2013:
 		EC_HRES_MSG(HrAddDelegateMailbox(FALSE,
 			lpwszProfileName,
-			VALUECHECK(serviceMode, ServiceMode::Mode_Default),
+			VCHK(serviceMode, ServiceMode::Mode_Default),
 			iServiceIndex,
 			(LPWSTR)pMailboxOptions->wszMailboxDisplayName.c_str(),
 			(LPWSTR)pMailboxOptions->wszMailboxLegacyDN.c_str(),
@@ -252,7 +252,7 @@ HRESULT HrAddDelegateMailboxOneProfile(LPWSTR lpwszProfileName, int iOutlookVers
 	case 2016:
 		EC_HRES_MSG(HrAddDelegateMailboxModern(FALSE,
 			lpwszProfileName,
-			VALUECHECK(serviceMode, ServiceMode::Mode_Default),
+			VCHK(serviceMode, ServiceMode::Mode_Default),
 			iServiceIndex,
 			(LPWSTR)pMailboxOptions->wszMailboxDisplayName.c_str(),
 			(LPWSTR)pMailboxOptions->wszSmtpAddress.c_str()), L"Calling HrCreateMsemsServiceModern");

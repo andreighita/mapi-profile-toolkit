@@ -22,8 +22,13 @@
 #include <utility>
 #include <vector>
 #include "ToolkitObjects.h"
+#include "MAPIObjects.h"
 #include "Misc/Utility/StringOperations.h"
 
+#pragma comment(lib, "Ole32.lib")
+#pragma comment(lib, "OleAut32.lib")
+#pragma comment(lib, "Activeds.lib")
+#pragma comment (lib, "adsiid.lib")
 #pragma comment (lib, "mapi32.lib")
 #pragma warning(disable:4996) // _CRT_SECURE_NO_WARNINGS
 
@@ -33,7 +38,7 @@
 		if (FAILED(hRes)) \
 																{ \
 			std::cout << "FAILED! hr = " << std::hex << hRes << ".  LINE = " << std::dec << __LINE__ << "\n"; \
-			std::cout << " >>> " << (wchar_t*) L#_hRes <<  "\n"; \
+			std::cout << " >>> " << (wchar_t*) _hRes <<  "\n"; \
 			goto Error; \
 																} \
 								} while (0)
@@ -63,9 +68,9 @@
 																		} \
 									} while (0)
 
-#define FLAGCHECK(variable, flag) (flag == (variable & flag))
+#define FCHK(variable, flag) (flag == (variable & flag))
 
-#define VALUECHECK(variable, value) (value == variable)
+#define VCHK(variable, value) (value == variable)
 
 std::wstring ConvertStringToWstring(std::string & szString);
 LPWSTR ConvertStdStringToWideChar(std::string szValue);

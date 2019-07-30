@@ -1,7 +1,7 @@
 // QueryKey - Enumerates the subkeys of key and its associated values.
 //     hKey - Key whose subkeys and values are to be enumerated.
 
-#include "../stdafx.h"
+#include "../../stdafx.h"
 #include "RegistryHelper.h"
 #include <windows.h>
 #include <stdio.h>

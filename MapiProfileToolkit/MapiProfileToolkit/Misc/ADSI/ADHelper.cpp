@@ -1,5 +1,5 @@
 
-#include "../stdafx.h"
+#include "../../stdafx.h"
 #include "ADHelper.h"
 
 // retrieves the current user DN

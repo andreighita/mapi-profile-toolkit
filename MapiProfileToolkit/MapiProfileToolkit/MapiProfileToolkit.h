@@ -13,7 +13,7 @@
 
 #pragma once
 #include "stdafx.h"
-#include "ToolkitObjects.h"
+
 #include "Profile/Profile.h"
 #include "Profile/ExchangeAccount.h"
 #include "Profile/CachedMode.h"
@@ -21,6 +21,7 @@
 #include "AddressBook/ConfigXmlParser.h"
 #include "XMLHelper.h"
 #include "Misc/Registry/RegistryHelper.h"
+#include "Logger.h"
 
 BOOL Is64BitProcess(void);
 BOOL IsCorrectBitness();

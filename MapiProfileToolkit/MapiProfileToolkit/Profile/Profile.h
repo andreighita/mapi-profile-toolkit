@@ -12,15 +12,13 @@
 */
 
 #include "../stdafx.h"
-#include "Logger.h"
+
 #include <initguid.h>
 #define USES_IID_IMAPIProp 
 #define USES_IID_IMsgServiceAdmin2
-#include "MAPIObjects.h"
 #include <MAPIX.h>
 #include <MAPIUtil.h>
 #include <MAPIAux.h>
-#include "MAPIObjects.h"
 #include "EdkMdb.h"
 #include <MAPIGuid.h>
 #include <MAPIAux.h>	
@@ -32,11 +30,10 @@
 #include <iostream>
 #include <algorithm> 
 #include <vector>
-#include "ToolkitObjects.h"
 #include "ExchangeAccount.h"
 #include "AdditionalMailbox.h"
 #include "PST.h"
-#include "AddressBook/ABProviderObjects.h"
+#include "../AddressBook/ABProviderObjects.h"
 
 
 #pragma region GenericProfile
