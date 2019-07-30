@@ -1,7 +1,7 @@
-#include "stdafx.h"
+#include "../stdafx.h"
 
 #include "AccountFunctions.h"
-#include "ADHelper.h"
+
 
 HRESULT GetDefaultAccount(LPMAPISESSION lpSession, LPWSTR lpwszProfile, OlkAccount * pOlkAccount)
 {

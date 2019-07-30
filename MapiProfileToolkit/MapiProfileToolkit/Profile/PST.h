@@ -1,12 +1,8 @@
 #pragma once
 
-#include "stdafx.h"
-#include "StringOperations.h"
-#include "ToolkitObjects.h"
+#include "../stdafx.h"
 #include "MAPIObjects.h"
-#include <MAPIAux.h>
-#include <MAPIUtil.h>
-#include "ExtraMAPIDefs.h"
+
 #include "Profile.h"
 
 HRESULT UpdatePstPath(LPWSTR lpszProfileName, LPWSTR lpszOldPath, LPWSTR lpszNewPath, bool bMoveFiles);

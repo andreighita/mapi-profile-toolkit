@@ -1,6 +1,7 @@
 #pragma once
-
-#include "stdafx.h"
+#include <string>
+#include <Windows.h>
+#include <algorithm>
 
 std::string ConvertMultiByteToStdString(LPSTR lpStr);
 

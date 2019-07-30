@@ -11,7 +11,7 @@
 * or construct procedures to meet your specific requirements.
 */
 
-#include "stdafx.h"
+#include "../stdafx.h"
 #include "Logger.h"
 #include <initguid.h>
 #define USES_IID_IMAPIProp 
@@ -33,7 +33,6 @@
 #include <algorithm> 
 #include <vector>
 #include "ToolkitObjects.h"
-#include "StringOperations.h"
 #include "ExchangeAccount.h"
 #include "AdditionalMailbox.h"
 #include "PST.h"

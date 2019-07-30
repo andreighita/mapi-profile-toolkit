@@ -1,15 +1,10 @@
 #pragma once
 
-#include <mapix.h>
-#include <mapidefs.h>
-#include <guiddef.h>
-#include <MAPIUTIL.H>
+#include "../stdafx.h"
 #include "AccountHelper.h"
 #include "AccountMgmt.h"
 #include "AccountObjects.h"
-
-
-#include "ToolkitObjects.h"
+#include "../Misc/ADSI/ADHelper.h"
 
 HRESULT GetDefaultAccount(LPMAPISESSION lpSession, LPWSTR lpwszProfile, OlkAccount * pOlkAccount);
 HRESULT UpdateAcctName(LPMAPISESSION lpSession, LPWSTR lpwszProfile, long lAcctId, LPWSTR lpszNewAcctName);

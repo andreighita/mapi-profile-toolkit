@@ -13,21 +13,9 @@
 
 // ProfileToolkit.cpp : Defines the entry point for the console application.
 //
-
+#pragma once
 #include "stdafx.h"
-
-#include <MAPIX.h>
-#include <MAPIUtil.h>
-#include "Profile.h"
 #include "MapiProfileToolkit.h"
-#include <iostream>
-#include <string>
-#include <utility>
-#include <algorithm>  
-#include "XMLHelper.h"
-#include "RegistryHelper.h"
-#include "Logger.h"
-#include <vector>
 
 // Is64BitProcess
 // Returns true if 64 bit process or false if 32 bit.

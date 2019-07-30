@@ -11,6 +11,18 @@
 #include <sstream>
 #include "Logger.h"
 #include <algorithm>
+#include <MAPIX.h>
+#include <MAPIUtil.h>
+#include <MAPIAux.h>
+#include "ExtraMAPIDefs.h"
+#include <mapidefs.h>
+#include <guiddef.h>
+#include <iostream>
+#include <string>
+#include <utility>
+#include <vector>
+#include "ToolkitObjects.h"
+#include "Misc/Utility/StringOperations.h"
 
 #pragma comment (lib, "mapi32.lib")
 #pragma warning(disable:4996) // _CRT_SECURE_NO_WARNINGS

@@ -1,10 +1,6 @@
 #pragma once
 
-#include "stdafx.h"
-#include "StringOperations.h"
-#include "ToolkitObjects.h"
-#include <MAPIAux.h>
-#include <MAPIUtil.h>
+#include "../stdafx.h"
 #include "Profile.h"
 
 HRESULT HrCreateMsemsService(ProfileMode profileMode, LPWSTR lpwszProfileName, int iOutlookVersion, ServiceOptions* pServiceOptions);

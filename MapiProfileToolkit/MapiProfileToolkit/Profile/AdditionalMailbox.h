@@ -1,8 +1,8 @@
 #pragma once
 
-#include "stdafx.h"
+#include "../stdafx.h"
 #include "Profile.h"
-#include "StringOperations.h"
+#include "Misc/Utility/StringOperations.h"
 #include "ToolkitObjects.h"
 #include "MAPIObjects.h"
 #include <MAPIUtil.h>
