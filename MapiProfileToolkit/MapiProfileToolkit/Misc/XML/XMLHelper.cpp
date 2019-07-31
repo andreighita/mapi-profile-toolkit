@@ -11,12 +11,7 @@
 * or construct procedures to meet your specific requirements.
 */
 
-#include "stdafx.h"
-#include <stdio.h>
-#include <tchar.h>
-#include <msxml6.h>
-#include "MAPIObjects.h"
-#include <sstream>
+#include "XMLHelper.h"
 
 // Macro that calls a COM method returning HRESULT value.
 #define CHK_HR(stmt)        do { hr=(stmt); if (FAILED(hr)) goto CleanUp; } while(0)
@@ -28,23 +23,23 @@
 #define SAFE_RELEASE(p)     do { if ((p)) { (p)->Release(); (p) = NULL; } } while(0)
 
 template <class T>
-inline std::string ConvertTToString(const T & t)
+inline std::wstring ConvertTToString(const T& t)
 {
-		std::stringstream ss;
-		ss << t;
-		return ss.str();
+	std::wstringstream wss;
+	wss << t;
+	return wss.str();
 }
 
 
-inline std::string ConvertIntToString(int t)
+inline std::wstring ConvertIntToString(int t)
 {
-	std::stringstream ss;
-	ss << t;
-	return ss.str();
+	std::wstringstream wss;
+	wss << t;
+	return wss.str();
 }
 
 // Helper function to create a VT_BSTR variant from a null terminated string. 
-HRESULT VariantFromString(PCWSTR wszValue, VARIANT &Variant)
+HRESULT VariantFromString(PCWSTR wszValue, VARIANT& Variant)
 {
 	HRESULT hr = S_OK;
 	BSTR bstr = SysAllocString(wszValue);
@@ -58,7 +53,7 @@ CleanUp:
 }
 
 // Helper function to create a DOM instance. 
-HRESULT CreateAndInitDOM(IXMLDOMDocument **ppDoc)
+HRESULT CreateAndInitDOM(IXMLDOMDocument** ppDoc)
 {
 	HRESULT hr = CoCreateInstance(__uuidof(DOMDocument60), NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(ppDoc));
 	if (SUCCEEDED(hr))
@@ -73,7 +68,7 @@ HRESULT CreateAndInitDOM(IXMLDOMDocument **ppDoc)
 }
 
 // Helper that allocates the BSTR param for the caller.
-HRESULT CreateElement(IXMLDOMDocument *pXMLDom, PCWSTR wszName, IXMLDOMElement **ppElement)
+HRESULT CreateElement(IXMLDOMDocument* pXMLDom, PCWSTR wszName, IXMLDOMElement** ppElement)
 {
 	HRESULT hr = S_OK;
 	*ppElement = NULL;
@@ -88,10 +83,10 @@ CleanUp:
 }
 
 // Helper function to append a child to a parent node.
-HRESULT AppendChildToParent(IXMLDOMNode *pChild, IXMLDOMNode *pParent)
+HRESULT AppendChildToParent(IXMLDOMNode* pChild, IXMLDOMNode* pParent)
 {
 	HRESULT hr = S_OK;
-	IXMLDOMNode *pChildOut = NULL;
+	IXMLDOMNode* pChildOut = NULL;
 	CHK_HR(pParent->appendChild(pChild, &pChildOut));
 
 CleanUp:
@@ -100,10 +95,10 @@ CleanUp:
 }
 
 // Helper function to create and add a processing instruction to a document node.
-HRESULT CreateAndAddPINode(IXMLDOMDocument *pDom, PCWSTR wszTarget, PCWSTR wszData)
+HRESULT CreateAndAddPINode(IXMLDOMDocument* pDom, PCWSTR wszTarget, PCWSTR wszData)
 {
 	HRESULT hr = S_OK;
-	IXMLDOMProcessingInstruction *pPI = NULL;
+	IXMLDOMProcessingInstruction* pPI = NULL;
 
 	BSTR bstrTarget = SysAllocString(wszTarget);
 	BSTR bstrData = SysAllocString(wszData);
@@ -120,10 +115,10 @@ CleanUp:
 }
 
 // Helper function to create and add a comment to a document node.
-HRESULT CreateAndAddCommentNode(IXMLDOMDocument *pDom, PCWSTR wszComment)
+HRESULT CreateAndAddCommentNode(IXMLDOMDocument* pDom, PCWSTR wszComment)
 {
 	HRESULT hr = S_OK;
-	IXMLDOMComment *pComment = NULL;
+	IXMLDOMComment* pComment = NULL;
 
 	BSTR bstrComment = SysAllocString(wszComment);
 	CHK_ALLOC(bstrComment);
@@ -138,11 +133,11 @@ CleanUp:
 }
 
 // Helper function to create and add an attribute to a parent node.
-HRESULT CreateAndAddAttributeNode(IXMLDOMDocument *pDom, PCWSTR wszName, PCWSTR wszValue, IXMLDOMElement *pParent)
+HRESULT CreateAndAddAttributeNode(IXMLDOMDocument* pDom, PCWSTR wszName, PCWSTR wszValue, IXMLDOMElement* pParent)
 {
 	HRESULT hr = S_OK;
-	IXMLDOMAttribute *pAttribute = NULL;
-	IXMLDOMAttribute *pAttributeOut = NULL; // Out param that is not used
+	IXMLDOMAttribute* pAttribute = NULL;
+	IXMLDOMAttribute* pAttributeOut = NULL; // Out param that is not used
 
 	BSTR bstrName = NULL;
 	VARIANT varValue;
@@ -165,10 +160,10 @@ CleanUp:
 }
 
 // Helper function to create and append a text node to a parent node.
-HRESULT CreateAndAddTextNode(IXMLDOMDocument *pDom, PCWSTR wszText, IXMLDOMNode *pParent)
+HRESULT CreateAndAddTextNode(IXMLDOMDocument* pDom, PCWSTR wszText, IXMLDOMNode* pParent)
 {
 	HRESULT hr = S_OK;
-	IXMLDOMText *pText = NULL;
+	IXMLDOMText* pText = NULL;
 
 	BSTR bstrText = SysAllocString(wszText);
 	CHK_ALLOC(bstrText);
@@ -183,10 +178,10 @@ CleanUp:
 }
 
 // Helper function to create and append a CDATA node to a parent node.
-HRESULT CreateAndAddCDATANode(IXMLDOMDocument *pDom, PCWSTR wszCDATA, IXMLDOMNode *pParent)
+HRESULT CreateAndAddCDATANode(IXMLDOMDocument* pDom, PCWSTR wszCDATA, IXMLDOMNode* pParent)
 {
 	HRESULT hr = S_OK;
-	IXMLDOMCDATASection *pCDATA = NULL;
+	IXMLDOMCDATASection* pCDATA = NULL;
 
 	BSTR bstrCDATA = SysAllocString(wszCDATA);
 	CHK_ALLOC(bstrCDATA);
@@ -202,7 +197,7 @@ CleanUp:
 
 // Helper function to create and append an element node to a parent node, and pass the newly created
 // element node to caller if it wants.
-HRESULT CreateAndAddElementNode(IXMLDOMDocument *pDom, PCWSTR wszName, PCWSTR wszNewline, IXMLDOMNode *pParent, IXMLDOMElement **ppElement = NULL)
+HRESULT CreateAndAddElementNode(IXMLDOMDocument* pDom, PCWSTR wszName, PCWSTR wszNewline, IXMLDOMNode* pParent, IXMLDOMElement** ppElement = NULL)
 {
 	HRESULT hr = S_OK;
 	IXMLDOMElement* pElement = NULL;
@@ -215,17 +210,17 @@ HRESULT CreateAndAddElementNode(IXMLDOMDocument *pDom, PCWSTR wszName, PCWSTR ws
 
 CleanUp:
 	if (ppElement)
-		*ppElement = pElement;  // Caller is repsonsible to release this element.
+		* ppElement = pElement;  // Caller is repsonsible to release this element.
 	else
 		SAFE_RELEASE(pElement); // Caller is not interested on this element, so release it.
 	return hr;
 }
 
-void ExportXML(ULONG cProfileInfo, ProfileInfo * profileInfo, std::wstring szExportPath)
+void ExportXML(ULONG cProfileInfo, ProfileInfo* profileInfo, std::wstring szExportPath)
 {
 	HRESULT hr = S_OK;
-	IXMLDOMDocument *pXMLDom = NULL;
-	IXMLDOMElement *pRoot = NULL;
+	IXMLDOMDocument* pXMLDom = NULL;
+	IXMLDOMElement* pRoot = NULL;
 
 	BSTR bstrXML = NULL;
 	VARIANT varFileName;
@@ -241,25 +236,25 @@ void ExportXML(ULONG cProfileInfo, ProfileInfo * profileInfo, std::wstring szExp
 
 	for (unsigned int i = 0; i < cProfileInfo; i++)
 	{
-		IXMLDOMElement *pProfileNode = NULL;
+		IXMLDOMElement* pProfileNode = NULL;
 		CHK_HR(CreateAndAddElementNode(pXMLDom, L"Profile", L"\n\t", pRoot, &pProfileNode));
 		// Add ProfileName node and value
-		IXMLDOMElement *pProfileNameNode = NULL;
+		IXMLDOMElement* pProfileNameNode = NULL;
 		CHK_HR(CreateAndAddElementNode(pXMLDom, L"ProfileName", L"\n\t", pProfileNode, &pProfileNameNode));
 		CHK_HR(CreateAndAddTextNode(pXMLDom, profileInfo[i].wszProfileName.c_str(), pProfileNameNode));
 		SAFE_RELEASE(pProfileNameNode);
 		// Add ProfileIndex node and value
-		IXMLDOMElement *pProfileIndexNode = NULL;
+		IXMLDOMElement* pProfileIndexNode = NULL;
 		CHK_HR(CreateAndAddElementNode(pXMLDom, L"ProfileIndex", L"\n\t", pProfileNode, &pProfileIndexNode));
 		CHK_HR(CreateAndAddTextNode(pXMLDom, ConvertStdStringToWideChar(ConvertIntToString(i + 1)), pProfileIndexNode));
 		SAFE_RELEASE(pProfileIndexNode);
 		// Add DefaultProfile node and value
-		IXMLDOMElement *pDefaultProfileNode = NULL;
+		IXMLDOMElement* pDefaultProfileNode = NULL;
 		CHK_HR(CreateAndAddElementNode(pXMLDom, L"DefaultProfile", L"\n\t", pProfileNode, &pDefaultProfileNode));
 		CHK_HR(CreateAndAddTextNode(pXMLDom, ConvertStdStringToWideChar(ConvertIntToString(profileInfo[i].bDefaultProfile)), pDefaultProfileNode));
 		SAFE_RELEASE(pDefaultProfileNode);
 		// Add ServiceCount node and value
-		IXMLDOMElement *pServiceCountNode = NULL;
+		IXMLDOMElement* pServiceCountNode = NULL;
 		CHK_HR(CreateAndAddElementNode(pXMLDom, L"ServicesCount", L"\n\t", pProfileNode, &pServiceCountNode));
 		CHK_HR(CreateAndAddTextNode(pXMLDom, ConvertStdStringToWideChar(ConvertIntToString(profileInfo[i].ulServiceCount)), pServiceCountNode));
 		SAFE_RELEASE(pServiceCountNode);
@@ -267,7 +262,7 @@ void ExportXML(ULONG cProfileInfo, ProfileInfo * profileInfo, std::wstring szExp
 		if (profileInfo[i].ulServiceCount > 0)
 		{
 			// create root node for Services
-			IXMLDOMElement *pServicesRootNode = NULL;
+			IXMLDOMElement* pServicesRootNode = NULL;
 			CHK_HR(CreateAndAddElementNode(pXMLDom, L"Services", L"\n\t", pProfileNode, &pServicesRootNode));
 
 			for (unsigned int j = 0; j < profileInfo[i].ulServiceCount; j++)
@@ -275,85 +270,85 @@ void ExportXML(ULONG cProfileInfo, ProfileInfo * profileInfo, std::wstring szExp
 				if (ServiceType::ServiceType_Mailbox == profileInfo[i].profileServices[j].serviceType)
 				{
 					// create child node for each service
-					IXMLDOMElement *pServiceNode = NULL;
+					IXMLDOMElement* pServiceNode = NULL;
 					CHK_HR(CreateAndAddElementNode(pXMLDom, L"ExchangeAccount", L"\n\t", pServicesRootNode, &pServiceNode));
 					// Add ServiceName node and value
-					IXMLDOMElement *pServiceNameNode = NULL;
+					IXMLDOMElement* pServiceNameNode = NULL;
 					CHK_HR(CreateAndAddElementNode(pXMLDom, L"AccountName", L"\n\t", pServiceNode, &pServiceNameNode));
 					CHK_HR(CreateAndAddTextNode(pXMLDom, profileInfo[i].profileServices[j].wszServiceName.c_str(), pServiceNameNode));
 					SAFE_RELEASE(pServiceNameNode);
 					// Add ServiceIndex node and value
-					IXMLDOMElement *pServiceIndexNode = NULL;
+					IXMLDOMElement* pServiceIndexNode = NULL;
 					CHK_HR(CreateAndAddElementNode(pXMLDom, L"AccountIndex", L"\n\t", pServiceNode, &pServiceIndexNode));
 					CHK_HR(CreateAndAddTextNode(pXMLDom, ConvertStdStringToWideChar(ConvertIntToString(j + 1)), pServiceIndexNode));
 					SAFE_RELEASE(pServiceIndexNode);
 					// Add ServiceDisplayName node and value
-					IXMLDOMElement *pServiceDisplayNameNode = NULL;
+					IXMLDOMElement* pServiceDisplayNameNode = NULL;
 					CHK_HR(CreateAndAddElementNode(pXMLDom, L"AccountDisplayName", L"\n\t", pServiceNode, &pServiceDisplayNameNode));
 					CHK_HR(CreateAndAddTextNode(pXMLDom, profileInfo[i].profileServices[j].exchangeAccountInfo->wszDisplayName.c_str(), pServiceDisplayNameNode));
 					SAFE_RELEASE(pServiceDisplayNameNode);
 					// Add DefaultService node and value
-					IXMLDOMElement *pDefaultServiceNode = NULL;
+					IXMLDOMElement* pDefaultServiceNode = NULL;
 					CHK_HR(CreateAndAddElementNode(pXMLDom, L"DefaultAccount", L"\n\t", pServiceNode, &pDefaultServiceNode));
 					CHK_HR(CreateAndAddTextNode(pXMLDom, ConvertStdStringToWideChar(ConvertIntToString(profileInfo[i].profileServices[j].bDefaultStore)), pDefaultServiceNode));
 					SAFE_RELEASE(pDefaultServiceNode);
 					// Add DatafilePath node and value
-					IXMLDOMElement *pDatafilePathNode = NULL;
+					IXMLDOMElement* pDatafilePathNode = NULL;
 					CHK_HR(CreateAndAddElementNode(pXMLDom, L"DatafilePath", L"\n\t", pServiceNode, &pDatafilePathNode));
 					CHK_HR(CreateAndAddTextNode(pXMLDom, profileInfo[i].profileServices[j].exchangeAccountInfo->wszDatafilePath.c_str(), pDatafilePathNode));
 					SAFE_RELEASE(pDatafilePathNode);
 					// Add UnresolvedServer node and value
-					IXMLDOMElement *pUnresolvedServerNode = NULL;
+					IXMLDOMElement* pUnresolvedServerNode = NULL;
 					CHK_HR(CreateAndAddElementNode(pXMLDom, L"UnresolvedServer", L"\n\t", pServiceNode, &pUnresolvedServerNode));
 					CHK_HR(CreateAndAddTextNode(pXMLDom, profileInfo[i].profileServices[j].exchangeAccountInfo->wszUnresolvedServer.c_str(), pUnresolvedServerNode));
 					SAFE_RELEASE(pUnresolvedServerNode);
 					// Add HomeServer node and value
-					IXMLDOMElement *pHomeServerNode = NULL;
+					IXMLDOMElement* pHomeServerNode = NULL;
 					CHK_HR(CreateAndAddElementNode(pXMLDom, L"HomeServer", L"\n\t", pServiceNode, &pHomeServerNode));
 					CHK_HR(CreateAndAddTextNode(pXMLDom, profileInfo[i].profileServices[j].exchangeAccountInfo->wszHomeServerName.c_str(), pHomeServerNode));
 					SAFE_RELEASE(pHomeServerNode);
 					// Add HomeServerDN node and value
-					IXMLDOMElement *pHomeServerDNNode = NULL;
+					IXMLDOMElement* pHomeServerDNNode = NULL;
 					CHK_HR(CreateAndAddElementNode(pXMLDom, L"HomeServerDN", L"\n\t", pServiceNode, &pHomeServerDNNode));
 					CHK_HR(CreateAndAddTextNode(pXMLDom, profileInfo[i].profileServices[j].exchangeAccountInfo->wszHomeServerDN.c_str(), pHomeServerDNNode));
 					SAFE_RELEASE(pHomeServerDNNode);
 					// Add RohProxyServer node and value
-					IXMLDOMElement *pRohProxyServerNode = NULL;
+					IXMLDOMElement* pRohProxyServerNode = NULL;
 					CHK_HR(CreateAndAddElementNode(pXMLDom, L"RohProxyServer", L"\n\t", pServiceNode, &pRohProxyServerNode));
 					CHK_HR(CreateAndAddTextNode(pXMLDom, profileInfo[i].profileServices[j].exchangeAccountInfo->wszRohProxyServer.c_str(), pRohProxyServerNode));
 					SAFE_RELEASE(pRohProxyServerNode);
 					// Add CachedModeEnabledOwner node and value
-					IXMLDOMElement *pCachedModeEnabledOwnerNode = NULL;
+					IXMLDOMElement* pCachedModeEnabledOwnerNode = NULL;
 					CHK_HR(CreateAndAddElementNode(pXMLDom, L"CachedModeEnabledOwner", L"\n\t", pServiceNode, &pCachedModeEnabledOwnerNode));
 					CHK_HR(CreateAndAddTextNode(pXMLDom, ConvertStdStringToWideChar(ConvertIntToString(profileInfo[i].profileServices[j].exchangeAccountInfo->bCachedModeEnabledOwner)), pCachedModeEnabledOwnerNode));
 					SAFE_RELEASE(pCachedModeEnabledOwnerNode);
 					// Add CachedModeEnabledShared node and value
-					IXMLDOMElement *pCachedModeEnabledSharedNode = NULL;
+					IXMLDOMElement* pCachedModeEnabledSharedNode = NULL;
 					CHK_HR(CreateAndAddElementNode(pXMLDom, L"CachedModeEnabledShared", L"\n\t", pServiceNode, &pCachedModeEnabledSharedNode));
 					CHK_HR(CreateAndAddTextNode(pXMLDom, ConvertStdStringToWideChar(ConvertIntToString(profileInfo[i].profileServices[j].exchangeAccountInfo->bCachedModeEnabledShared)), pCachedModeEnabledSharedNode));
 					SAFE_RELEASE(pCachedModeEnabledSharedNode);
 					// Add CachedModeEnabledPublicFolders node and value
-					IXMLDOMElement *pCachedModeEnabledPublicFoldersNode = NULL;
+					IXMLDOMElement* pCachedModeEnabledPublicFoldersNode = NULL;
 					CHK_HR(CreateAndAddElementNode(pXMLDom, L"CachedModeEnabledPublicFolders", L"\n\t", pServiceNode, &pCachedModeEnabledPublicFoldersNode));
 					CHK_HR(CreateAndAddTextNode(pXMLDom, ConvertStdStringToWideChar(ConvertIntToString(profileInfo[i].profileServices[j].exchangeAccountInfo->bCachedModeEnabledPublicFolders)), pCachedModeEnabledPublicFoldersNode));
 					SAFE_RELEASE(pCachedModeEnabledPublicFoldersNode);
 					// Add CachedModeMonths node and value
-					IXMLDOMElement *pCachedModeMonthsNode = NULL;
+					IXMLDOMElement* pCachedModeMonthsNode = NULL;
 					CHK_HR(CreateAndAddElementNode(pXMLDom, L"CachedModeMonths", L"\n\t", pServiceNode, &pCachedModeMonthsNode));
 					CHK_HR(CreateAndAddTextNode(pXMLDom, ConvertStdStringToWideChar(ConvertIntToString(profileInfo[i].profileServices[j].exchangeAccountInfo->iCachedModeMonths)), pCachedModeMonthsNode));
 					SAFE_RELEASE(pCachedModeMonthsNode);
 					// Add UserName node and value
-					IXMLDOMElement *pUserNameNode = NULL;
+					IXMLDOMElement* pUserNameNode = NULL;
 					CHK_HR(CreateAndAddElementNode(pXMLDom, L"UserName", L"\n\t", pServiceNode, &pUserNameNode));
 					CHK_HR(CreateAndAddTextNode(pXMLDom, profileInfo[i].profileServices[j].exchangeAccountInfo->szUserName.c_str(), pUserNameNode));
 					SAFE_RELEASE(pUserNameNode);
 					// Add UserEmailSmtpAddress node and value
-					IXMLDOMElement *pUserEmailSmtpAddressNode = NULL;
+					IXMLDOMElement* pUserEmailSmtpAddressNode = NULL;
 					CHK_HR(CreateAndAddElementNode(pXMLDom, L"UserEmailSmtpAddress", L"\n\t", pServiceNode, &pUserEmailSmtpAddressNode));
 					CHK_HR(CreateAndAddTextNode(pXMLDom, profileInfo[i].profileServices[j].exchangeAccountInfo->szUserEmailSmtpAddress.c_str(), pUserEmailSmtpAddressNode));
 					SAFE_RELEASE(pUserEmailSmtpAddressNode);
 					// Add MailboxCount node and value
-					IXMLDOMElement *pMailboxCountNode = NULL;
+					IXMLDOMElement* pMailboxCountNode = NULL;
 					CHK_HR(CreateAndAddElementNode(pXMLDom, L"MailboxCount", L"\n\t", pServiceNode, &pMailboxCountNode));
 					CHK_HR(CreateAndAddTextNode(pXMLDom, ConvertStdStringToWideChar(ConvertIntToString(profileInfo[i].profileServices[j].exchangeAccountInfo->ulMailboxCount)), pMailboxCountNode));
 					SAFE_RELEASE(pMailboxCountNode);
@@ -361,31 +356,31 @@ void ExportXML(ULONG cProfileInfo, ProfileInfo * profileInfo, std::wstring szExp
 					if (profileInfo[i].profileServices[j].exchangeAccountInfo->ulMailboxCount > 0)
 					{
 						// create root node for Mailboxes
-						IXMLDOMElement *pMailboxesRootNode = NULL;
+						IXMLDOMElement* pMailboxesRootNode = NULL;
 						CHK_HR(CreateAndAddElementNode(pXMLDom, L"Mailboxes", L"\n\t", pServiceNode, &pMailboxesRootNode));
 
 						for (unsigned int k = 0; k < profileInfo[i].profileServices[j].exchangeAccountInfo->ulMailboxCount; k++)
 						{
 							// create child node for each mailbox
-							IXMLDOMElement *pMailboxNode = NULL;
+							IXMLDOMElement* pMailboxNode = NULL;
 							CHK_HR(CreateAndAddElementNode(pXMLDom, L"Mailbox", L"\n\t", pMailboxesRootNode, &pMailboxNode));
 							// Add DisplayName node and value
-							IXMLDOMElement *pDisplayNameNode = NULL;
+							IXMLDOMElement* pDisplayNameNode = NULL;
 							CHK_HR(CreateAndAddElementNode(pXMLDom, L"DisplayName", L"\n\t", pMailboxNode, &pDisplayNameNode));
 							CHK_HR(CreateAndAddTextNode(pXMLDom, profileInfo[i].profileServices[j].exchangeAccountInfo->accountMailboxes[k].wszDisplayName.c_str(), pDisplayNameNode));
 							SAFE_RELEASE(pDisplayNameNode);
 							// Add MailboxIndex node and value
-							IXMLDOMElement *pMailboxIndexNode = NULL;
+							IXMLDOMElement* pMailboxIndexNode = NULL;
 							CHK_HR(CreateAndAddElementNode(pXMLDom, L"MailboxIndex", L"\n\t", pMailboxNode, &pMailboxIndexNode));
 							CHK_HR(CreateAndAddTextNode(pXMLDom, ConvertStdStringToWideChar(ConvertIntToString(k + 1)), pMailboxIndexNode));
 							SAFE_RELEASE(pMailboxIndexNode);
 							// Add DefaultMailbox node and value
-							IXMLDOMElement *pDefaultMailboxNode = NULL;
+							IXMLDOMElement* pDefaultMailboxNode = NULL;
 							CHK_HR(CreateAndAddElementNode(pXMLDom, L"DefaultMailbox", L"\n\t", pMailboxNode, &pDefaultMailboxNode));
 							CHK_HR(CreateAndAddTextNode(pXMLDom, ConvertStdStringToWideChar(ConvertIntToString(profileInfo[i].profileServices[j].exchangeAccountInfo->accountMailboxes[k].bPrimaryMailbox)), pDefaultMailboxNode));
 							SAFE_RELEASE(pDefaultMailboxNode);
 							// Add EntryType node and value
-							IXMLDOMElement *pEntryTypeNode = NULL;
+							IXMLDOMElement* pEntryTypeNode = NULL;
 							CHK_HR(CreateAndAddElementNode(pXMLDom, L"EntryType", L"\n\t", pMailboxNode, &pEntryTypeNode));
 							switch (profileInfo[i].profileServices[j].exchangeAccountInfo->accountMailboxes[k].ulProfileType)
 							{
@@ -414,30 +409,30 @@ void ExportXML(ULONG cProfileInfo, ProfileInfo * profileInfo, std::wstring szExp
 				if (profileInfo[i].profileServices[j].serviceType == ServiceType::ServiceType_Pst)
 				{
 					// create child node for each service
-					IXMLDOMElement *pServiceNode = NULL;
+					IXMLDOMElement* pServiceNode = NULL;
 					CHK_HR(CreateAndAddElementNode(pXMLDom, L"Pst", L"\n\t", pServicesRootNode, &pServiceNode));
 					// Add ServiceName node and value
-					IXMLDOMElement *pServiceNameNode = NULL;
+					IXMLDOMElement* pServiceNameNode = NULL;
 					CHK_HR(CreateAndAddElementNode(pXMLDom, L"ServiceName", L"\n\t", pServiceNode, &pServiceNameNode));
 					CHK_HR(CreateAndAddTextNode(pXMLDom, profileInfo[i].profileServices[j].wszServiceName.c_str(), pServiceNameNode));
 					SAFE_RELEASE(pServiceNameNode);
 					// Add ServiceIndex node and value
-					IXMLDOMElement *pServiceIndexNode = NULL;
+					IXMLDOMElement* pServiceIndexNode = NULL;
 					CHK_HR(CreateAndAddElementNode(pXMLDom, L"ServiceIndex", L"\n\t", pServiceNode, &pServiceIndexNode));
 					CHK_HR(CreateAndAddTextNode(pXMLDom, ConvertStdStringToWideChar(ConvertIntToString(j + 1)), pServiceIndexNode));
 					SAFE_RELEASE(pServiceIndexNode);
 					// Add PstName node and value
-					IXMLDOMElement *pPstNameNode = NULL;
+					IXMLDOMElement* pPstNameNode = NULL;
 					CHK_HR(CreateAndAddElementNode(pXMLDom, L"PstName", L"\n\t", pServiceNode, &pPstNameNode));
 					CHK_HR(CreateAndAddTextNode(pXMLDom, profileInfo[i].profileServices[j].pstInfo->wszDisplayName.c_str(), pPstNameNode));
 					SAFE_RELEASE(pPstNameNode);
 					// Add DatafilePath node and value
-					IXMLDOMElement *pDatafilePathNode = NULL;
+					IXMLDOMElement* pDatafilePathNode = NULL;
 					CHK_HR(CreateAndAddElementNode(pXMLDom, L"DatafilePath", L"\n\t", pServiceNode, &pDatafilePathNode));
 					CHK_HR(CreateAndAddTextNode(pXMLDom, profileInfo[i].profileServices[j].pstInfo->wszPstPath.c_str(), pDatafilePathNode));
 					SAFE_RELEASE(pDatafilePathNode);
 					// Add EntryType node and value
-					IXMLDOMElement *pEntryTypeNode = NULL;
+					IXMLDOMElement* pEntryTypeNode = NULL;
 					CHK_HR(CreateAndAddElementNode(pXMLDom, L"PstType", L"\n\t", pServiceNode, &pEntryTypeNode));
 					switch (profileInfo[i].profileServices[j].pstInfo->ulPstType)
 					{
@@ -473,7 +468,7 @@ void ExportXML(ULONG cProfileInfo, ProfileInfo * profileInfo, std::wstring szExp
 		std::wstring szFullExportPath = szExportPath + L"\\" + szComputerName + L"_" + szUserName + L".xml";
 		CHK_HR(VariantFromString(szFullExportPath.c_str(), varFileName));
 		CHK_HR(pXMLDom->save(varFileName));
-		Logger::Write(logLevelSuccess, L"Profile information saved to " +  szFullExportPath);
+		Logger::Write(logLevelSuccess, L"Profile information saved to " + szFullExportPath);
 	}
 	else
 	{

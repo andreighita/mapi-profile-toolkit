@@ -19,15 +19,11 @@
 #include "Profile/CachedMode.h"
 #include "Profile/PST.h"
 #include "AddressBook/ConfigXmlParser.h"
-#include "XMLHelper.h"
+#include "Misc/XML/XMLHelper.h"
 #include "Misc/Registry/RegistryHelper.h"
 #include "Logger.h"
 
 BOOL Is64BitProcess(void);
 BOOL IsCorrectBitness();
 BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts);
-BOOL ValidateScenario2(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts);
-BOOL ParseArgsProfile(int argc, _TCHAR* argv[], ProfileOptions * profileOptions);
-BOOL ParseArgsService(int argc, _TCHAR* argv[], ServiceOptions * serviceOptions);
-BOOL ParseArgsMailbox(int argc, _TCHAR* argv[], ProviderOptions * mailboxOptions);
-HRESULT HrListProfiles(ProfileOptions * pProfileOptions, std::wstring wszExportPath);
+

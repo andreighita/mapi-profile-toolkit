@@ -157,7 +157,7 @@ typedef struct {
 //Properties related to profile having exchange account only
 #define PROP_EXCHANGE_EMAILID			PROP_TAG(PT_UNICODE, 0x663D) //email ID
 #define PROP_EXCHANGE_EMAILID2			PROP_TAG(PT_UNICODE, 0x6641) //email ID
-#define PR_ROH_PROXY_SERVER				PROP_TAG(PT_UNICODE, 0x6622) //RPC server name
+//#define PR_ROH_PROXY_SERVER				PROP_TAG(PT_UNICODE, 0x6622) //RPC server name
 #define PR_INTERNET_CONTENT_ID			PROP_TAG(PT_UNICODE, 0x662A) //server name
 
 //start::IOlkAccountManager::DisplayAccountList flags

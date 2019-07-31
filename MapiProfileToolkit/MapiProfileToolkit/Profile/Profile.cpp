@@ -1,9 +1,75 @@
-#pragma comment (lib, "Crypt32.lib")
+
 #include "Profile.h"
 
 LPWSTR GetDefaultProfileNameLP()
 {
 	return (LPWSTR)GetDefaultProfileName().c_str();
+}
+
+HRESULT HrListProfiles(ProfileOptions* pProfileOptions, std::wstring wszExportPath)
+{
+	HRESULT hRes = S_OK;
+	if VCHK(pProfileOptions->profileMode, ProfileMode::Mode_All)
+	{
+		ULONG ulProfileCount = GetProfileCount();
+		ProfileInfo* profileInfo = new ProfileInfo[ulProfileCount];
+		ZeroMemory(profileInfo, sizeof(ProfileInfo) * ulProfileCount);
+		Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for all profiles");
+		EC_HRES_MSG(HrGetProfiles(ulProfileCount, profileInfo), L"Calling HrGetProfiles");
+		if (wszExportPath != L"")
+		{
+			Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for all profiles");
+			ExportXML(ulProfileCount, profileInfo, wszExportPath);
+		}
+		else
+		{
+			Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for all profiles");
+			ExportXML(ulProfileCount, profileInfo, L"");
+		}
+
+	}
+	else if VCHK(pProfileOptions->profileMode, ProfileMode::Mode_Specific)
+	{
+		ProfileInfo* pProfileInfo = new ProfileInfo();
+		Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for profile: " + pProfileOptions->wszProfileName);
+		EC_HRES_MSG(HrGetProfile((LPWSTR)pProfileOptions->wszProfileName.c_str(), pProfileInfo), L"Calling HrGetProfile");
+		if (wszExportPath != L"")
+		{
+			Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for profile");
+			ExportXML(1, pProfileInfo, wszExportPath);
+		}
+		else
+		{
+			Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for profile");
+			ExportXML(1, pProfileInfo, L"");
+		}
+
+	}
+	else if VCHK(pProfileOptions->profileMode, ProfileMode::Mode_Default)
+	{
+		std::wstring szDefaultProfileName = GetDefaultProfileName();
+		if (!szDefaultProfileName.empty())
+		{
+			pProfileOptions->wszProfileName = szDefaultProfileName;
+		}
+
+		ProfileInfo* pProfileInfo = new ProfileInfo();
+		Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for default profile: " + pProfileOptions->wszProfileName);
+		EC_HRES_MSG(HrGetProfile((LPWSTR)pProfileOptions->wszProfileName.c_str(), pProfileInfo), L"Calling HrGetProfile");
+		if (wszExportPath != L"")
+		{
+			Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for default profile");
+			ExportXML(1, pProfileInfo, wszExportPath);
+		}
+		else
+		{
+			Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for default profile");
+			ExportXML(1, pProfileInfo, L"");
+		}
+	}
+
+Error:
+	return hRes;
 }
 
 // GetDefaultProfileName

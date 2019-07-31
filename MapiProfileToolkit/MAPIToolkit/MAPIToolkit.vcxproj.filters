@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\ServiceWorkers">
+      <UniqueIdentifier>{363678a1-b1f4-4e2f-b49f-6f6d767224c3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ServiceWorkers">
+      <UniqueIdentifier>{d0372c79-7dc3-4bb1-981d-04218dcf34c3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -24,6 +30,33 @@
     <ClInclude Include="Toolkit.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ToolkitTypeDefs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ProfileWorker.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ProviderWorker.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AddressBookWorker.h">
+      <Filter>Header Files\ServiceWorkers</Filter>
+    </ClInclude>
+    <ClInclude Include="DataFileWorker.h">
+      <Filter>Header Files\ServiceWorkers</Filter>
+    </ClInclude>
+    <ClInclude Include="ExchangeAccountWorker.h">
+      <Filter>Header Files\ServiceWorkers</Filter>
+    </ClInclude>
+    <ClInclude Include="ServiceWorker.h">
+      <Filter>Header Files\ServiceWorkers</Filter>
+    </ClInclude>
+    <ClInclude Include="PopAccountWorker.h">
+      <Filter>Header Files\ServiceWorkers</Filter>
+    </ClInclude>
+    <ClInclude Include="ImapAccountWorker.h">
+      <Filter>Header Files\ServiceWorkers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MAPIToolkit.cpp">
@@ -33,6 +66,30 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Toolkit.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ProviderWorker.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ProfileWorker.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AddressBookWorker.cpp">
+      <Filter>Source Files\ServiceWorkers</Filter>
+    </ClCompile>
+    <ClCompile Include="DataFileWorker.cpp">
+      <Filter>Source Files\ServiceWorkers</Filter>
+    </ClCompile>
+    <ClCompile Include="ExchangeAccountWorker.cpp">
+      <Filter>Source Files\ServiceWorkers</Filter>
+    </ClCompile>
+    <ClCompile Include="ServiceWorker.cpp">
+      <Filter>Source Files\ServiceWorkers</Filter>
+    </ClCompile>
+    <ClCompile Include="ImapAccountWorker.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PopAccountWorker.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

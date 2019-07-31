@@ -1,6 +1,6 @@
 #pragma once
 #include "stdafx.h"
-#include "ABProviderObjects.h"
+#include "AddressBook/ABProviderObjects.h"
 #include <windows.h>
 #include <msxml.h>
 #include <objsafe.h>

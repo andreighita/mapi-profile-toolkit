@@ -13,16 +13,8 @@
 
 #include "../stdafx.h"
 
-#include <initguid.h>
-#define USES_IID_IMAPIProp 
-#define USES_IID_IMsgServiceAdmin2
-#include <MAPIX.h>
-#include <MAPIUtil.h>
-#include <MAPIAux.h>
-#include "EdkMdb.h"
-#include <MAPIGuid.h>
-#include <MAPIAux.h>	
-#include <MSPST.h>
+
+
 #include <WinBase.h>
 #include <Shlwapi.h>
 #include <string>
@@ -34,6 +26,7 @@
 #include "AdditionalMailbox.h"
 #include "PST.h"
 #include "../AddressBook/ABProviderObjects.h"
+#include "../Misc/XML/XMLHelper.h"
 
 
 #pragma region GenericProfile
@@ -66,6 +59,8 @@
 	VOID PrintProfile(ProfileInfo* profileInfo);
 
 	HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo* profileInfo);
+
+	HRESULT HrListProfiles(ProfileOptions* pProfileOptions, std::wstring wszExportPath);
 
 #pragma endregion
 

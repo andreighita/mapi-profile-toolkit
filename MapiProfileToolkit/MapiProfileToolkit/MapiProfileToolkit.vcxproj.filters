@@ -44,15 +44,6 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="ToolkitObjects.h" />
     <ClInclude Include="targetver.h" />
-    <ClInclude Include="XMLHelper.h">
-      <Filter>XML</Filter>
-    </ClInclude>
-    <ClInclude Include="XMLHelper2.h">
-      <Filter>XML</Filter>
-    </ClInclude>
-    <ClInclude Include="XmlParser.h">
-      <Filter>XML</Filter>
-    </ClInclude>
     <ClInclude Include="MAPIObjects.h">
       <Filter>MAPI</Filter>
     </ClInclude>
@@ -113,6 +104,15 @@
     <ClInclude Include="Misc\Utility\StringOperations.h">
       <Filter>Utility</Filter>
     </ClInclude>
+    <ClInclude Include="Misc\XML\XmlParser.h">
+      <Filter>XML</Filter>
+    </ClInclude>
+    <ClInclude Include="Misc\XML\XMLHelper.h">
+      <Filter>XML</Filter>
+    </ClInclude>
+    <ClInclude Include="Misc\XML\XMLHelper2.h">
+      <Filter>XML</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MapiProfileToolkit.cpp" />
@@ -159,6 +159,7 @@
     <ClCompile Include="Misc\Utility\StringOperations.cpp">
       <Filter>Utility</Filter>
     </ClCompile>
+    <ClCompile Include="Misc\XML\XMLHelper.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="MapiProfileToolkit.rc">
