@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -168,6 +168,7 @@
     <ClInclude Include="PopAccountWorker.h" />
     <ClInclude Include="ProfileWorker.h" />
     <ClInclude Include="ProviderWorker.h" />
+    <ClInclude Include="RegistryHelper.h" />
     <ClInclude Include="ServiceWorker.h" />
     <ClInclude Include="Toolkit.h" />
     <ClInclude Include="ToolkitTypeDefs.h" />
@@ -187,6 +188,7 @@
     <ClCompile Include="PopAccountWorker.cpp" />
     <ClCompile Include="ProfileWorker.cpp" />
     <ClCompile Include="ProviderWorker.cpp" />
+    <ClCompile Include="RegistryHelper.cpp" />
     <ClCompile Include="ServiceWorker.cpp" />
     <ClCompile Include="Toolkit.cpp" />
   </ItemGroup>

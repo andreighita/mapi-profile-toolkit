@@ -7,7 +7,7 @@ class ServiceWorker
 public:
 	ServiceWorker();
 
-#define ACTION_SERVICE_CHANGEDATAFILEPATH	0x00800000
+
 	// ACTION_SERVICE_ADD	
 	void AddService();
 
