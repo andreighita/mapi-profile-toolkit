@@ -3,6 +3,7 @@
 #include <Windows.h>
 #include <MAPIX.h>
 #include <MAPIAux.h>
+#include <map>
 
 #define WIN32_LEAN_AND_MEAN
 
@@ -43,6 +44,37 @@
 //#define ACTION_5								0x20000000
 //#define ACTION_6								0x40000000
 //#define ACTION_7								0x80000000
+
+std::map<std::wstring, ULONG> actionsMap =
+{
+	{ L"addprofile",			ACTION_PROFILE_ADD},
+	{ L"addprovider",			ACTION_PROVIDER_ADD },
+	{ L"addservice",			ACTION_SERVICE_ADD },
+	{ L"changedatafilepath",	ACTION_SERVICE_CHANGEDATAFILEPATH },
+	{ L"cloneprofile",			ACTION_PROFILE_CLONE },
+	{ L"promotedelegates",		ACTION_PROFILE_PROMOTEDELEGATES },
+	{ L"listallprofiles",		ACTION_PROFILE_LISTALL },
+	{ L"listallproviders",		ACTION_PROVIDER_LISTALL },
+	{ L"listallservices",		ACTION_SERVICE_LISTALL },
+	{ L"listprofile",			ACTION_PROFILE_LIST },
+	{ L"listprovider",			ACTION_PROVIDER_LIST },
+	{ L"listservice",			ACTION_SERVICE_LIST },
+	{ L"promoteonedelegate",	ACTION_PROFILE_PROMOTEONEDELEGATE },
+	{ L"removeallprofiles",		ACTION_PROFILE_REMOVEALL },
+	{ L"removeallproviders",	ACTION_PROVIDER_REMOVEALL },
+	{ L"removeallservices",		ACTION_SERVICE_REMOVEALL },
+	{ L"removeprofile",			ACTION_PROFILE_REMOVE },
+	{ L"removeprovider",		ACTION_PROVIDER_REMOVE },
+	{ L"removeservice",			ACTION_SERVICE_REMOVE },
+	{ L"setcachedmode",			ACTION_SERVICE_SETCACHEDMODE },
+	{ L"setdefaultprofile",		ACTION_PROFILE_SETDEFAULT },
+	{ L"setdefaultservice",		ACTION_SERVICE_SETDEFAULT },
+	{ L"updateprofile",			ACTION_PROFILE_UPDATE },
+	{ L"updateprovider",		ACTION_PROVIDER_UPDATE },
+	{ L"updateservice",			ACTION_SERVICE_UPDATE }
+};
+
+
 
 typedef enum
 {

@@ -3,13 +3,27 @@
 
 #include <iostream>
 #include <tchar.h>
+#include <map>
 #pragma comment (lib, "MAPIToolkit.lib")
-#include "C:\Users\anixi\source\repos\mapi-toolkit\MapiProfileToolkit\MAPIToolkit\MAPIToolkit.h"
+//#include "C:\Users\anixi\source\repos\mapi-toolkit\MapiProfileToolkit\MAPIToolkit\MAPIToolkit.h"
 
 int wmain(int argc, wchar_t* argv[])
 {
     std::cout << "Hello World!\n";
-	MAPIToolkit::Run(argc, argv);
+	//MAPIToolkit::Run(argc, argv);
+	std::map<std::string, int> mymap = {
+					{ "alpha", 10 },
+					{ "beta", 20 },
+					{ "gamma", 30 } };
+	try
+	{
+		int value1 = mymap.at("alpha");
+		int value2 = mymap.at("something");
+	}
+	catch (const std::exception& e)
+	{
+
+	}
 }
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu

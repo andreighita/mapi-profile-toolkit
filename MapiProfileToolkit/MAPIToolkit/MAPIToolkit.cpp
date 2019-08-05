@@ -337,7 +337,7 @@ namespace MAPIToolkit
 						Logger::Write(LogLevel::logLevelFailed, L"The specified action is not valid. Valid options are 'addprofile', 'addprovider', 'addservice', 'changedatafilepath', 'cloneprofile', 'promotedelegates', 'listallprofiles', 'listallproviders', 'listallservices', 'listprofile', 'listprovider', 'listservice', 'promoteonedelegate', 'removeallprofiles', 'removeallproviders', 'removeallservices', 'removeprofile', 'removeprovider', 'removeservice', 'setcachedmode', 'setdefaultprofile', 'setdefaultservice', 'updateprofile', 'updateprovider', and 'updateservice'");
 						return false;
 					}
-				}
+				}	
 				else
 				{
 					Logger::Write(LogLevel::logLevelFailed, L"You must specify a valid export mode. Valid options are 'export' and 'noexport'");
