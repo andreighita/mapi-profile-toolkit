@@ -34,15 +34,15 @@
 #define ACTION_SERVICE_REMOVE				0x00200000 
 #define ACTION_SERVICE_REMOVEALL			0x00400000 
 #define ACTION_SERVICE_CHANGEDATAFILEPATH	0x00800000
+#define ACTION_SERVICE_SETDEFAULT			0x01000000
 
-//#define ACTION_1								0x01000000
-//#define ACTION_2								0x02000000 
-//#define ACTION_3								0x04000000
-//#define ACTION_4								0x08000000
-//#define ACTION_5								0x10000000
-//#define ACTION_6								0x20000000
-//#define ACTION_7								0x40000000
-//#define ACTION_8								0x80000000
+//#define ACTION_1								0x02000000 
+//#define ACTION_2								0x04000000
+//#define ACTION_3								0x08000000
+//#define ACTION_4								0x10000000
+//#define ACTION_5								0x20000000
+//#define ACTION_6								0x40000000
+//#define ACTION_7								0x80000000
 
 typedef enum
 {

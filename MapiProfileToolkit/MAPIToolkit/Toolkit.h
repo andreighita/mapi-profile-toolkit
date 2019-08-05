@@ -10,7 +10,7 @@ namespace MAPIToolkit
 		ProfileWorker* m_profileWorker;
 		ServiceWorker* m_serviceWorker;
 		ProviderWorker* m_providerWorker;
-
+		ULONG profileCount;
 		ULONG action;
 		LoggingMode loggingMode;
 		std::wstring wszExportPath;

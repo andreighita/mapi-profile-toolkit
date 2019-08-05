@@ -37,6 +37,12 @@
     <Filter Include="Misc\XML">
       <UniqueIdentifier>{484c23b9-d286-4e4a-8bad-f37925e04a19}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\ProviderWorkers">
+      <UniqueIdentifier>{d428f5b7-d209-4c58-b95e-0b749bc94d76}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ProviderWorkers">
+      <UniqueIdentifier>{cc768259-f9f4-4105-ac07-c0f409d02a25}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -49,9 +55,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ProfileWorker.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ProviderWorker.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="AddressBookWorker.h">
@@ -114,15 +117,27 @@
     <ClInclude Include="Logger.h">
       <Filter>Misc\Utility</Filter>
     </ClInclude>
+    <ClInclude Include="MAPIToolkit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PublicFoldersWorker.h">
+      <Filter>Header Files\ProviderWorkers</Filter>
+    </ClInclude>
+    <ClInclude Include="ProviderWorker.h">
+      <Filter>Header Files\ProviderWorkers</Filter>
+    </ClInclude>
+    <ClInclude Include="PrimaryMailboxWorker.h">
+      <Filter>Header Files\ProviderWorkers</Filter>
+    </ClInclude>
+    <ClInclude Include="DelegateWorker.h">
+      <Filter>Header Files\ProviderWorkers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MAPIToolkit.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Toolkit.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ProviderWorker.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ProfileWorker.cpp">
@@ -178,6 +193,18 @@
     </ClCompile>
     <ClCompile Include="Logger.cpp">
       <Filter>Misc\Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="PrimaryMailboxWorker.cpp">
+      <Filter>Source Files\ProviderWorkers</Filter>
+    </ClCompile>
+    <ClCompile Include="ProviderWorker.cpp">
+      <Filter>Source Files\ProviderWorkers</Filter>
+    </ClCompile>
+    <ClCompile Include="PublicFoldersWorker.cpp">
+      <Filter>Source Files\ProviderWorkers</Filter>
+    </ClCompile>
+    <ClCompile Include="DelegateWorker.cpp">
+      <Filter>Source Files\ProviderWorkers</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

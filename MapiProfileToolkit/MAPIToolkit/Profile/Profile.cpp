@@ -20,10 +20,10 @@ LPWSTR GetDefaultProfileNameLP()
 	return (LPWSTR)GetDefaultProfileName().c_str();
 }
 
-HRESULT HrListProfiles(Toolkit* pToolkit, std::wstring wszExportPath)
+HRESULT HrListProfiles(Toolkit* m_toolkit, std::wstring wszExportPath)
 {
 	HRESULT hRes = S_OK;
-	if VCHK(pToolkit->profileMode, ProfileMode::Mode_All)
+	if VCHK(m_toolkit->profileMode, ProfileMode::Mode_All)
 	{
 		ULONG ulProfileCount = GetProfileCount();
 		ProfileInfo* profileInfo = new ProfileInfo[ulProfileCount];
@@ -42,11 +42,11 @@ HRESULT HrListProfiles(Toolkit* pToolkit, std::wstring wszExportPath)
 		}
 
 	}
-	else if VCHK(pToolkit->profileMode, ProfileMode::Mode_Specific)
+	else if VCHK(m_toolkit->profileMode, ProfileMode::Mode_Specific)
 	{
 		ProfileInfo* pProfileInfo = new ProfileInfo();
-		Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for profile: " + pToolkit->m_profileWorker->profileName);
-		HCKM(HrGetProfile((LPWSTR)pToolkit->m_profileWorker->profileName.c_str(), pProfileInfo), L"Calling HrGetProfile");
+		Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for profile: " + m_toolkit->m_profileWorker->profileName);
+		HCKM(HrGetProfile((LPWSTR)m_toolkit->m_profileWorker->profileName.c_str(), pProfileInfo), L"Calling HrGetProfile");
 		if (wszExportPath != L"")
 		{
 			Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for profile");
@@ -59,17 +59,17 @@ HRESULT HrListProfiles(Toolkit* pToolkit, std::wstring wszExportPath)
 		}
 
 	}
-	else if VCHK(pToolkit->profileMode, ProfileMode::Mode_Default)
+	else if VCHK(m_toolkit->profileMode, ProfileMode::Mode_Default)
 	{
 		std::wstring szDefaultProfileName = GetDefaultProfileName();
 		if (!szDefaultProfileName.empty())
 		{
-			pToolkit->m_profileWorker->profileName = szDefaultProfileName;
+			m_toolkit->m_profileWorker->profileName = szDefaultProfileName;
 		}
 
 		ProfileInfo* pProfileInfo = new ProfileInfo();
-		Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for default profile: " + pToolkit->m_profileWorker->profileName);
-		HCKM(HrGetProfile((LPWSTR)pToolkit->m_profileWorker->profileName.c_str(), pProfileInfo), L"Calling HrGetProfile");
+		Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for default profile: " + m_toolkit->m_profileWorker->profileName);
+		HCKM(HrGetProfile((LPWSTR)m_toolkit->m_profileWorker->profileName.c_str(), pProfileInfo), L"Calling HrGetProfile");
 		if (wszExportPath != L"")
 		{
 			Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for default profile");

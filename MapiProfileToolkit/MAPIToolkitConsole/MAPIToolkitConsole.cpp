@@ -2,10 +2,14 @@
 //
 
 #include <iostream>
+#include <tchar.h>
+#pragma comment (lib, "MAPIToolkit.lib")
+#include "C:\Users\anixi\source\repos\mapi-toolkit\MapiProfileToolkit\MAPIToolkit\MAPIToolkit.h"
 
-int main()
+int wmain(int argc, wchar_t* argv[])
 {
     std::cout << "Hello World!\n";
+	MAPIToolkit::Run(argc, argv);
 }
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu

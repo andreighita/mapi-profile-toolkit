@@ -47,7 +47,7 @@ namespace MAPIToolkit
 
 	HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo* profileInfo);
 
-	HRESULT HrListProfiles(Toolkit* pToolkit, std::wstring wszExportPath);
+	HRESULT HrListProfiles(Toolkit* m_toolkit, std::wstring wszExportPath);
 
 #pragma endregion
 
