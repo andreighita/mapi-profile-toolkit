@@ -10,25 +10,12 @@
 * functionality of a particular procedure, but they will not modify these examples to provide added functionality
 * or construct procedures to meet your specific requirements.
 */
+#include <Windows.h>
+#include "..//ToolkitTypeDefs.h"
+#include "..//Toolkit.h"
 
-#include "pch.h"
-
-
-
-#include <WinBase.h>
-#include <Shlwapi.h>
-#include <string>
-#include <utility>
-#include <iostream>
-#include <algorithm> 
-#include <vector>
-#include "ExchangeAccount.h"
-#include "AdditionalMailbox.h"
-#include "PST.h"
-#include "../AddressBook/ABProviderObjects.h"
-#include "../Misc/XML/XMLHelper.h"
-
-
+namespace MAPIToolkit
+{
 #pragma region GenericProfile
 	LPWSTR GetDefaultProfileNameLP();
 
@@ -60,14 +47,14 @@
 
 	HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo* profileInfo);
 
-	HRESULT HrListProfiles(ProfileOptions* pProfileOptions, std::wstring wszExportPath);
+	HRESULT HrListProfiles(Toolkit* pToolkit, std::wstring wszExportPath);
 
 #pragma endregion
 
 #pragma region Providers
-// HrDeleteProvider
-// Deletes the provider with the specified UID from the service with the specified UID in a given profile
-HRESULT HrDeleteProvider(LPWSTR lpwszProfileName, LPMAPIUID lpServiceUid, LPMAPIUID lpProviderUid);
+	// HrDeleteProvider
+	// Deletes the provider with the specified UID from the service with the specified UID in a given profile
+	HRESULT HrDeleteProvider(LPWSTR lpwszProfileName, LPMAPIUID lpServiceUid, LPMAPIUID lpProviderUid);
 
 #pragma endregion
 
@@ -91,3 +78,4 @@ HRESULT HrDeleteProvider(LPWSTR lpwszProfileName, LPMAPIUID lpServiceUid, LPMAPI
 	HRESULT CheckABServiceExists(LPSERVICEADMIN lpSvcAdmin, LPTSTR lppszDisplayName, LPMAPIUID lppMapiUid, BOOL* success);
 
 #pragma endregion
+}

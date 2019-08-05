@@ -1853,7 +1853,7 @@ HRESULT CheckABServiceExists(LPSERVICEADMIN lpSvcAdmin, LPTSTR lppszDisplayName,
 
 	if (lpSvcRows->cRows > 0)
 	{
-		if (lpSvcRows->cRows = 1)
+		if (lpSvcRows->cRows == 1)
 		{
 			// 1 row expected
 			wprintf(L"Found one entry.\n");
@@ -1976,7 +1976,7 @@ HRESULT CheckABServiceExists(LPSERVICEADMIN lpSvcAdmin, LPTSTR lppszDisplayName,
 
 	if (lpSvcRows->cRows > 0)
 	{
-		if (lpSvcRows->cRows = 1)
+		if (lpSvcRows->cRows == 1)
 		{
 			// 1 row expected
 			wprintf(L"Found one entry.\n");

@@ -1,4 +1,3 @@
-#include "pch.h"
 #include "AddressBookWorker.h"
 
 MAPIToolkit::AddressBookWorker::AddressBookWorker()

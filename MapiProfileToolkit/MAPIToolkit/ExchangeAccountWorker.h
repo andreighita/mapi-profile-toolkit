@@ -4,6 +4,7 @@ namespace MAPIToolkit
 {
 	class ExchangeAccountWorker : public ServiceWorker
 	{
+	public:
 		std::wstring wszAddressBookExternalUrl; // sabe 
 		std::wstring wszAddressBookInternalUrl; // sabi
 		std::wstring wszAutodiscoverUrl;		// sau

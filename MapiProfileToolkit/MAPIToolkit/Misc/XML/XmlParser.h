@@ -1,46 +1,49 @@
 #pragma once
-#include "stdafx.h"
-#include "AddressBook/ABProviderObjects.h"
 #include <windows.h>
 #include <msxml.h>
 #include <objsafe.h>
 #include <objbase.h>
 #include <atlbase.h>
 #include "wchar.h"
+#include "../../ToolkitTypeDefs.h"
+#include "../../InlineAndMacros.h"
 
 HRESULT ParseXml(LPTSTR lpszABConfigurationPath, ABProvider* abProvider)
 {
 	HRESULT hRes = S_OK;
 	CComPtr<IXMLDOMDocument> pXMLDoc;
-	EC_HRES(pXMLDoc.CoCreateInstance(__uuidof(DOMDocument)));
+
 	CComPtr<IXMLDOMElement> xmlElement;
-	
-	// Load the file. 
 	VARIANT_BOOL bSuccess = false;
+
+	HCK(pXMLDoc.CoCreateInstance(__uuidof(DOMDocument)));
+
+	// Load the file. 
+	
 	// Can load it from a url/filename...
 	//iXMLDoc->load(CComVariant(url),&bSuccess);
 	// or from a BSTR...
-	EC_HRES(pXMLDoc->loadXML(CComBSTR(lpszABConfigurationPath), &bSuccess));
+	HCK(pXMLDoc->loadXML(CComBSTR(lpszABConfigurationPath), &bSuccess));
 	
 	if (bSuccess)
 	{
 		// Get a pointer to the root
 		CComPtr<IXMLDOMElement> pRootElm;
-		EC_HRES(pXMLDoc->get_documentElement(&pRootElm));
+		HCK(pXMLDoc->get_documentElement(&pRootElm));
 		CComPtr<IXMLDOMNodeList> pXMLNodes;
 		// Thanks to the magic of CComPtr, we never need call
 		// Release() -- that gets done automatically.
-		EC_HRES(pRootElm->get_childNodes(&pXMLNodes));
+		HCK(pRootElm->get_childNodes(&pXMLNodes));
 		long lCount;
-		EC_HRES(pXMLNodes->get_length(&lCount));
+		HCK(pXMLNodes->get_length(&lCount));
 		for (int i = 0; i < lCount; i++)
 		{
 			CComPtr<IXMLDOMNode> pXMLNode;
-			EC_HRES(pXMLNodes->get_item(i, &pXMLNode));
+			HCK(pXMLNodes->get_item(i, &pXMLNode));
 			BSTR bstrNodeName;
-			EC_HRES(pXMLNode->get_nodeName(&bstrNodeName));
+			HCK(pXMLNode->get_nodeName(&bstrNodeName));
 			VARIANT pNodeValue;
-			EC_HRES(pXMLNode->get_nodeValue(&pNodeValue));
+			HCK(pXMLNode->get_nodeValue(&pNodeValue));
 			if (0 == _wcsicmp(bstrNodeName, L"DisplayName"))
 			{
 				abProvider->lpszDisplayName = pNodeValue.bstrVal;
@@ -88,7 +91,7 @@ HRESULT ParseXml(LPTSTR lpszABConfigurationPath, ABProvider* abProvider)
 			}
 			if (0 == _wcsicmp(bstrNodeName, L"DefaultSearchBase"))
 			{
-				abProvider->uDefaultSearchBase = pNodeValue.ulVal;
+				abProvider->ulDefaultSearchBase = pNodeValue.ulVal;
 				break;
 			}
 			if (0 == _wcsicmp(bstrNodeName, L"CustomSearchBase"))

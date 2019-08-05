@@ -1,4 +1,3 @@
-#include "pch.h"
 #include "Toolkit.h"
 namespace MAPIToolkit
 {

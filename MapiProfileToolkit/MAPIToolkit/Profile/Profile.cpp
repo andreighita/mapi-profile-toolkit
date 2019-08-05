@@ -1,21 +1,35 @@
-#include "pch.h"
 #include "Profile.h"
+#include "..//Toolkit.h"
+#include "..//Logger.h"
+#include "../InlineAndMacros.h"
+#include <MAPIUtil.h>
+#include <EdkMdb.h>
+#include "../ExtraMAPIDefs.h"
+#include "..//Misc/Utility/StringOperations.h"
+#include <string.h>
+#include <wincrypt.h>
+#include "..//Misc/XML/XMLHelper.h"
+#include "AdditionalMailbox.h"
+#include "ExchangeAccount.h"
+#include "PST.h"
 
+namespace MAPIToolkit
+{
 LPWSTR GetDefaultProfileNameLP()
 {
 	return (LPWSTR)GetDefaultProfileName().c_str();
 }
 
-HRESULT HrListProfiles(ProfileOptions* pProfileOptions, std::wstring wszExportPath)
+HRESULT HrListProfiles(Toolkit* pToolkit, std::wstring wszExportPath)
 {
 	HRESULT hRes = S_OK;
-	if VCHK(pProfileOptions->profileMode, ProfileMode::Mode_All)
+	if VCHK(pToolkit->profileMode, ProfileMode::Mode_All)
 	{
 		ULONG ulProfileCount = GetProfileCount();
 		ProfileInfo* profileInfo = new ProfileInfo[ulProfileCount];
 		ZeroMemory(profileInfo, sizeof(ProfileInfo) * ulProfileCount);
 		Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for all profiles");
-		EC_HRES_MSG(HrGetProfiles(ulProfileCount, profileInfo), L"Calling HrGetProfiles");
+		HCKM(HrGetProfiles(ulProfileCount, profileInfo), L"Calling HrGetProfiles");
 		if (wszExportPath != L"")
 		{
 			Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for all profiles");
@@ -28,11 +42,11 @@ HRESULT HrListProfiles(ProfileOptions* pProfileOptions, std::wstring wszExportPa
 		}
 
 	}
-	else if VCHK(pProfileOptions->profileMode, ProfileMode::Mode_Specific)
+	else if VCHK(pToolkit->profileMode, ProfileMode::Mode_Specific)
 	{
 		ProfileInfo* pProfileInfo = new ProfileInfo();
-		Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for profile: " + pProfileOptions->wszProfileName);
-		EC_HRES_MSG(HrGetProfile((LPWSTR)pProfileOptions->wszProfileName.c_str(), pProfileInfo), L"Calling HrGetProfile");
+		Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for profile: " + pToolkit->m_profileWorker->profileName);
+		HCKM(HrGetProfile((LPWSTR)pToolkit->m_profileWorker->profileName.c_str(), pProfileInfo), L"Calling HrGetProfile");
 		if (wszExportPath != L"")
 		{
 			Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for profile");
@@ -45,17 +59,17 @@ HRESULT HrListProfiles(ProfileOptions* pProfileOptions, std::wstring wszExportPa
 		}
 
 	}
-	else if VCHK(pProfileOptions->profileMode, ProfileMode::Mode_Default)
+	else if VCHK(pToolkit->profileMode, ProfileMode::Mode_Default)
 	{
 		std::wstring szDefaultProfileName = GetDefaultProfileName();
 		if (!szDefaultProfileName.empty())
 		{
-			pProfileOptions->wszProfileName = szDefaultProfileName;
+			pToolkit->m_profileWorker->profileName = szDefaultProfileName;
 		}
 
 		ProfileInfo* pProfileInfo = new ProfileInfo();
-		Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for default profile: " + pProfileOptions->wszProfileName);
-		EC_HRES_MSG(HrGetProfile((LPWSTR)pProfileOptions->wszProfileName.c_str(), pProfileInfo), L"Calling HrGetProfile");
+		Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for default profile: " + pToolkit->m_profileWorker->profileName);
+		HCKM(HrGetProfile((LPWSTR)pToolkit->m_profileWorker->profileName.c_str(), pProfileInfo), L"Calling HrGetProfile");
 		if (wszExportPath != L"")
 		{
 			Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for default profile");
@@ -91,16 +105,16 @@ std::wstring GetDefaultProfileName()
 	enum { iDisplayName, cptaProps };
 	SizedSPropTagArray(cptaProps, sptaProps) = { cptaProps, PR_DISPLAY_NAME_A };
 
-	EC_HRES_MSG(MAPIAdminProfiles(0, &lpProfAdmin), L"Calling MAPIAdminProfiles" );
+	HCKM(MAPIAdminProfiles(0, &lpProfAdmin), L"Calling MAPIAdminProfiles" );
 
-	EC_HRES_MSG(lpProfAdmin->GetProfileTable(0, &lpProfTable), L"Calling GetProfileTable");
+	HCKM(lpProfAdmin->GetProfileTable(0, &lpProfTable), L"Calling GetProfileTable");
 
 	// Allocate memory for the restriction
-	EC_HRES_MSG(MAPIAllocateBuffer(sizeof(SRestriction), (LPVOID*)&lpProfRes), L"Calling MAPIAllocateBuffer");
+	HCKM(MAPIAllocateBuffer(sizeof(SRestriction), (LPVOID*)&lpProfRes), L"Calling MAPIAllocateBuffer");
 
-	EC_HRES_MSG(MAPIAllocateBuffer(sizeof(SRestriction) * 2, (LPVOID*)&lpProfResLvl1), L"Calling MAPIAllocateBuffer");
+	HCKM(MAPIAllocateBuffer(sizeof(SRestriction) * 2, (LPVOID*)&lpProfResLvl1), L"Calling MAPIAllocateBuffer");
 
-	EC_HRES_MSG(MAPIAllocateBuffer(sizeof(SPropValue), (LPVOID*)&lpProfPropVal), L"Calling MAPIAllocateBuffer");
+	HCKM(MAPIAllocateBuffer(sizeof(SPropValue), (LPVOID*)&lpProfPropVal), L"Calling MAPIAllocateBuffer");
 
 	// Set up restriction to query the profile table
 	lpProfRes->rt = RES_AND;
@@ -120,7 +134,7 @@ std::wstring GetDefaultProfileName()
 	lpProfPropVal->Value.b = true;
 
 	// Query the table to get the the default profile only
-	EC_HRES_MSG(HrQueryAllRows(lpProfTable,
+	HCKM(HrQueryAllRows(lpProfTable,
 		(LPSPropTagArray)&sptaProps,
 		lpProfRes,
 		NULL,
@@ -163,13 +177,13 @@ ULONG GetProfileCount()
 	ULONG ulRowCount = 0;
 	HRESULT hRes = S_OK;
 
-	EC_HRES_MSG(MAPIAdminProfiles(0, // Flags
+	HCKM(MAPIAdminProfiles(0, // Flags
 		&lpProfAdmin), L"Calling MAPIAdminProfiles"); // Pointer to new IProfAdmin
 									 // Get an IProfAdmin interface.
 
-	EC_HRES_MSG(lpProfAdmin->GetProfileTable(0, &lpProfTable), L"Calling GetProfileTable");
+	HCKM(lpProfAdmin->GetProfileTable(0, &lpProfTable), L"Calling GetProfileTable");
 
-	EC_HRES_MSG(lpProfTable->GetRowCount(0, &ulRowCount), L"Calling GetRowCount");
+	HCKM(lpProfTable->GetRowCount(0, &ulRowCount), L"Calling GetRowCount");
 
 Error:
 	goto Cleanup;
@@ -192,15 +206,15 @@ HRESULT HrGetProfiles(ULONG ulProfileCount, ProfileInfo * profileInfo)
 	enum { iDisplayName, cptaProps };
 	SizedSPropTagArray(cptaProps, sptaProps) = { cptaProps, PR_DISPLAY_NAME_A };
 
-	EC_HRES_MSG(MAPIAdminProfiles(0, // Flags
+	HCKM(MAPIAdminProfiles(0, // Flags
 		&lpProfAdmin), L"Calling MAPIAdminProfiles"); // Pointer to new IProfAdmin
 									 // Get an IProfAdmin interface.
 
-	EC_HRES_MSG(lpProfAdmin->GetProfileTable(0,
+	HCKM(lpProfAdmin->GetProfileTable(0,
 		&lpProfTable), L"Calling GetProfileTable");
 
 	// Query the table to get the the default profile only
-	EC_HRES_MSG(HrQueryAllRows(lpProfTable,
+	HCKM(HrQueryAllRows(lpProfTable,
 		(LPSPropTagArray)&sptaProps,
 		NULL,
 		NULL,
@@ -211,7 +225,7 @@ HRESULT HrGetProfiles(ULONG ulProfileCount, ProfileInfo * profileInfo)
 	{
 		for (unsigned int i = 0; i < lpProfRows->cRows; i++)
 		{
-			EC_HRES_MSG(HrGetProfile(ConvertMultiByteToWideChar(lpProfRows->aRow[i].lpProps[iDisplayName].Value.lpszA), &profileInfo[i]), L"Calling HrGetProfile");
+			HCKM(HrGetProfile(ConvertMultiByteToWideChar(lpProfRows->aRow[i].lpProps[iDisplayName].Value.lpszA), &profileInfo[i]), L"Calling HrGetProfile");
 		}
 	}
 
@@ -238,11 +252,11 @@ HRESULT HrDeleteProfile(LPWSTR lpszProfileName)
 
 	// Get an IProfAdmin interface.
 
-	EC_HRES_MSG(MAPIAdminProfiles(0,              // Flags.
+	HCKM(MAPIAdminProfiles(0,              // Flags.
 		&lpProfAdmin), L"Calling MAPIAdminProfiles."); // Pointer to new IProfAdmin.
 
 													   // Create a new profile.
-		EC_HRES_MSG(lpProfAdmin->DeleteProfile((LPTSTR)ConvertWideCharToMultiByte(lpszProfileName), NULL), L"Calling DeleteProfile");
+		HCKM(lpProfAdmin->DeleteProfile((LPTSTR)ConvertWideCharToMultiByte(lpszProfileName), NULL), L"Calling DeleteProfile");
 		// Create a new profile.
 
 Error:
@@ -269,7 +283,7 @@ HRESULT HrCreateProfile(LPWSTR lpszProfileName)
 
 	// Get an IProfAdmin interface.
 
-	EC_HRES_MSG(MAPIAdminProfiles(0,              // Flags.
+	HCKM(MAPIAdminProfiles(0,              // Flags.
 		&lpProfAdmin), L"Calling MAPIAdminProfiles."); // Pointer to new IProfAdmin.
 
 													   // Create a new profile.
@@ -280,10 +294,10 @@ HRESULT HrCreateProfile(LPWSTR lpszProfileName)
 
 	if (hRes == E_ACCESSDENIED)
 	{
-		EC_HRES_MSG(lpProfAdmin->DeleteProfile((LPTSTR)ConvertWideCharToMultiByte(lpszProfileName), NULL), L"Calling DeleteProfile");
+		HCKM(lpProfAdmin->DeleteProfile((LPTSTR)ConvertWideCharToMultiByte(lpszProfileName), NULL), L"Calling DeleteProfile");
 		// Create a new profile.
 
-		EC_HRES_MSG(lpProfAdmin->CreateProfile((LPTSTR)ConvertWideCharToMultiByte(lpszProfileName),     // Name of new profile.
+		HCKM(lpProfAdmin->CreateProfile((LPTSTR)ConvertWideCharToMultiByte(lpszProfileName),     // Name of new profile.
 			nullptr,          // Password for profile.
 			0,          // Handle to parent window.
 			0), L"Calling CreateProfile.");        // Flags.
@@ -313,7 +327,7 @@ HRESULT HrCreateProfile(LPWSTR lpszProfileName, LPSERVICEADMIN2 *lppSvcAdmin2)
 
 	// Get an IProfAdmin interface.
 
-	EC_HRES_MSG(MAPIAdminProfiles(0,              // Flags.
+	HCKM(MAPIAdminProfiles(0,              // Flags.
 		&lpProfAdmin), L"Calling MAPIAdminProfiles."); // Pointer to new IProfAdmin.
 
 													   // Create a new profile.
@@ -324,23 +338,23 @@ HRESULT HrCreateProfile(LPWSTR lpszProfileName, LPSERVICEADMIN2 *lppSvcAdmin2)
 
 	if (hRes == E_ACCESSDENIED)
 	{
-		EC_HRES_MSG(lpProfAdmin->DeleteProfile((LPTSTR)ConvertWideCharToMultiByte(lpszProfileName), NULL), L"Calling DeleteProfile.");
+		HCKM(lpProfAdmin->DeleteProfile((LPTSTR)ConvertWideCharToMultiByte(lpszProfileName), NULL), L"Calling DeleteProfile.");
 
-		EC_HRES_MSG(lpProfAdmin->CreateProfile((LPTSTR)ConvertWideCharToMultiByte(lpszProfileName),     // Name of new profile.
+		HCKM(lpProfAdmin->CreateProfile((LPTSTR)ConvertWideCharToMultiByte(lpszProfileName),     // Name of new profile.
 			nullptr,          // Password for profile.
 			0,          // Handle to parent window.
 			0), L"Calling CreateProfile.");        // Flags.
 	}
 
 	// Get an IMsgServiceAdmin interface off of the IProfAdmin interface.
-	EC_HRES_MSG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpszProfileName),     // Profile that we want to modify.
+	HCKM(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpszProfileName),     // Profile that we want to modify.
 		nullptr,          // Password for that profile.
 		0,          // Handle to parent window.
 		0,             // Flags.
 		&lpSvcAdmin), L"Calling AdminServices."); // Pointer to new IMsgServiceAdmin.
 
 												  // Create the new message service for Exchange.
-	if (lpSvcAdmin) EC_HRES_MSG(lpSvcAdmin->QueryInterface(IID_IMsgServiceAdmin2, (LPVOID*)&lpSvcAdmin2), L"Calling QueryInterface");
+	if (lpSvcAdmin) HCKM(lpSvcAdmin->QueryInterface(IID_IMsgServiceAdmin2, (LPVOID*)&lpSvcAdmin2), L"Calling QueryInterface");
 
 	*lppSvcAdmin2 = lpSvcAdmin2;
 
@@ -369,11 +383,11 @@ HRESULT HrSetDefaultProfile(LPWSTR lpszProfileName)
 
 	// Get an IProfAdmin interface.
 
-	EC_HRES_MSG(MAPIAdminProfiles(0,              // Flags.
+	HCKM(MAPIAdminProfiles(0,              // Flags.
 		&lpProfAdmin), L"Calling MAPIAdminProfiles."); // Pointer to new IProfAdmin.
 
 													   // Create a new profile.
-	EC_HRES_MSG(lpProfAdmin->SetDefaultProfile((LPTSTR)ConvertWideCharToMultiByte(lpszProfileName),     // Name of new profile.
+	HCKM(lpProfAdmin->SetDefaultProfile((LPTSTR)ConvertWideCharToMultiByte(lpszProfileName),     // Name of new profile.
 		0), L"Calling SetDefaultProfile.");        // Flags.
 
 Error:
@@ -395,7 +409,7 @@ HRESULT HrCloneProfile(ProfileInfo * profileInfo)
 	unsigned int uiServiceIndex = 0;
 	profileInfo->wszProfileName = profileInfo->wszProfileName + L"_Clone";
 	Logger::Write(logLevelInfo, L"Creating new profile named: " + profileInfo->wszProfileName);
-	EC_HRES_MSG(HrCreateProfile((LPWSTR)profileInfo->wszProfileName.c_str(), &lpServiceAdmin), L"Calling HrCreateProfile.");
+	HCKM(HrCreateProfile((LPWSTR)profileInfo->wszProfileName.c_str(), &lpServiceAdmin), L"Calling HrCreateProfile.");
 	if (lpServiceAdmin)
 	{
 		for (unsigned int i = 0; i < profileInfo->ulServiceCount; i++)
@@ -405,7 +419,7 @@ HRESULT HrCloneProfile(ProfileInfo * profileInfo)
 			if (profileInfo->profileServices[i].serviceType == ServiceType::ServiceType_Mailbox)
 			{
 				Logger::Write(logLevelInfo, L"Adding exchange mailbox: " + profileInfo->profileServices[i].exchangeAccountInfo->wszEmailAddress);
-				EC_HRES_MSG(HrCreateMsemsServiceModernExt(false, // sort this out later
+				HCKM(HrCreateMsemsServiceModernExt(false, // sort this out later
 					(LPWSTR)profileInfo->wszProfileName.c_str(),
 					profileInfo->profileServices[i].ulResourceFlags,
 					profileInfo->profileServices[i].exchangeAccountInfo->ulProfileConfigFlags,
@@ -422,7 +436,7 @@ HRESULT HrCloneProfile(ProfileInfo * profileInfo)
 						Logger::Write(logLevelInfo, L"Adding additional mailbox: " + profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress);
 						// this should not add online archives
 						if (TRUE != profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].bIsOnlineArchive)
-							EC_HRES_MSG(HrAddDelegateMailboxModern(false,
+							HCKM(HrAddDelegateMailboxModern(false,
 							(LPWSTR)profileInfo->wszProfileName.c_str(),
 								FALSE,
 								uiServiceIndex,
@@ -435,7 +449,7 @@ HRESULT HrCloneProfile(ProfileInfo * profileInfo)
 			else if (profileInfo->profileServices[i].serviceType == ServiceType::ServiceType_Pst)
 			{
 				Logger::Write(logLevelInfo, L"Adding PST file: " + profileInfo->profileServices[i].pstInfo->wszPstPath);
-				EC_HRES_MSG(HrCreatePstService(lpServiceAdmin,
+				HCKM(HrCreatePstService(lpServiceAdmin,
 					&lpServiceUid,
 					(LPWSTR)profileInfo->profileServices[i].wszServiceName.c_str(),
 					profileInfo->profileServices[i].ulResourceFlags,
@@ -448,7 +462,7 @@ HRESULT HrCloneProfile(ProfileInfo * profileInfo)
 		}
 
 		Logger::Write(logLevelInfo, L"Setting profile as default.");
-		EC_HRES_MSG(HrSetDefaultProfile((LPWSTR)profileInfo->wszProfileName.c_str()), L"Calling HrSetDefaultProfile.");
+		HCKM(HrSetDefaultProfile((LPWSTR)profileInfo->wszProfileName.c_str()), L"Calling HrSetDefaultProfile.");
 	}
 	goto Cleanup;
 
@@ -466,7 +480,7 @@ HRESULT HrSimpleCloneProfile(ProfileInfo * profileInfo, bool bSetDefaultProfile)
 	unsigned int uiServiceIndex = 0;
 	profileInfo->wszProfileName = profileInfo->wszProfileName + L"_Clone";
 	Logger::Write(logLevelInfo, L"Creating new profile named: " + profileInfo->wszProfileName);
-	EC_HRES_MSG(HrCreateProfile((LPWSTR)profileInfo->wszProfileName.c_str(), &lpServiceAdmin), L"Calling HrCreateProfile.");
+	HCKM(HrCreateProfile((LPWSTR)profileInfo->wszProfileName.c_str(), &lpServiceAdmin), L"Calling HrCreateProfile.");
 	if (lpServiceAdmin)
 	{
 		for (unsigned int i = 0; i < profileInfo->ulServiceCount; i++)
@@ -477,7 +491,7 @@ HRESULT HrSimpleCloneProfile(ProfileInfo * profileInfo, bool bSetDefaultProfile)
 			{
 				Logger::Write(logLevelInfo, L"Adding exchange mailbox: " + profileInfo->profileServices[i].exchangeAccountInfo->wszEmailAddress);
 				
-				EC_HRES_MSG(HrCreateMsemsServiceMOH(false,
+				HCKM(HrCreateMsemsServiceMOH(false,
 					(LPWSTR)profileInfo->wszProfileName.c_str(),
 					(LPWSTR)profileInfo->profileServices[i].exchangeAccountInfo->wszEmailAddress.c_str(),
 					(LPWSTR)profileInfo->profileServices[i].exchangeAccountInfo->wszMailboxDN.c_str(),
@@ -494,7 +508,7 @@ HRESULT HrSimpleCloneProfile(ProfileInfo * profileInfo, bool bSetDefaultProfile)
 		if (bSetDefaultProfile)
 		{
 			Logger::Write(logLevelInfo, L"Setting profile as default.");
-			EC_HRES_MSG(HrSetDefaultProfile((LPWSTR)profileInfo->wszProfileName.c_str()), L"Calling HrSetDefaultProfile.");
+			HCKM(HrSetDefaultProfile((LPWSTR)profileInfo->wszProfileName.c_str()), L"Calling HrSetDefaultProfile.");
 		}
 	}
 	goto Cleanup;
@@ -566,28 +580,29 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo)
 	LPSPropValue lpProfPropVal = NULL;
 	LPMAPITABLE lpProfTable = NULL;
 	LPSRowSet lpProfRows = NULL;
-
+	LPSERVICEADMIN lpServiceAdmin = NULL;
+	LPMAPITABLE lpServiceTable = NULL;
 	// Setting up an enum and a prop tag array with the props we'll use
 	enum { iDisplayName, iDefaultProfile, cptaProps };
 	SizedSPropTagArray(cptaProps, sptaProps) = { cptaProps, PR_DISPLAY_NAME, PR_DEFAULT_PROFILE };
 
-	EC_HRES_MSG(MAPIAdminProfiles(0, // Flags
+	HCKM(MAPIAdminProfiles(0, // Flags
 		&lpProfAdmin), L"Calling MAPIAdminProfiles."); // Pointer to new IProfAdmin
 													   // Get an IProfAdmin interface.
 
-	EC_HRES_MSG(lpProfAdmin->GetProfileTable(0,
+	HCKM(lpProfAdmin->GetProfileTable(0,
 		&lpProfTable), L"Calling GetProfileTable.");
 
 	// Allocate memory for the restriction
-	EC_HRES_MSG(MAPIAllocateBuffer(
+	HCKM(MAPIAllocateBuffer(
 		sizeof(SRestriction),
 		(LPVOID*)&lpProfRes), L"Calling MAPIAllocateBuffer.");
 
-	EC_HRES_MSG(MAPIAllocateBuffer(
+	HCKM(MAPIAllocateBuffer(
 		sizeof(SRestriction) * 2,
 		(LPVOID*)&lpProfResLvl1), L"Calling MAPIAllocateBuffer");
 
-	EC_HRES_MSG(MAPIAllocateBuffer(
+	HCKM(MAPIAllocateBuffer(
 		sizeof(SPropValue),
 		(LPVOID*)&lpProfPropVal), L"Calling MAPIAllocateBuffer");
 
@@ -609,7 +624,7 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo)
 	lpProfPropVal->Value.lpszA = ConvertWideCharToMultiByte(lpszProfileName);
 
 	// Query the table to get the the default profile only
-	EC_HRES_MSG(HrQueryAllRows(lpProfTable,
+	HCKM(HrQueryAllRows(lpProfTable,
 		(LPSPropTagArray)&sptaProps,
 		lpProfRes,
 		NULL,
@@ -630,9 +645,8 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo)
 	}
 
 	// Begin process services
-	LPSERVICEADMIN lpServiceAdmin = NULL;
-	LPMAPITABLE lpServiceTable = NULL;
-	EC_HRES_MSG(lpProfAdmin->AdminServices((LPTSTR)lpszProfileName,
+
+	HCKM(lpProfAdmin->AdminServices((LPTSTR)lpszProfileName,
 		LPTSTR(""),            // Password for that profile.
 		NULL,                // Handle to parent window.
 		MAPI_UNICODE,                    // Flags.
@@ -652,7 +666,7 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo)
 		SizedSPropTagArray(cptaSvcProps, sptaSvcProps) = { cptaSvcProps, PR_SERVICE_UID ,PR_SERVICE_NAME_A, PR_DISPLAY_NAME_W, PR_EMSMDB_SECTION_UID, PR_RESOURCE_FLAGS };
 
 		// Query the table to get the the default profile only
-		EC_HRES_MSG(HrQueryAllRows(lpServiceTable,
+		HCKM(HrQueryAllRows(lpServiceTable,
 			(LPSPropTagArray)&sptaSvcProps,
 			NULL,
 			NULL,
@@ -880,15 +894,15 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo)
 						SizedSPropTagArray(cptaProvProps, sptaProvProps) = { cptaProvProps, PR_INSTANCE_KEY };
 
 						// Allocate memory for the restriction
-						EC_HRES_MSG(MAPIAllocateBuffer(
+						HCKM(MAPIAllocateBuffer(
 							sizeof(SRestriction),
 							(LPVOID*)&lpProvRes), L"Calling MAPIAllocateBuffer.");
 
-						EC_HRES_MSG(MAPIAllocateBuffer(
+						HCKM(MAPIAllocateBuffer(
 							sizeof(SRestriction) * 2,
 							(LPVOID*)&lpProvResLvl1), L"Calling MAPIAllocateBuffer.");
 
-						EC_HRES_MSG(MAPIAllocateBuffer(
+						HCKM(MAPIAllocateBuffer(
 							sizeof(SPropValue),
 							(LPVOID*)&lpProvPropVal), L"Calling MAPIAllocateBuffer.");
 
@@ -912,7 +926,7 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo)
 						lpProvAdmin->GetProviderTable(0,
 							&lpProvTable);
 						// Query the table to get the the default profile only
-						EC_HRES_MSG(HrQueryAllRows(lpProvTable,
+						HCKM(HrQueryAllRows(lpProvTable,
 							(LPSPropTagArray)&sptaProvProps,
 							lpProvRes,
 							NULL,
@@ -1230,15 +1244,15 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo)
 						SizedSPropTagArray(cptaProvProps, sptaProvProps) = { cptaProvProps, PR_INSTANCE_KEY };
 
 						// Allocate memory for the restriction
-						EC_HRES_MSG(MAPIAllocateBuffer(
+						HCKM(MAPIAllocateBuffer(
 							sizeof(SRestriction),
 							(LPVOID*)&lpProvRes), L"Calling MAPIAllocateBuffer");
 
-						EC_HRES_MSG(MAPIAllocateBuffer(
+						HCKM(MAPIAllocateBuffer(
 							sizeof(SRestriction) * 2,
 							(LPVOID*)&lpProvResLvl1), L"Calling MAPIAllocateBuffer");
 
-						EC_HRES_MSG(MAPIAllocateBuffer(
+						HCKM(MAPIAllocateBuffer(
 							sizeof(SPropValue),
 							(LPVOID*)&lpProvPropVal), L"Calling MAPIAllocateBuffer");
 
@@ -1262,7 +1276,7 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo)
 						lpProvAdmin->GetProviderTable(0,
 							&lpProvTable);
 						// Query the table to get the the default profile only
-						EC_HRES_MSG(HrQueryAllRows(lpProvTable,
+						HCKM(HrQueryAllRows(lpProvTable,
 							(LPSPropTagArray)&sptaProvProps,
 							lpProvRes,
 							NULL,
@@ -1363,10 +1377,10 @@ HRESULT HrDeleteProvider(LPWSTR lpwszProfileName, LPMAPIUID lpServiceUid, LPMAPI
 	LPSERVICEADMIN lpServiceAdmin = NULL;
 	LPPROVIDERADMIN lpProviderAdmin = NULL;
 
-	EC_HRES_MSG(MAPIAdminProfiles(0, // Flags
+	HCKM(MAPIAdminProfiles(0, // Flags
 		&lpProfAdmin), L"Calling MAPIAdminProfiles"); // Pointer to new IProfAdmin
 
-	EC_HRES_MSG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
+	HCKM(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
 		LPTSTR(""),            // Password for that profile.
 		NULL,                // Handle to parent window.
 		0,                    // Flags.
@@ -1374,10 +1388,10 @@ HRESULT HrDeleteProvider(LPWSTR lpwszProfileName, LPMAPIUID lpServiceUid, LPMAPI
 
 	if (lpServiceAdmin)
 	{
-		EC_HRES_MSG(lpServiceAdmin->AdminProviders(lpServiceUid, NULL, &lpProviderAdmin), L"Calling AdminProviders");
+		HCKM(lpServiceAdmin->AdminProviders(lpServiceUid, NULL, &lpProviderAdmin), L"Calling AdminProviders");
 		if (lpProviderAdmin)
 		{
-			EC_HRES_MSG(lpProviderAdmin->DeleteProvider(lpProviderUid), L"Calling DeleteProvider");
+			HCKM(lpProviderAdmin->DeleteProvider(lpProviderUid), L"Calling DeleteProvider");
 		}
 	}
 
@@ -1409,9 +1423,9 @@ HRESULT HrGetSections(LPSERVICEADMIN2 lpSvcAdmin, LPMAPIUID lpServiceUid, LPPROF
 		*lppEmsMdbSection = nullptr;
 	}
 
-	EC_HRES_MSG(lpSvcAdmin->OpenProfileSection(lpServiceUid, NULL, MAPI_FORCE_ACCESS | MAPI_MODIFY, &lpSvcProfSect), L"Calling OpenProfileSection.");
+	HCKM(lpSvcAdmin->OpenProfileSection(lpServiceUid, NULL, MAPI_FORCE_ACCESS | MAPI_MODIFY, &lpSvcProfSect), L"Calling OpenProfileSection.");
 
-	EC_HRES_MSG(lpSvcProfSect->GetProps(
+	HCKM(lpSvcProfSect->GetProps(
 		(LPSPropTagArray)& sptaUids,
 		0,
 		&cValues,
@@ -1422,16 +1436,16 @@ HRESULT HrGetSections(LPSERVICEADMIN2 lpSvcAdmin, LPMAPIUID lpServiceUid, LPPROF
 
 
 	if (lpProps[0].ulPropTag != sptaUids.aulPropTag[0])
-		EC_HRES_MSG(lpProps[0].Value.err, L"Cheking Value.err");
+		HCKM(lpProps[0].Value.err, L"Cheking Value.err");
 	if (NULL != lppEmsMdbSection)
 	{
 		if (lpProps[1].ulPropTag != sptaUids.aulPropTag[1])
-			EC_HRES_MSG(lpProps[1].Value.err, L"Cheking Value.err");
+			HCKM(lpProps[1].Value.err, L"Cheking Value.err");
 	}
 
 	if (NULL != lppStoreProviderSection)
 	{
-		EC_HRES_MSG(lpSvcAdmin->OpenProfileSection(
+		HCKM(lpSvcAdmin->OpenProfileSection(
 			(LPMAPIUID)lpProps[0].Value.bin.lpb,
 			0,
 			MAPI_FORCE_ACCESS | MAPI_MODIFY,
@@ -1440,7 +1454,7 @@ HRESULT HrGetSections(LPSERVICEADMIN2 lpSvcAdmin, LPMAPIUID lpServiceUid, LPPROF
 
 	if (NULL != lppEmsMdbSection)
 	{
-		EC_HRES_MSG(lpSvcAdmin->OpenProfileSection(
+		HCKM(lpSvcAdmin->OpenProfileSection(
 			(LPMAPIUID)lpProps[1].Value.bin.lpb,
 			0,
 			MAPI_FORCE_ACCESS | MAPI_MODIFY,
@@ -1489,9 +1503,9 @@ HRESULT HrGetSections(LPSERVICEADMIN lpSvcAdmin, LPMAPIUID lpServiceUid, LPPROFS
 		*lppEmsMdbSection = nullptr;
 	}
 
-	EC_HRES_MSG(lpSvcAdmin->OpenProfileSection(lpServiceUid, NULL, MAPI_FORCE_ACCESS | MAPI_MODIFY, &lpSvcProfSect), L"Calling OpenProfileSection.");
+	HCKM(lpSvcAdmin->OpenProfileSection(lpServiceUid, NULL, MAPI_FORCE_ACCESS | MAPI_MODIFY, &lpSvcProfSect), L"Calling OpenProfileSection.");
 
-	EC_HRES_MSG(lpSvcProfSect->GetProps(
+	HCKM(lpSvcProfSect->GetProps(
 		(LPSPropTagArray)& sptaUids,
 		0,
 		&cValues,
@@ -1502,16 +1516,16 @@ HRESULT HrGetSections(LPSERVICEADMIN lpSvcAdmin, LPMAPIUID lpServiceUid, LPPROFS
 
 
 	if (lpProps[0].ulPropTag != sptaUids.aulPropTag[0])
-		EC_HRES_MSG(lpProps[0].Value.err, L"Cheking Value.err");
+		HCKM(lpProps[0].Value.err, L"Cheking Value.err");
 	if (NULL != lppEmsMdbSection)
 	{
 		if (lpProps[1].ulPropTag != sptaUids.aulPropTag[1])
-			EC_HRES_MSG(lpProps[1].Value.err, L"Cheking Value.err");
+			HCKM(lpProps[1].Value.err, L"Cheking Value.err");
 	}
 
 	if (NULL != lpStoreProvProfSect)
 	{
-		EC_HRES_MSG(lpSvcAdmin->OpenProfileSection(
+		HCKM(lpSvcAdmin->OpenProfileSection(
 			(LPMAPIUID)lpProps[0].Value.bin.lpb,
 			0,
 			MAPI_FORCE_ACCESS | MAPI_MODIFY,
@@ -1520,7 +1534,7 @@ HRESULT HrGetSections(LPSERVICEADMIN lpSvcAdmin, LPMAPIUID lpServiceUid, LPPROFS
 
 	if (NULL != lppEmsMdbSection)
 	{
-		EC_HRES_MSG(lpSvcAdmin->OpenProfileSection(
+		HCKM(lpSvcAdmin->OpenProfileSection(
 			(LPMAPIUID)lpProps[1].Value.bin.lpb,
 			0,
 			MAPI_FORCE_ACCESS | MAPI_MODIFY,
@@ -1560,18 +1574,18 @@ HRESULT ListAllABServices(LPSERVICEADMIN lpSvcAdmin)
 		PROP_AB_PROVIDER_SERVER_SPA, PROP_AB_PROVIDER_ENABLE_BROWSING, PROP_AB_PROVIDER_SEARCH_BASE_DEFAULT };
 
 	// Get access to the message service table, a list of the message services in the profile.
-	EC_HRES(lpSvcAdmin->GetMsgServiceTable(0, // Flags        
+	HCK(lpSvcAdmin->GetMsgServiceTable(0, // Flags        
 		&lpMsgSvcTable)); // Pointer to table
 	wprintf(L"Retrieved message service table from profile.\n");
 
 	// Set up restriction to query table.
 	// Allocate and create the SRestriction
 	// Allocate base memory:
-	EC_HRES(MAPIAllocateBuffer(
+	HCK(MAPIAllocateBuffer(
 		sizeof(SRestriction),
 		(LPVOID*)& lpRes));
 
-	EC_HRES(MAPIAllocateMore(
+	HCK(MAPIAllocateMore(
 		sizeof(SPropValue),
 		lpRes,
 		(LPVOID*)& lpspvSvcName));
@@ -1584,12 +1598,12 @@ HRESULT ListAllABServices(LPSERVICEADMIN lpSvcAdmin)
 	lpRes->res.resContent.ulPropTag = PR_SERVICE_NAME;
 	lpRes->res.resContent.lpProp = lpspvSvcName;
 	lpspvSvcName->ulPropTag = PR_SERVICE_NAME;
-	lpspvSvcName->Value.lpszA = "EMABLT";
+	lpspvSvcName->Value.lpszA = ConvertWideCharToMultiByte(L"EMABLT");
 
 	wprintf(L"Set up restriction for searching Ldap AB services.\n");
 
 	// Query the table to get the entry for EMABLT type services.
-	EC_HRES(HrQueryAllRows(lpMsgSvcTable,
+	HCK(HrQueryAllRows(lpMsgSvcTable,
 		(LPSPropTagArray)& sptaProps,
 		lpRes,
 		NULL,
@@ -1602,10 +1616,10 @@ HRESULT ListAllABServices(LPSERVICEADMIN lpSvcAdmin)
 		for (unsigned int i = 0; i < lpSvcRows->cRows; i++)
 		{
 			LPPROFSECT lpProfSect = NULL;			LPMAPIPROP lpMapiProp = NULL;
-			EC_HRES(lpSvcAdmin->OpenProfileSection(LPMAPIUID(lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb), NULL, MAPI_MODIFY | MAPI_FORCE_ACCESS, &lpProfSect));
+			HCK(lpSvcAdmin->OpenProfileSection(LPMAPIUID(lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb), NULL, MAPI_MODIFY | MAPI_FORCE_ACCESS, &lpProfSect));
 			ULONG ulPropVal = 0;
 			LPSPropValue lpsPropValues = NULL;
-			EC_HRES(lpProfSect->GetProps((LPSPropTagArray)& sptaProps, NULL, &ulPropVal, &lpsPropValues));
+			HCK(lpProfSect->GetProps((LPSPropTagArray)& sptaProps, NULL, &ulPropVal, &lpsPropValues));
 			if (lpsPropValues)
 			{
 				wprintf(L"Listing entry #%i:\n", i);
@@ -1662,6 +1676,7 @@ HRESULT CreateABService(LPSERVICEADMIN lpSvcAdmin, ABProvider* pABProvider)
 	MAPIUID				uidService = { 0 };
 	LPMAPIUID			lpuidService = &uidService;
 
+	LPWSTR lpszwPassword = pABProvider->lpszPassword;
 
 	wprintf(L"Attempting ot obtain an IMsgServiceAdmin2 interface pointer...");
 	// Retrieves pointers to the supported interfaces on an object.
@@ -1671,7 +1686,7 @@ HRESULT CreateABService(LPSERVICEADMIN lpSvcAdmin, ABProvider* pABProvider)
 	else
 	{
 		wprintf(L"FAILED\n");
-		EC_HRES(hRes);
+		HCK(hRes);
 	}
 	wprintf(L"Attempting to Create AB service...");
 	// Adds a message service to the current profile and returns that newly added service UID.
@@ -1681,7 +1696,7 @@ HRESULT CreateABService(LPSERVICEADMIN lpSvcAdmin, ABProvider* pABProvider)
 	else
 	{
 		wprintf(L"FAILED\n");
-		EC_HRES(hRes);
+		HCK(hRes);
 	}
 
 	// Set up the new props
@@ -1721,7 +1736,7 @@ HRESULT CreateABService(LPSERVICEADMIN lpSvcAdmin, ABProvider* pABProvider)
 	rgval[8].ulPropTag = PROP_AB_PROVIDER_SERVER_SPA;
 	rgval[8].Value.b = pABProvider->bRequireSPA;
 
-	LPWSTR lpszwPassword = pABProvider->lpszPassword;
+
 	// Encrypt the password if supplied
 	if (0 < wcslen(lpszwPassword))
 	{
@@ -1768,7 +1783,7 @@ HRESULT CreateABService(LPSERVICEADMIN lpSvcAdmin, ABProvider* pABProvider)
 	else
 	{
 		wprintf(L"FAILED\n");
-		EC_HRES(hRes);
+		HCK(hRes);
 	}
 Error:
 	return hRes;
@@ -1790,28 +1805,28 @@ HRESULT CheckABServiceExists(LPSERVICEADMIN lpSvcAdmin, LPTSTR lppszDisplayName,
 	SizedSPropTagArray(cptaProps, sptaProps) = { cptaProps, PR_SERVICE_UID };
 
 	// Provides access to the message service table, a list of the message services in the profile.
-	EC_HRES(lpSvcAdmin->GetMsgServiceTable(0, // Flags        
+	HCK(lpSvcAdmin->GetMsgServiceTable(0, // Flags        
 		&lpMsgSvcTable)); // Pointer to table
 	wprintf(L"Retrieved message service table from profile.\n");
 
 	// Set up restriction to query table.
 	// Allocate and create our SRestriction
 	// Allocate base memory:
-	EC_HRES(MAPIAllocateBuffer(
+	HCK(MAPIAllocateBuffer(
 		sizeof(SRestriction),
 		(LPVOID*)& lpRes));
 
-	EC_HRES(MAPIAllocateMore(
+	HCK(MAPIAllocateMore(
 		sizeof(SRestriction) * 2,
 		lpRes,
 		(LPVOID*)& lpResLevel1));
 
-	EC_HRES(MAPIAllocateMore(
+	HCK(MAPIAllocateMore(
 		sizeof(SPropValue),
 		lpRes,
 		(LPVOID*)& lpspvSvcName));
 
-	EC_HRES(MAPIAllocateMore(
+	HCK(MAPIAllocateMore(
 		sizeof(SPropValue),
 		lpRes,
 		(LPVOID*)& lpspvDispName));
@@ -1832,7 +1847,7 @@ HRESULT CheckABServiceExists(LPSERVICEADMIN lpSvcAdmin, LPTSTR lppszDisplayName,
 	lpResLevel1[0].res.resContent.ulPropTag = PR_SERVICE_NAME;
 	lpResLevel1[0].res.resContent.lpProp = lpspvSvcName;
 	lpspvSvcName->ulPropTag = PR_SERVICE_NAME;
-	lpspvSvcName->Value.lpszA = "EMABLT";
+	lpspvSvcName->Value.lpszA = ConvertWideCharToMultiByte(L"EMABLT");
 	//Get the services matching the supplied display Name
 	lpResLevel1[1].rt = RES_CONTENT;
 	lpResLevel1[1].res.resContent.ulFuzzyLevel = FL_FULLSTRING;
@@ -1843,7 +1858,7 @@ HRESULT CheckABServiceExists(LPSERVICEADMIN lpSvcAdmin, LPTSTR lppszDisplayName,
 	wprintf(L"Set up restriction for searching Ldap AB service.\n");
 
 	// Query the table to get the entry for the EMABLT service.
-	EC_HRES(HrQueryAllRows(lpMsgSvcTable,
+	HCK(HrQueryAllRows(lpMsgSvcTable,
 		(LPSPropTagArray)& sptaProps,
 		lpRes,
 		NULL,
@@ -1908,26 +1923,26 @@ HRESULT CheckABServiceExists(LPSERVICEADMIN lpSvcAdmin, LPTSTR lppszDisplayName,
 
 	// Allocate and create our SRestriction
 	// Allocate base memory:
-	EC_HRES(MAPIAllocateBuffer(
+	HCK(MAPIAllocateBuffer(
 		sizeof(SRestriction),
 		(LPVOID*)& lpRes));
 
-	EC_HRES(MAPIAllocateMore(
+	HCK(MAPIAllocateMore(
 		sizeof(SRestriction) * 3,
 		lpRes,
 		(LPVOID*)& lpResLevel1));
 
-	EC_HRES(MAPIAllocateMore(
+	HCK(MAPIAllocateMore(
 		sizeof(SPropValue),
 		lpRes,
 		(LPVOID*)& lpspvSvcName));
 
-	EC_HRES(MAPIAllocateMore(
+	HCK(MAPIAllocateMore(
 		sizeof(SPropValue),
 		lpRes,
 		(LPVOID*)& lpspvDispName));
 
-	EC_HRES(MAPIAllocateMore(
+	HCK(MAPIAllocateMore(
 		sizeof(SPropValue),
 		lpRes,
 		(LPVOID*)& lpspvSrvName));
@@ -1948,7 +1963,7 @@ HRESULT CheckABServiceExists(LPSERVICEADMIN lpSvcAdmin, LPTSTR lppszDisplayName,
 	lpResLevel1[0].res.resContent.ulPropTag = PR_SERVICE_NAME;
 	lpResLevel1[0].res.resContent.lpProp = lpspvSvcName;
 	lpspvSvcName->ulPropTag = PR_SERVICE_NAME;
-	lpspvSvcName->Value.lpszA = "EMABLT";
+	lpspvSvcName->Value.lpszA = ConvertWideCharToMultiByte(L"EMABLT");
 	//Get the services matching the supplied Display Name
 	lpResLevel1[1].rt = RES_CONTENT;
 	lpResLevel1[1].res.resContent.ulFuzzyLevel = FL_IGNORECASE;
@@ -1966,7 +1981,7 @@ HRESULT CheckABServiceExists(LPSERVICEADMIN lpSvcAdmin, LPTSTR lppszDisplayName,
 	wprintf(L"Set up restriction for searching Ldap AB service.\n");
 
 	// Query the table to get the entry for the Exchange message service.
-	EC_HRES(HrQueryAllRows(lpMsgSvcTable,
+	HCK(HrQueryAllRows(lpMsgSvcTable,
 		(LPSPropTagArray)& sptaProps,
 		lpRes,
 		NULL,
@@ -2119,13 +2134,13 @@ HRESULT UpdateABService(LPSERVICEADMIN lpSvcAdmin, ABProvider* pABProvider, LPMA
 	else
 	{
 		wprintf(L"FAILED\n");
-		EC_HRES(hRes);
+		HCK(hRes);
 	}
 
 Error:
 	MAPIFreeBuffer(rgval);
 	if (hRes != S_OK)
-		EC_HRES(hRes);
+		HCK(hRes);
 	return hRes;
 }
 
@@ -2144,6 +2159,7 @@ HRESULT RemoveABService(LPSERVICEADMIN lpSvcAdmin, LPMAPIUID lpMapiUid)
 
 Error:
 	if (hRes != S_OK)
-		EC_HRES(hRes);
+		HCK(hRes);
 	return hRes;
+}
 }

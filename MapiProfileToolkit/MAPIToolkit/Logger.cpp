@@ -1,7 +1,7 @@
-#include "pch.h"
 #include "Logger.h"
 #include "ToolkitTypeDefs.h"
 #include <sstream>
+#pragma warning(disable:4996)
 
 namespace MAPIToolkit
 {

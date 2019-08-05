@@ -1,12 +1,10 @@
 // QueryKey - Enumerates the subkeys of key and its associated values.
 //     hKey - Key whose subkeys and values are to be enumerated.
-
 #include "RegistryHelper.h"
 #include <windows.h>
-#include <stdio.h>
-#include <tchar.h>
-#include <comdef.h>
+
 #include <string>
+#include <tchar.h>
 
 #define MAX_KEY_LENGTH 255
 #define MAX_VALUE_NAME 16383

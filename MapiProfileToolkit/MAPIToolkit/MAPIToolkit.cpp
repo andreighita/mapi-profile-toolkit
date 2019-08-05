@@ -1,7 +1,6 @@
 // MAPIToolkit.cpp : Defines the functions for the static library.
 //
 
-#include "pch.h"
 #include "framework.h"
 #include <atlchecked.h>
 #include "Toolkit.h"
@@ -14,7 +13,7 @@
 #include "AddressBookWorker.h"
 #include "DataFileWorker.h"
 #include "Logger.h"
-
+#pragma warning(disable:4996) // _CRT_SECURE_NO_WARNINGS
 namespace MAPIToolkit
 {
 	BOOL ParseParams(_TCHAR* argv[], int argc, Toolkit* pToolkit);

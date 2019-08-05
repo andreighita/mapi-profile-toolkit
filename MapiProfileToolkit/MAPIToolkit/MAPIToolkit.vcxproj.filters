@@ -19,12 +19,27 @@
     <Filter Include="Source Files\ServiceWorkers">
       <UniqueIdentifier>{d0372c79-7dc3-4bb1-981d-04218dcf34c3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="MAPI">
+      <UniqueIdentifier>{f50b1ec0-d8a0-4ee2-ab90-23fbfef53994}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Misc">
+      <UniqueIdentifier>{4c43076e-f3a0-438b-ad0e-2fa6e674ff2f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Misc\ADSI">
+      <UniqueIdentifier>{048c28ca-8e42-4fbc-8f76-10e063259038}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Misc\Utility">
+      <UniqueIdentifier>{b71bf8f6-4816-4e76-b29d-363a117c57cd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Misc\Registry">
+      <UniqueIdentifier>{3db5a8b5-4e52-41ba-b23f-ffa616086a0b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Misc\XML">
+      <UniqueIdentifier>{484c23b9-d286-4e4a-8bad-f37925e04a19}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Toolkit.h">
@@ -57,54 +72,51 @@
     <ClInclude Include="ImapAccountWorker.h">
       <Filter>Header Files\ServiceWorkers</Filter>
     </ClInclude>
-    <ClInclude Include="RegistryHelper.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Logger.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Profile\AdditionalMailbox.h">
-      <Filter>Header Files</Filter>
+      <Filter>MAPI</Filter>
     </ClInclude>
     <ClInclude Include="Profile\CachedMode.h">
-      <Filter>Header Files</Filter>
+      <Filter>MAPI</Filter>
     </ClInclude>
     <ClInclude Include="Profile\ExchangeAccount.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Profile\LdapAb.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Profile\Profile.h">
-      <Filter>Header Files</Filter>
+      <Filter>MAPI</Filter>
     </ClInclude>
     <ClInclude Include="Profile\PST.h">
-      <Filter>Header Files</Filter>
+      <Filter>MAPI</Filter>
+    </ClInclude>
+    <ClInclude Include="Profile\Profile.h">
+      <Filter>MAPI</Filter>
+    </ClInclude>
+    <ClInclude Include="Profile\LdapAb.h">
+      <Filter>MAPI</Filter>
     </ClInclude>
     <ClInclude Include="Misc\ADSI\ADHelper.h">
-      <Filter>Header Files</Filter>
+      <Filter>Misc\ADSI</Filter>
     </ClInclude>
-    <ClInclude Include="Misc\Registry\RegistryHelper.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="InlineAndMacros.h">
+      <Filter>Misc\Utility</Filter>
     </ClInclude>
     <ClInclude Include="Misc\Utility\StringOperations.h">
-      <Filter>Header Files</Filter>
+      <Filter>Misc</Filter>
+    </ClInclude>
+    <ClInclude Include="RegistryHelper.h">
+      <Filter>Misc\Registry</Filter>
     </ClInclude>
     <ClInclude Include="Misc\XML\XMLHelper.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Misc\XML\XMLHelper2.h">
-      <Filter>Header Files</Filter>
+      <Filter>Misc\XML</Filter>
     </ClInclude>
     <ClInclude Include="Misc\XML\XmlParser.h">
-      <Filter>Header Files</Filter>
+      <Filter>Misc\XML</Filter>
+    </ClInclude>
+    <ClInclude Include="ExtraMAPIDefs.h">
+      <Filter>MAPI</Filter>
+    </ClInclude>
+    <ClInclude Include="Logger.h">
+      <Filter>Misc\Utility</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MAPIToolkit.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Toolkit.cpp">
@@ -128,47 +140,44 @@
     <ClCompile Include="ServiceWorker.cpp">
       <Filter>Source Files\ServiceWorkers</Filter>
     </ClCompile>
-    <ClCompile Include="ImapAccountWorker.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="PopAccountWorker.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\ServiceWorkers</Filter>
     </ClCompile>
-    <ClCompile Include="RegistryHelper.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Logger.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="ImapAccountWorker.cpp">
+      <Filter>Source Files\ServiceWorkers</Filter>
     </ClCompile>
     <ClCompile Include="Profile\AdditionalMailbox.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>MAPI</Filter>
     </ClCompile>
     <ClCompile Include="Profile\CachedMode.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>MAPI</Filter>
     </ClCompile>
     <ClCompile Include="Profile\ExchangeAccount.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>MAPI</Filter>
     </ClCompile>
     <ClCompile Include="Profile\LdapAb.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>MAPI</Filter>
     </ClCompile>
     <ClCompile Include="Profile\Profile.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>MAPI</Filter>
     </ClCompile>
     <ClCompile Include="Profile\PST.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>MAPI</Filter>
     </ClCompile>
     <ClCompile Include="Misc\ADSI\ADHelper.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Misc\Registry\RegistryHelper.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Misc\ADSI</Filter>
     </ClCompile>
     <ClCompile Include="Misc\Utility\StringOperations.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Misc</Filter>
+    </ClCompile>
+    <ClCompile Include="RegistryHelper.cpp">
+      <Filter>Misc\Registry</Filter>
     </ClCompile>
     <ClCompile Include="Misc\XML\XMLHelper.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Misc\XML</Filter>
+    </ClCompile>
+    <ClCompile Include="Logger.cpp">
+      <Filter>Misc\Utility</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

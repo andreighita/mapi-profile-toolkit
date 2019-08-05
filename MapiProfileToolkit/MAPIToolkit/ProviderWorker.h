@@ -1,9 +1,13 @@
 #pragma once
-#include "pch.h"
+#include <Windows.h>
+#include "ToolkitTypeDefs.h"
+#include <string.h>
+
 namespace MAPIToolkit
 {
 	class ProviderWorker
 	{
+	public:
 		std::wstring wszSmtpAddress;			// msa		| 
 		std::wstring wszMailboxLegacyDN;		// mmldn
 		std::wstring wszMailboxDisplayName;		// mmdn
