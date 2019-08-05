@@ -1,7 +1,10 @@
 #pragma once
 #include "ServiceWorker.h"
-class ImapAccountWorker :
-	public ServiceWorker
+namespace MAPIToolkit
 {
-};
+	class ImapAccountWorker :
+		public ServiceWorker
+	{
+	};
+}
 

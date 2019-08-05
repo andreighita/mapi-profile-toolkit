@@ -17,6 +17,7 @@ namespace MAPIToolkit
 		ExportMode exportMode; // 0 = no export; 1 = export;
 		std::wstring wszLogFilePath;
 		int iOutlookVersion;
+		ProfileMode profileMode; // pm
 
 	public:
 		Toolkit();
