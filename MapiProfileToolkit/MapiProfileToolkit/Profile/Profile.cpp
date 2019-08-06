@@ -402,7 +402,7 @@ HRESULT HrCloneProfile(ProfileInfo * profileInfo)
 		{
 			MAPIUID uidService = { 0 };
 			LPMAPIUID lpServiceUid = &uidService;
-			if (profileInfo->profileServices[i].serviceType == ServiceType::ServiceType_Mailbox)
+			if (profileInfo->profileServices[i].serviceType == ServiceType::ServiceType_ExchangeAccount)
 			{
 				Logger::Write(logLevelInfo, L"Adding exchange mailbox: " + profileInfo->profileServices[i].exchangeAccountInfo->wszEmailAddress);
 				EC_HRES_MSG(HrCreateMsemsServiceModernExt(false, // sort this out later
@@ -432,7 +432,7 @@ HRESULT HrCloneProfile(ProfileInfo * profileInfo)
 				}
 				uiServiceIndex++;
 			}
-			else if (profileInfo->profileServices[i].serviceType == ServiceType::ServiceType_Pst)
+			else if (profileInfo->profileServices[i].serviceType == ServiceType::ServiceType_DataFile)
 			{
 				Logger::Write(logLevelInfo, L"Adding PST file: " + profileInfo->profileServices[i].pstInfo->wszPstPath);
 				EC_HRES_MSG(HrCreatePstService(lpServiceAdmin,
@@ -473,7 +473,7 @@ HRESULT HrSimpleCloneProfile(ProfileInfo * profileInfo, bool bSetDefaultProfile)
 		{
 			MAPIUID uidService = { 0 };
 			LPMAPIUID lpServiceUid = &uidService;
-			if (profileInfo->profileServices[i].serviceType == ServiceType::ServiceType_Mailbox)
+			if (profileInfo->profileServices[i].serviceType == ServiceType::ServiceType_ExchangeAccount)
 			{
 				Logger::Write(logLevelInfo, L"Adding exchange mailbox: " + profileInfo->profileServices[i].exchangeAccountInfo->wszEmailAddress);
 				
@@ -519,7 +519,7 @@ VOID PrintProfile(ProfileInfo * profileInfo)
 			wprintf(L" -> [%i] Service resource flags: %#x\n", i, profileInfo->profileServices[i].ulResourceFlags);
 			MAPIUID uidService = { 0 };
 			LPMAPIUID lpServiceUid = &uidService;
-			if (profileInfo->profileServices[i].serviceType == ServiceType::ServiceType_Mailbox)
+			if (profileInfo->profileServices[i].serviceType == ServiceType::ServiceType_ExchangeAccount)
 			{
 				wprintf(L" -> [%i] Service type: %ls\n", i, L"Exchange Mailbox");
 				wprintf(L" -> [%i] E-mail address: %ls\n", i, profileInfo->profileServices[i].exchangeAccountInfo->wszEmailAddress.c_str());
@@ -543,7 +543,7 @@ VOID PrintProfile(ProfileInfo * profileInfo)
 					}
 				}
 			}
-			else if (profileInfo->profileServices[i].serviceType == ServiceType::ServiceType_Pst)
+			else if (profileInfo->profileServices[i].serviceType == ServiceType::ServiceType_DataFile)
 			{
 				wprintf(L" -> [%i] Service type: %ls\n", i, L"PST");
 				wprintf(L" -> [%i] Display name: %ls\n", i, profileInfo->profileServices[i].pstInfo->wszDisplayName.c_str());
@@ -681,7 +681,7 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo)
 				if (0 == strcmp(lpSvcRows->aRow[i].lpProps[iServiceName].Value.lpszA, "MSEMS"))
 				{
 					profileInfo->profileServices[i].exchangeAccountInfo = new ExchangeAccountInfo();
-					profileInfo->profileServices[i].serviceType = ServiceType::ServiceType_Mailbox;
+					profileInfo->profileServices[i].serviceType = ServiceType::ServiceType_ExchangeAccount;
 					LPPROVIDERADMIN lpProvAdmin = NULL;
 
 					if (SUCCEEDED(lpServiceAdmin->AdminProviders((LPMAPIUID)lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb,
@@ -1210,7 +1210,7 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo)
 					profileInfo->profileServices[i].pstInfo->wszDisplayName = std::wstring(L" ");
 					profileInfo->profileServices[i].pstInfo->wszPstPath = std::wstring(L" ");
 					profileInfo->profileServices[i].pstInfo->ulPstConfigFlags = 0;
-					profileInfo->profileServices[i].serviceType = ServiceType::ServiceType_Pst;
+					profileInfo->profileServices[i].serviceType = ServiceType::ServiceType_DataFile;
 
 					LPPROVIDERADMIN lpProvAdmin = NULL;
 

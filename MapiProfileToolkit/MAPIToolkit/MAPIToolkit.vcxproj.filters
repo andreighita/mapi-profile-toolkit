@@ -48,9 +48,6 @@
     <ClInclude Include="framework.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Toolkit.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ToolkitTypeDefs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -117,9 +114,6 @@
     <ClInclude Include="Logger.h">
       <Filter>Misc\Utility</Filter>
     </ClInclude>
-    <ClInclude Include="MAPIToolkit.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="PublicFoldersWorker.h">
       <Filter>Header Files\ProviderWorkers</Filter>
     </ClInclude>
@@ -132,14 +126,11 @@
     <ClInclude Include="DelegateWorker.h">
       <Filter>Header Files\ProviderWorkers</Filter>
     </ClInclude>
+    <ClInclude Include="Toolkit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="MAPIToolkit.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Toolkit.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ProfileWorker.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -205,6 +196,9 @@
     </ClCompile>
     <ClCompile Include="DelegateWorker.cpp">
       <Filter>Source Files\ProviderWorkers</Filter>
+    </ClCompile>
+    <ClCompile Include="Toolkit.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

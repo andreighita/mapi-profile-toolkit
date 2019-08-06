@@ -3,7 +3,7 @@
 
 namespace MAPIToolkit
 {
-	HRESULT HrCreateMsemsService(ProfileMode profileMode, LPWSTR lpwszProfileName, int iOutlookVersion, ExchangeAccountWorker* pExchangeAccountWorker);
+	HRESULT HrCreateMsemsService(ULONG profileMode, LPWSTR lpwszProfileName, int iOutlookVersion, ExchangeAccountWorker* pExchangeAccountWorker);
 
 	HRESULT HrCreateMsemsServiceOneProfile(LPWSTR lpwszProfileName, int iOutlookVersion, ExchangeAccountWorker* pExchangeAccountWorker);
 
@@ -24,7 +24,7 @@ namespace MAPIToolkit
 		LPWSTR lpwszProfileName,
 		ULONG ulResourceFlags,
 		ULONG ulProfileConfigFlags,
-		ULONG ulCachedModeMonths,
+		ULONG ulULONGMonths,
 		LPWSTR lpszSmtpAddress,
 		LPWSTR lpszDisplayName);
 

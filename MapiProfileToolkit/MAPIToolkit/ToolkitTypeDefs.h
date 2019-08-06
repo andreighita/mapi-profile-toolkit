@@ -11,7 +11,7 @@
 
 #define ACTION_PROFILE_ADD					0x00000001
 #define ACTION_PROFILE_CLONE				0x00000002
-#define ACTION_PROFILE_UPDATE				0x00000004
+#define ACTION_PROFILE_RENAME				0x00000004
 #define ACTION_PROFILE_LIST					0x00000008
 #define ACTION_PROFILE_LISTALL				0x00000010
 #define ACTION_PROFILE_REMOVE				0x00000020
@@ -45,118 +45,89 @@
 //#define ACTION_6								0x40000000
 //#define ACTION_7								0x80000000
 
-std::map<std::wstring, ULONG> actionsMap =
-{
-	{ L"addprofile",			ACTION_PROFILE_ADD},
-	{ L"addprovider",			ACTION_PROVIDER_ADD },
-	{ L"addservice",			ACTION_SERVICE_ADD },
-	{ L"changedatafilepath",	ACTION_SERVICE_CHANGEDATAFILEPATH },
-	{ L"cloneprofile",			ACTION_PROFILE_CLONE },
-	{ L"promotedelegates",		ACTION_PROFILE_PROMOTEDELEGATES },
-	{ L"listallprofiles",		ACTION_PROFILE_LISTALL },
-	{ L"listallproviders",		ACTION_PROVIDER_LISTALL },
-	{ L"listallservices",		ACTION_SERVICE_LISTALL },
-	{ L"listprofile",			ACTION_PROFILE_LIST },
-	{ L"listprovider",			ACTION_PROVIDER_LIST },
-	{ L"listservice",			ACTION_SERVICE_LIST },
-	{ L"promoteonedelegate",	ACTION_PROFILE_PROMOTEONEDELEGATE },
-	{ L"removeallprofiles",		ACTION_PROFILE_REMOVEALL },
-	{ L"removeallproviders",	ACTION_PROVIDER_REMOVEALL },
-	{ L"removeallservices",		ACTION_SERVICE_REMOVEALL },
-	{ L"removeprofile",			ACTION_PROFILE_REMOVE },
-	{ L"removeprovider",		ACTION_PROVIDER_REMOVE },
-	{ L"removeservice",			ACTION_SERVICE_REMOVE },
-	{ L"setcachedmode",			ACTION_SERVICE_SETCACHEDMODE },
-	{ L"setdefaultprofile",		ACTION_PROFILE_SETDEFAULT },
-	{ L"setdefaultservice",		ACTION_SERVICE_SETDEFAULT },
-	{ L"updateprofile",			ACTION_PROFILE_UPDATE },
-	{ L"updateprovider",		ACTION_PROVIDER_UPDATE },
-	{ L"updateservice",			ACTION_SERVICE_UPDATE }
-};
+// PROFILEMODE
+#define PROFILEMODE_UNKNOWN		0x00000000
+#define PROFILEMODE_DEFAULT		0x00000001
+#define PROFILEMODE_SPECIFIC	0x00000002
+#define PROFILEMODE_ALL			0x00000004
 
+// SERVICEMODE
+#define SERVICEMODE_UNKNOWN		0x00000000
+#define SERVICEMODE_DEFAULT		0x00000001
+#define SERVICEMODE_SPECIFIC	0x00000002
+#define SERVICEMODE_ALL			0x00000004
 
+// CONNECTMODE
+#define CONNECTMODE_UNKNOWN			0x00000000
+#define CONNECTMODE_RPCOVERHTTP		0x00000001
+#define CONNECTMODE_MAPIOVERHTTP	0x00000002
 
-typedef enum
-{
-	Mode_Unknown,
-	Mode_Default,
-	Mode_Specific,
-	Mode_All
-}  ProfileMode;
+// SERVICETYPE
+#define SERVICETYPE_UNKNOWN			0x00000000
+#define SERVICETYPE_EXCHANGEACCOUNT	0x00000001
+#define SERVICETYPE_DATAFILE		0x00000002
+#define SERVICETYPE_ADDRESSBOOK		0x00000004
+#define SERVICETYPE_ALL				0x00000008
 
-typedef ProfileMode ServiceMode;
+// PROVIDERTYPE
+#define PROVIDERTYPE_UNKNOWN			0x00000000
+#define PROVIDERTYPE_PRIMARYMAILBOX		0x00000001
+#define PROVIDERTYPE_DELEGATE			0x00000002
+#define PROVIDERTYPE_PUBLICFOLDERS		0x00000004
+#define PROVIDERTYPE_ALL				0x00000008
 
-typedef enum
-{
-	ConnectMode_Unknown,
-	ConnectMode_RpcOverHttp = 1,
-	ConnectMode_MapiOverHttp
-} ConnectMode;
+// EXPORTMODE
+#define EXPORTMODE_UNKNOWN			0x00000000
+#define EXPORTMODE_EXPORT			0x00000001
+#define EXPORTMODE_NOEXPORT			0x00000002
 
-typedef enum
-{
-	ServiceType_Unknown,
-	ServiceType_Mailbox,
-	ServiceType_Pst,
-	ServiceType_AddressBook,
-	ServiceType_All
-} ServiceType;
+// INPUTMODE
+#define INPUTMODE_UNKNOWN			0x00000000
+#define INPUTMODE_USER				0x00000001
+#define INPUTMODE_DIRECTORY			0x00000002
+#define INPUTMODE_FILE				0x00000004
 
-typedef enum
-{
-	ProviderType_PrimaryMailbox = 1,
-	ProviderType_Delegate,
-	ProviderType_PublicFolder,
-	ProviderType_All
-} ProviderType;
+// LOGGINGMODE
+#define LOGGINGMODE_UNKNOWN			0x00000000
+#define LOGGINGMODE_NONE			0x00000001
+#define LOGGINGMODE_CONSOLE			0x00000002
+#define LOGGINGMODE_FILE			0x00000004
+#define LOGGINGMODE_ALL				0x00000008
 
-typedef enum
-{
-	Export = 1,
-	NoExport
-} ExportMode;
+// CACHEDMODE
+#define CACHEDMODE_UNKNOWN			0x00000000
+#define CACHEDMODE_ENABLED			0x00000001
+#define CACHEDMODE_DISABLED			0x00000002
 
-typedef enum
-{
-	User = 1,
-	Directory,
-	File
-} InputMode;
+// LOGLEVEL
+#define LOGLEVEL_UNKNOWN			0x00000000
+#define LOGLEVEL_INFO				0x00000001
+#define LOGLEVEL_WARNING			0x00000002
+#define LOGLEVEL_ERROR				0x00000004
+#define LOGLEVEL_SUCCESS			0x00000008
+#define LOGLEVEL_FAILED				0x00000010
+#define LOGLEVEL_DEBUG				0x00000020
 
-typedef enum
-{
-	LoggingModeNone = 1,
-	LoggingModeConsole,
-	LoggingModeFile,
-	LoggingModeConsoleAndFile
-} LoggingMode;
+// LOGCALLSTATUS
+#define LOGCALLSTATUS_UNKNOWN			0x00000000
+#define LOGCALLSTATUS_SUCCESS			0x00000001
+#define LOGCALLSTATUS_ERROR				0x00000002
+#define LOGCALLSTATUS_NOFILE			0x00000004
+#define LOGCALLSTATUS_LOGGINGDISABLED	0x00000008
 
-typedef enum
-{
-	CachedMode_Enabled = 1,
-	CachedMode_Disabled
-} CachedMode;
-
-typedef enum { logLevelInfo, logLevelWarning, logLevelError, logLevelSuccess, logLevelFailed, logLevelDebug } LogLevel;
-typedef enum { logCallStatusSuccess, logCallStatusError, logCallStatusNoFile, logCallStatusLoggingDisabled } LogCallStatus;
-
+// PSTTYPE
+#define PSTTYPE_UNKNOWN			0x00000000
+#define PSTTYPE_ANSI			0x00000001
+#define PSTTYPE_UNICODE			0x00000002
 
 struct UpdateSmtpAddress
 {
 	ULONG ulAdTimeout;
-	InputMode inputMode;
+	ULONG inputMode;
 	std::wstring szADsPAth;
 	std::wstring szOldDomainName;
 	std::wstring szNewDomainName;
 };
-
-
-
-enum { CACHEDMODE_DISABLED = 1, CACHEDMODE_ENABLED };
-enum { SERVICE_PRIMARY = 1, SERVICE_SECONDARY };
-enum { PROFILETYPE_UNKNOWN, PROFILETYPE_PRIMARY, PROFILETYPE_DELEGATE, PROFILETYPE_PUBLICFOLDERS };
-
-enum { PSTTYPE_ANSI = 0, PSTTYPE_UNICODE = 0x80000000 };
 
 struct MailboxInfo
 {
@@ -207,9 +178,9 @@ struct ExchangeAccountInfo
 	std::wstring wszDisplayName;
 	std::wstring wszDatafilePath;
 	std::wstring wszEmailAddress;
-	BOOL bCachedModeEnabledOwner;
-	BOOL bCachedModeEnabledShared;
-	BOOL bCachedModeEnabledPublicFolders;
+	BOOL bULONGEnabledOwner;
+	BOOL bULONGEnabledShared;
+	BOOL bULONGEnabledPublicFolders;
 	int iCachedModeMonths;
 	std::wstring szUserName;
 	std::wstring szUserEmailSmtpAddress;
@@ -233,9 +204,9 @@ struct EMSMdbSection
 	std::wstring wszDisplayName;
 	std::wstring wszDatafilePath;
 	std::wstring wszSmtpAddress;
-	BOOL bCachedModeEnabledOwner;
-	BOOL bCachedModeEnabledShared;
-	BOOL bCachedModeEnabledPublicFolders;
+	BOOL bULONGEnabledOwner;
+	BOOL bULONGEnabledShared;
+	BOOL bULONGEnabledPublicFolders;
 	int iCachedModeMonths;
 	std::wstring szUserName;
 	std::wstring szUserEmailSmtpAddress;
@@ -277,7 +248,7 @@ struct ServiceInfo
 {
 	std::wstring wszServiceName;
 	std::wstring wszDisplayName;
-	ServiceType serviceType; // MSEMS = SERVICETYPE_EXCHANGEACCOUNT; EMABLT = SERVICETYPE_ADDRESSBOOKPROVIDER; MSPST_MS/MSUPST_MS = ServiceType::Pst; EAS = SERVICETYPE_EASACCOUNT;
+	ULONG serviceType; // MSEMS = SERVICETYPE_EXCHANGEACCOUNT; EMABLT = SERVICETYPE_ADDRESSBOOKPROVIDER; MSPST_MS/MSUPST_MS = ULONG::Pst; EAS = SERVICETYPE_EASACCOUNT;
 	BOOL bDefaultStore; // PR_RESOURCE_FLAGS = 
 	ULONG ulResourceFlags; // PR_RESOURCE_FLAGS = SERVICE_DEFAULT_STORE
 	EasAccountInfo* easAccountInfo;

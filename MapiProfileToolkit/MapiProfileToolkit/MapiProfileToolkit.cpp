@@ -229,7 +229,7 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions* pRunOpts)
 				}
 				else if (wszValue == L"update")
 				{
-					pRunOpts->action |= ACTION_PROFILE_UPDATE;
+					pRunOpts->action |= ACTION_PROFILE_RENAME;
 					i++;
 				}
 				else if (wszValue == L"remove")
@@ -370,12 +370,12 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions* pRunOpts)
 				std::transform(wszValue.begin(), wszValue.end(), wszValue.begin(), ::tolower);
 				if (wszValue == L"mailbox")
 				{
-					pRunOpts->profileOptions->serviceOptions->serviceType = ServiceType::ServiceType_Mailbox;
+					pRunOpts->profileOptions->serviceOptions->serviceType = ServiceType::ServiceType_ExchangeAccount;
 					i++;
 				}
 				else if (wszValue == L"pst")
 				{
-					pRunOpts->profileOptions->serviceOptions->serviceType = ServiceType::ServiceType_Pst;
+					pRunOpts->profileOptions->serviceOptions->serviceType = ServiceType::ServiceType_DataFile;
 					i++;
 				}
 				else if (wszValue == L"addressbook")
@@ -915,7 +915,7 @@ void _tmain(int argc, _TCHAR* argv[])
 				HrSetDefaultProfile((LPWSTR)tkOptions->profileOptions->wszProfileName.c_str());
 			}
 
-			if FCHK(tkOptions->action, ACTION_PROFILE_UPDATE)
+			if FCHK(tkOptions->action, ACTION_PROFILE_RENAME)
 			{
 				// Are we adding a service?
 				if FCHK(tkOptions->action, ACTION_SERVICE_ADD)

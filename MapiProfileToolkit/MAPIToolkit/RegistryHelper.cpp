@@ -1,3 +1,4 @@
+#pragma once
 // QueryKey - Enumerates the subkeys of key and its associated values.
 //     hKey - Key whose subkeys and values are to be enumerated.
 #include "RegistryHelper.h"
@@ -162,6 +163,30 @@ namespace MAPIToolkit
 		}
 		else
 			return L"";
+	}
+
+	BOOL __cdecl WriteRegStringValue(HKEY hRegistryHive, LPCTSTR lpszKeyName, LPCTSTR lpszValueName, LPCTSTR lpszValueData)
+	{
+		HKEY key;
+		if (RegOpenKey(hRegistryHive, lpszKeyName, &key) != ERROR_SUCCESS)
+		{
+			Logger::Write(LOGLEVEL_ERROR, L"Unable to open registry key");
+			return FALSE;
+		}
+
+		if (RegSetValueExW(key, lpszValueName, 0, REG_SZ, (LPBYTE)lpszValueData, wcslen(lpszValueData)  * sizeof(wchar_t)) != ERROR_SUCCESS)
+		{
+			RegCloseKey(key);
+			Logger::Write(LOGLEVEL_ERROR, L"Unable to set registry value value_name");
+			return FALSE;
+		}
+		else
+		{
+			Logger::Write(LOGLEVEL_SUCCESS, L"value_name was set");
+			return FALSE;
+		}
+		RegCloseKey(key);
+		return TRUE;
 	}
 
 }

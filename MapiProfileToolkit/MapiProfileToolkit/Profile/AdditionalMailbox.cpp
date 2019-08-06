@@ -719,7 +719,7 @@ HRESULT HrPromoteDelegatesOneProfile(LPWSTR lpwszProfileName, ProfileInfo* pProf
 		{
 			if (pProfileInfo->profileServices[i].bDefaultStore)
 			{
-				if (pProfileInfo->profileServices[i].serviceType == ServiceType::ServiceType_Mailbox)
+				if (pProfileInfo->profileServices[i].serviceType == ServiceType::ServiceType_ExchangeAccount)
 				{
 					for (ULONG j = 0; j <= pProfileInfo->profileServices[i].exchangeAccountInfo->ulMailboxCount; j++)
 					{
@@ -733,7 +733,7 @@ HRESULT HrPromoteDelegatesOneProfile(LPWSTR lpwszProfileName, ProfileInfo* pProf
 		}
 		else if (iServiceIndex != -1)
 		{
-			if (pProfileInfo->profileServices[iServiceIndex].serviceType == ServiceType::ServiceType_Mailbox)
+			if (pProfileInfo->profileServices[iServiceIndex].serviceType == ServiceType::ServiceType_ExchangeAccount)
 			{
 				for (ULONG j = 0; j <= pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->ulMailboxCount; j++)
 				{
@@ -746,7 +746,7 @@ HRESULT HrPromoteDelegatesOneProfile(LPWSTR lpwszProfileName, ProfileInfo* pProf
 		}
 		else if (bAllServices)
 		{
-			if (pProfileInfo->profileServices[i].serviceType == ServiceType::ServiceType_Mailbox)
+			if (pProfileInfo->profileServices[i].serviceType == ServiceType::ServiceType_ExchangeAccount)
 			{
 				for (ULONG j = 0; j <= pProfileInfo->profileServices[i].exchangeAccountInfo->ulMailboxCount; j++)
 				{

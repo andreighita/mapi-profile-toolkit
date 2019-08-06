@@ -48,7 +48,7 @@ HRESULT HrSetCachedModeOneProfile(LPWSTR lpwszProfileName, ProfileInfo* pProfile
 		{
 			if (pProfileInfo->profileServices[i].bDefaultStore)
 			{
-				if (pProfileInfo->profileServices[i].serviceType == ServiceType::ServiceType_Mailbox)
+				if (pProfileInfo->profileServices[i].serviceType == ServiceType::ServiceType_ExchangeAccount)
 				{
 					EC_HRES_MSG(HrSetCachedModeOneService(ConvertWideCharToMultiByte(lpwszProfileName), &pProfileInfo->profileServices[i].muidServiceUid, bCachedModeOwner, bCachedModeShared, bCachedModePublicFolders, iCachedModeMonths, iOutlookVersion), L"Calling HrSetCachedModeOneService on service");
 				}
@@ -56,7 +56,7 @@ HRESULT HrSetCachedModeOneProfile(LPWSTR lpwszProfileName, ProfileInfo* pProfile
 		}
 		else if (iServiceIndex != -1)
 		{
-			if (pProfileInfo->profileServices[iServiceIndex].serviceType == ServiceType::ServiceType_Mailbox)
+			if (pProfileInfo->profileServices[iServiceIndex].serviceType == ServiceType::ServiceType_ExchangeAccount)
 			{
 				EC_HRES_MSG(HrSetCachedModeOneService(ConvertWideCharToMultiByte(lpwszProfileName), &pProfileInfo->profileServices[iServiceIndex].muidServiceUid, bCachedModeOwner, bCachedModeShared, bCachedModePublicFolders, iCachedModeMonths, iOutlookVersion), L"Calling HrSetCachedModeOneService on service");
 
@@ -64,7 +64,7 @@ HRESULT HrSetCachedModeOneProfile(LPWSTR lpwszProfileName, ProfileInfo* pProfile
 		}
 		else if (bAllServices)
 		{
-			if (pProfileInfo->profileServices[i].serviceType == ServiceType::ServiceType_Mailbox)
+			if (pProfileInfo->profileServices[i].serviceType == ServiceType::ServiceType_ExchangeAccount)
 			{
 				EC_HRES_MSG(HrSetCachedModeOneService(ConvertWideCharToMultiByte(lpwszProfileName), &pProfileInfo->profileServices[i].muidServiceUid, bCachedModeOwner, bCachedModeShared, bCachedModePublicFolders, iCachedModeMonths, iOutlookVersion), L"Calling HrSetCachedModeOneService on service");
 			}

@@ -9,16 +9,16 @@
 
 namespace MAPIToolkit
 {
-HRESULT HrCreateMsemsService(ProfileMode profileMode, LPWSTR lpwszProfileName, int iOutlookVersion, ExchangeAccountWorker* pExchangeAccountWorker)
+HRESULT HrCreateMsemsService(ULONG profileMode, LPWSTR lpwszProfileName, int iOutlookVersion, ExchangeAccountWorker* pExchangeAccountWorker)
 {
 	HRESULT hRes = S_OK;
 
-	if VCHK(profileMode, ProfileMode::Mode_Default)
+	if VCHK(profileMode, PROFILEMODE_DEFAULT)
 	{
 		HCKM(HrCreateMsemsServiceOneProfile((LPWSTR)GetDefaultProfileName().c_str(), iOutlookVersion, pExchangeAccountWorker), L"Calling HrCreateMsemsServiceOneProfile");
 
 	}
-	if VCHK(profileMode, ProfileMode::Mode_All)
+	if VCHK(profileMode, PROFILEMODE_ALL)
 	{
 		ULONG ulProfileCount = GetProfileCount();
 		ProfileInfo* profileInfo = new ProfileInfo[ulProfileCount];
@@ -30,12 +30,12 @@ HRESULT HrCreateMsemsService(ProfileMode profileMode, LPWSTR lpwszProfileName, i
 	}
 	else
 	{
-		if VCHK(profileMode, ProfileMode::Mode_Specific)
+		if VCHK(profileMode, PROFILEMODE_SPECIFIC)
 		{
 			HCKM(HrCreateMsemsServiceOneProfile(lpwszProfileName, iOutlookVersion, pExchangeAccountWorker), L"Calling HrCreateMsemsServiceOneProfile");
 		}
 		else
-			Logger::Write(logLevelError, L"The specified profile name is invalid or no profile name was specified.\n");
+			Logger::Write(LOGLEVEL_ERROR, L"The specified profile name is invalid or no profile name was specified.\n");
 	}
 
 Error:
@@ -48,17 +48,17 @@ HRESULT HrCreateMsemsServiceOneProfile(LPWSTR lpwszProfileName, int iOutlookVers
 	switch (iOutlookVersion)
 	{
 	case 2007:
-		Logger::Write(logLevelError, L"This client version is not currently supported.");
+		Logger::Write(LOGLEVEL_ERROR, L"This client version is not currently supported.");
 		break;
 	case 2010:
 
-		if VCHK(pExchangeAccountWorker->connectMode, ConnectMode::ConnectMode_RpcOverHttp)
+		if VCHK(pExchangeAccountWorker->connectMode, CONNECTMODE_RPCOVERHTTP)
 		{
 			// This id a bit of a hack since delegate mailboxes don't need to have the personalised server name in the delegate provider
 			// I'm just creating these based on the legacyDN and the MailStore so best check that those have value
-			Logger::Write(logLevelError, L"Validating delegate information.");
+			Logger::Write(LOGLEVEL_ERROR, L"Validating delegate information.");
 
-			Logger::Write(logLevelInfo, L"Creating and configuring new ROH service.");
+			Logger::Write(LOGLEVEL_INFO, L"Creating and configuring new ROH service.");
 			HCKM(HrCreateMsemsServiceROH(FALSE,
 				lpwszProfileName,
 				(LPWSTR)pExchangeAccountWorker->wszSmtpAddress.c_str(),
@@ -69,12 +69,12 @@ HRESULT HrCreateMsemsServiceOneProfile(LPWSTR lpwszProfileName, int iOutlookVers
 				(LPWSTR)pExchangeAccountWorker->wszAutodiscoverUrl.c_str()), L"Calling HrCreateMsemsServiceROH");
 		}
 		// best not be used for now as I haven't sorted it out
-		if VCHK(pExchangeAccountWorker->connectMode, ConnectMode::ConnectMode_MapiOverHttp)
+		if VCHK(pExchangeAccountWorker->connectMode, CONNECTMODE_MAPIOVERHTTP)
 		{
-			Logger::Write(logLevelError, L"Validating delegate information.");
+			Logger::Write(LOGLEVEL_ERROR, L"Validating delegate information.");
 			if (((pExchangeAccountWorker->wszMailStoreInternalUrl != L"") || (pExchangeAccountWorker->wszMailStoreExternalUrl != L"")) && (pExchangeAccountWorker->wszMailboxLegacyDN != L""))
 			{
-				//Logger::Write(logLevelError, L"MOH logic is not currently available.");
+				//Logger::Write(LOGLEVEL_ERROR, L"MOH logic is not currently available.");
 				std::wstring wszParsedSmtpAddress = SubstringToEnd(L"smtp:", pExchangeAccountWorker->wszSmtpAddress);
 				std::wstring wszPersonalisedServerName;
 				if (pExchangeAccountWorker->wszMailStoreInternalUrl != L"")
@@ -107,13 +107,13 @@ HRESULT HrCreateMsemsServiceOneProfile(LPWSTR lpwszProfileName, int iOutlookVers
 
 		break;
 	case 2013:
-		if VCHK(pExchangeAccountWorker->connectMode, ConnectMode::ConnectMode_RpcOverHttp)
+		if VCHK(pExchangeAccountWorker->connectMode, CONNECTMODE_RPCOVERHTTP)
 		{
 			// This id a bit of a hack since delegate mailboxes don't need to have the personalised server name in the delegate provider
 			// I'm just creating these based on the legacyDN and the MailStore so best check that those have value
-			Logger::Write(logLevelError, L"Validating delegate information.");
+			Logger::Write(LOGLEVEL_ERROR, L"Validating delegate information.");
 
-			Logger::Write(logLevelInfo, L"Creating and configuring new ROH service.");
+			Logger::Write(LOGLEVEL_INFO, L"Creating and configuring new ROH service.");
 			HCKM(HrCreateMsemsServiceROH(FALSE,
 				lpwszProfileName,
 				(LPWSTR)pExchangeAccountWorker->wszSmtpAddress.c_str(),
@@ -124,12 +124,12 @@ HRESULT HrCreateMsemsServiceOneProfile(LPWSTR lpwszProfileName, int iOutlookVers
 				(LPWSTR)pExchangeAccountWorker->wszAutodiscoverUrl.c_str()), L"Calling HrCreateMsemsServiceROH");
 		}
 		// best not be used for now as I haven't sorted it out
-		if VCHK(pExchangeAccountWorker->connectMode, ConnectMode::ConnectMode_MapiOverHttp)
+		if VCHK(pExchangeAccountWorker->connectMode, CONNECTMODE_MAPIOVERHTTP)
 		{
-			Logger::Write(logLevelError, L"Validating delegate information.");
+			Logger::Write(LOGLEVEL_ERROR, L"Validating delegate information.");
 			if (((pExchangeAccountWorker->wszMailStoreInternalUrl != L"") || (pExchangeAccountWorker->wszMailStoreExternalUrl != L"")) && (pExchangeAccountWorker->wszMailboxLegacyDN != L""))
 			{
-				//Logger::Write(logLevelError, L"MOH logic is not currently available.");
+				//Logger::Write(LOGLEVEL_ERROR, L"MOH logic is not currently available.");
 				std::wstring wszParsedSmtpAddress = SubstringToEnd(L"smtp:", pExchangeAccountWorker->wszSmtpAddress);
 				std::wstring wszPersonalisedServerName;
 				if (pExchangeAccountWorker->wszMailStoreInternalUrl != L"")
@@ -163,7 +163,7 @@ HRESULT HrCreateMsemsServiceOneProfile(LPWSTR lpwszProfileName, int iOutlookVers
 
 		break;
 	case 2016:
-		Logger::Write(logLevelInfo, L"Creating and configuring new service.");
+		Logger::Write(LOGLEVEL_INFO, L"Creating and configuring new service.");
 		HCKM(HrCreateMsemsServiceModern(FALSE,
 			lpwszProfileName,
 			(LPWSTR)pExchangeAccountWorker->wszSmtpAddress.c_str(),
@@ -193,7 +193,7 @@ HRESULT HrCreateMsemsServiceModernExt(BOOL bDefaultProfile,
 	LPWSTR lpwszProfileName,
 	ULONG ulResourceFlags,
 	ULONG ulProfileConfigFlags,
-	ULONG ulCachedModeMonths,
+	ULONG ulULONGMonths,
 	LPWSTR lpszSmtpAddress,
 	LPWSTR lpszDisplayName)
 {
@@ -306,7 +306,7 @@ HRESULT HrCreateMsemsServiceModernExt(BOOL bDefaultProfile,
 
 		ZeroMemory(&rgvalEmsMdbSect[6], sizeof(SPropValue));
 		rgvalEmsMdbSect[6].ulPropTag = PR_RULE_ACTION_TYPE;
-		rgvalEmsMdbSect[6].Value.l = ulCachedModeMonths;
+		rgvalEmsMdbSect[6].Value.l = ulULONGMonths;
 
 		HCKM(lpEmsMdbProfSect->SetProps(
 			7,
@@ -636,7 +636,7 @@ HRESULT HrCreateMsemsServiceROH(BOOL bDefaultProfile,
 	// Validate parameters
 	if (!lpszSmtpAddress || !lpszMailboxLegacyDn || !lpszUnresolvedServer || !lpszRohProxyServer || !lpszProfileServerDn || !lpszAutodiscoverUrl)
 	{
-		Logger::Write(LogLevel::logLevelFailed, L"Please provide a value for all of the following parameters: autodiscoverurl, mailboxlegacydn, rohproxyserver, serverlegacydn, smtpaddress, unresolvedserver");
+		Logger::Write(LOGLEVEL_FAILED, L"Please provide a value for all of the following parameters: autodiscoverurl, mailboxlegacydn, rohproxyserver, serverlegacydn, smtpaddress, unresolvedserver");
 		return MAPI_E_CANCEL;
 	}
 	// Enumeration for convenience.

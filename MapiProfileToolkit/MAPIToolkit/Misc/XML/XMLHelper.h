@@ -1,3 +1,4 @@
+#pragma once
 #include <stdio.h>
 #include <tchar.h>
 #include <msxml6.h>

@@ -15,7 +15,8 @@ namespace MAPIToolkit
 		// ACTION_PROFILE_CLONE
 		void CloneProfile();
 
-		// ACTION_PROFILE_UPDATE
+		// ACTION_PROFILE_RENAME
+		void RenameProfile();
 
 		// ACTION_PROFILE_LIST
 		void ListProfile();
@@ -37,6 +38,6 @@ namespace MAPIToolkit
 		void PromoteDelegates();
 
 		// ACTION_PROFILE_PROMOTEONEDELEGATE
-		void PromoteDelegate();
+		void PromoteOneDelegate();
 	};
 }

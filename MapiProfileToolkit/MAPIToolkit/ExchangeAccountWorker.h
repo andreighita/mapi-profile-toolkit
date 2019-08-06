@@ -20,11 +20,13 @@ namespace MAPIToolkit
 		std::wstring wszUnresolvedServer;		// sus
 		std::wstring wszUnresolvedUser;			// suu
 
-		ConnectMode connectMode;					// scnctm		| ROH or MOH
-		CachedMode cachedModeOwner;				// scmo		| 1 = disabled; 2 = enabled; 
-		CachedMode cachedModePublicFolders;			// scmpf	| 1 = disabled; 2 = enabled; 
-		CachedMode cachedModeShared;				// scms		| 1 = disabled; 2 = enabled; 
+		ULONG connectMode;					// scnctm		| ROH or MOH
+		ULONG cachedModeOwner;				// scmo		| 1 = disabled; 2 = enabled; 
+		ULONG cachedModePublicFolders;			// scmpf	| 1 = disabled; 2 = enabled; 
+		ULONG cachedModeShared;				// scms		| 1 = disabled; 2 = enabled; 
 
+		// ACTION_SERVICE_ADD
+		void AddExchangeAccount();
 		// ACTION_SERVICE_SETCACHEDMODE
 		void SetCachedMode();
 	public:

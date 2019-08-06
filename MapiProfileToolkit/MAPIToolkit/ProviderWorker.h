@@ -16,7 +16,7 @@ namespace MAPIToolkit
 		std::wstring wszRohProxyServer;			// mrps
 		std::wstring wszMailStoreExternalUrl;	// mmse
 		std::wstring wszMailStoreInternalUrl;	// mmsi
-		ProviderType providerType;
+		ULONG providerType;
 		ULONG ulRohProxyServerFlags;			// mrpsf
 		ULONG ulRohProxyServerAuthPackage;		// mrpsap
 	};

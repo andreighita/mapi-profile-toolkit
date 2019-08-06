@@ -54,7 +54,7 @@ namespace MAPIToolkit
 			{
 				if (pProfileInfo->profileServices[i].bDefaultStore)
 				{
-					if (pProfileInfo->profileServices[i].serviceType == ServiceType::ServiceType_Mailbox)
+					if (pProfileInfo->profileServices[i].serviceType == SERVICETYPE_EXCHANGEACCOUNT)
 					{
 						HCKM(HrSetCachedModeOneService(ConvertWideCharToMultiByte(lpwszProfileName), &pProfileInfo->profileServices[i].muidServiceUid, bCachedModeOwner, bCachedModeShared, bCachedModePublicFolders, iCachedModeMonths, iOutlookVersion), L"Calling HrSetCachedModeOneService on service");
 					}
@@ -62,7 +62,7 @@ namespace MAPIToolkit
 			}
 			else if (iServiceIndex != -1)
 			{
-				if (pProfileInfo->profileServices[iServiceIndex].serviceType == ServiceType::ServiceType_Mailbox)
+				if (pProfileInfo->profileServices[iServiceIndex].serviceType == SERVICETYPE_EXCHANGEACCOUNT)
 				{
 					HCKM(HrSetCachedModeOneService(ConvertWideCharToMultiByte(lpwszProfileName), &pProfileInfo->profileServices[iServiceIndex].muidServiceUid, bCachedModeOwner, bCachedModeShared, bCachedModePublicFolders, iCachedModeMonths, iOutlookVersion), L"Calling HrSetCachedModeOneService on service");
 
@@ -70,7 +70,7 @@ namespace MAPIToolkit
 			}
 			else if (bAllServices)
 			{
-				if (pProfileInfo->profileServices[i].serviceType == ServiceType::ServiceType_Mailbox)
+				if (pProfileInfo->profileServices[i].serviceType == SERVICETYPE_EXCHANGEACCOUNT)
 				{
 					HCKM(HrSetCachedModeOneService(ConvertWideCharToMultiByte(lpwszProfileName), &pProfileInfo->profileServices[i].muidServiceUid, bCachedModeOwner, bCachedModeShared, bCachedModePublicFolders, iCachedModeMonths, iOutlookVersion), L"Calling HrSetCachedModeOneService on service");
 				}

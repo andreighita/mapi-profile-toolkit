@@ -8,7 +8,7 @@
 
 #define ACTION_PROFILE_ADD					0x00000001
 #define ACTION_PROFILE_CLONE				0x00000002
-#define ACTION_PROFILE_UPDATE				0x00000004
+#define ACTION_PROFILE_RENAME				0x00000004
 #define ACTION_PROFILE_LIST					0x00000008
 #define ACTION_PROFILE_LISTALL				0x00000010
 #define ACTION_PROFILE_REMOVE				0x00000020
@@ -62,8 +62,8 @@ typedef enum
 	typedef enum 
 	{
 		ServiceType_Unknown,
-		ServiceType_Mailbox ,
-		ServiceType_Pst,
+		ServiceType_ExchangeAccount ,
+		ServiceType_DataFile,
 		ServiceType_AddressBook
 	} ServiceType;
 

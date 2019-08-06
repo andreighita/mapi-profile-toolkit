@@ -17,13 +17,13 @@ namespace MAPIToolkit
 		LPWSTR lpszwDisplayName,
 		LPWSTR lpszwSMTPAddress);
 
-	HRESULT HrAddDelegateMailbox(ProfileMode profileMode, LPWSTR lpwszProfileName, ServiceMode serviceMode, int iServiceIndex, int iOutlookVersion, ProviderWorker* pProviderWorker);
+	HRESULT HrAddDelegateMailbox(ULONG profileMode, LPWSTR lpwszProfileName, ULONG serviceMode, int iServiceIndex, int iOutlookVersion, ProviderWorker* pProviderWorker);
 
-	HRESULT HrAddDelegateMailboxOneProfile(LPWSTR lpwszProfileName, int iOutlookVersion, ServiceMode serviceMode, int iServiceIndex, ProviderWorker* pProviderWorker);
+	HRESULT HrAddDelegateMailboxOneProfile(LPWSTR lpwszProfileName, int iOutlookVersion, ULONG serviceMode, int iServiceIndex, ProviderWorker* pProviderWorker);
 
-	HRESULT HrAddDelegateMailbox(ProfileMode profileMode, LPWSTR lpwszProfileName, ServiceMode serviceMode, int iServiceIndex, int iOutlookVersion, ProviderWorker* pProviderWorker);
+	HRESULT HrAddDelegateMailbox(ULONG profileMode, LPWSTR lpwszProfileName, ULONG serviceMode, int iServiceIndex, int iOutlookVersion, ProviderWorker* pProviderWorker);
 
-	HRESULT HrAddDelegateMailboxOneProfile(LPWSTR lpwszProfileName, int iOutlookVersion, ServiceMode serviceMode, int iServiceIndex, ProviderWorker* pProviderWorker);
+	HRESULT HrAddDelegateMailboxOneProfile(LPWSTR lpwszProfileName, int iOutlookVersion, ULONG serviceMode, int iServiceIndex, ProviderWorker* pProviderWorker);
 
 	HRESULT HrAddDelegateMailbox(BOOL bDefaultProfile,
 		LPWSTR lpwszProfileName,
@@ -48,11 +48,11 @@ namespace MAPIToolkit
 		LPWSTR lpszwServer,
 		LPWSTR lpszwServerDN);
 
-	HRESULT HrPromoteDelegates(LPWSTR lpwszProfileName, BOOL bDefaultProfile, BOOL bAllProfiles, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, int iOutlookVersion, ConnectMode connectMode);
+	HRESULT HrPromoteDelegates(LPWSTR lpwszProfileName, BOOL bDefaultProfile, BOOL bAllProfiles, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, int iOutlookVersion, ULONG connectMode);
 
-	HRESULT HrPromoteDelegatesOneProfile(LPWSTR lpwszProfileName, ProfileInfo* pProfileInfo, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, int iOutlookVersion, ConnectMode connectMode);
+	HRESULT HrPromoteDelegatesOneProfile(LPWSTR lpwszProfileName, ProfileInfo* pProfileInfo, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, int iOutlookVersion, ULONG connectMode);
 
-	HRESULT HrPromoteOneDelegate(LPWSTR lpwszProfileName, int iOutlookVersion, ConnectMode connectMode, MailboxInfo mailboxInfo);
+	HRESULT HrPromoteOneDelegate(LPWSTR lpwszProfileName, int iOutlookVersion, ULONG connectMode, MailboxInfo mailboxInfo);
 
 
 }

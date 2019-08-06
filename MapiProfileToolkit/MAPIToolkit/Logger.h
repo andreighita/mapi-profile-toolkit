@@ -1,5 +1,4 @@
 #pragma once
-#pragma once
 
 #include <iostream>
 #include <fstream>
@@ -13,17 +12,17 @@ namespace MAPIToolkit
 	{
 	public:
 		static void Initialise(std::wstring wszPath);
-		static LogCallStatus Write(LogLevel llLevel, std::wstring szMessage, LoggingMode loggingMode);
-		static LogCallStatus Write(LogLevel llLevel, std::wstring szMessage);
-		static void SetLoggingMode(LoggingMode loggingMode);
+		static ULONG Write(ULONG llLevel, std::wstring szMessage, ULONG loggingMode);
+		static ULONG Write(ULONG llLevel, std::wstring szMessage);
+		static void SetCachedMode(ULONG loggingMode);
 	private:
 		~Logger();
 
 		static std::wofstream m_ofsLogFile;
 		static std::wstring m_szLogFilePath;
 		static bool m_bIsLogFileOpen;
-		static LoggingMode m_loggingMode;
-		LogLevel m_logLevel;
+		static ULONG m_loggingMode;
+		ULONG m_logLevel;
 
 	};
 }

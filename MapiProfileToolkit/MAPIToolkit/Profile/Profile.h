@@ -12,7 +12,6 @@
 */
 #include <Windows.h>
 #include "..//ToolkitTypeDefs.h"
-#include "..//Toolkit.h"
 
 namespace MAPIToolkit
 {
@@ -47,7 +46,7 @@ namespace MAPIToolkit
 
 	HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo* profileInfo);
 
-	HRESULT HrListProfiles(Toolkit* m_toolkit, std::wstring wszExportPath);
+	HRESULT HrListProfiles(ULONG profileMode, std::wstring profileName, std::wstring wszExportPath);
 
 #pragma endregion
 

@@ -1,5 +1,4 @@
 #include "Profile.h"
-#include "..//Toolkit.h"
 #include "..//Logger.h"
 #include "../InlineAndMacros.h"
 #include <MAPIUtil.h>
@@ -20,64 +19,64 @@ LPWSTR GetDefaultProfileNameLP()
 	return (LPWSTR)GetDefaultProfileName().c_str();
 }
 
-HRESULT HrListProfiles(Toolkit* m_toolkit, std::wstring wszExportPath)
+HRESULT HrListProfiles(ULONG profileMode, std::wstring profileName, std::wstring wszExportPath)
 {
 	HRESULT hRes = S_OK;
-	if VCHK(m_toolkit->profileMode, ProfileMode::Mode_All)
+	if VCHK(profileMode, PROFILEMODE_ALL)
 	{
 		ULONG ulProfileCount = GetProfileCount();
 		ProfileInfo* profileInfo = new ProfileInfo[ulProfileCount];
 		ZeroMemory(profileInfo, sizeof(ProfileInfo) * ulProfileCount);
-		Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for all profiles");
+		Logger::Write(LOGLEVEL_INFO, L"Retrieving MAPI Profile information for all profiles");
 		HCKM(HrGetProfiles(ulProfileCount, profileInfo), L"Calling HrGetProfiles");
 		if (wszExportPath != L"")
 		{
-			Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for all profiles");
+			Logger::Write(LOGLEVEL_INFO, L"Exporting MAPI Profile information for all profiles");
 			ExportXML(ulProfileCount, profileInfo, wszExportPath);
 		}
 		else
 		{
-			Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for all profiles");
+			Logger::Write(LOGLEVEL_INFO, L"Exporting MAPI Profile information for all profiles");
 			ExportXML(ulProfileCount, profileInfo, L"");
 		}
 
 	}
-	else if VCHK(m_toolkit->profileMode, ProfileMode::Mode_Specific)
+	else if VCHK(profileMode, PROFILEMODE_SPECIFIC)
 	{
 		ProfileInfo* pProfileInfo = new ProfileInfo();
-		Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for profile: " + m_toolkit->m_profileWorker->profileName);
-		HCKM(HrGetProfile((LPWSTR)m_toolkit->m_profileWorker->profileName.c_str(), pProfileInfo), L"Calling HrGetProfile");
+		Logger::Write(LOGLEVEL_INFO, L"Retrieving MAPI Profile information for profile: " + profileName);
+		HCKM(HrGetProfile((LPWSTR)profileName.c_str(), pProfileInfo), L"Calling HrGetProfile");
 		if (wszExportPath != L"")
 		{
-			Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for profile");
+			Logger::Write(LOGLEVEL_INFO, L"Exporting MAPI Profile information for profile");
 			ExportXML(1, pProfileInfo, wszExportPath);
 		}
 		else
 		{
-			Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for profile");
+			Logger::Write(LOGLEVEL_INFO, L"Exporting MAPI Profile information for profile");
 			ExportXML(1, pProfileInfo, L"");
 		}
 
 	}
-	else if VCHK(m_toolkit->profileMode, ProfileMode::Mode_Default)
+	else if VCHK(profileMode, PROFILEMODE_DEFAULT)
 	{
 		std::wstring szDefaultProfileName = GetDefaultProfileName();
 		if (!szDefaultProfileName.empty())
 		{
-			m_toolkit->m_profileWorker->profileName = szDefaultProfileName;
+			profileName = szDefaultProfileName;
 		}
 
 		ProfileInfo* pProfileInfo = new ProfileInfo();
-		Logger::Write(logLevelInfo, L"Retrieving MAPI Profile information for default profile: " + m_toolkit->m_profileWorker->profileName);
-		HCKM(HrGetProfile((LPWSTR)m_toolkit->m_profileWorker->profileName.c_str(), pProfileInfo), L"Calling HrGetProfile");
+		Logger::Write(LOGLEVEL_INFO, L"Retrieving MAPI Profile information for default profile: " + profileName);
+		HCKM(HrGetProfile((LPWSTR)profileName.c_str(), pProfileInfo), L"Calling HrGetProfile");
 		if (wszExportPath != L"")
 		{
-			Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for default profile");
+			Logger::Write(LOGLEVEL_INFO, L"Exporting MAPI Profile information for default profile");
 			ExportXML(1, pProfileInfo, wszExportPath);
 		}
 		else
 		{
-			Logger::Write(logLevelInfo, L"Exporting MAPI Profile information for default profile");
+			Logger::Write(LOGLEVEL_INFO, L"Exporting MAPI Profile information for default profile");
 			ExportXML(1, pProfileInfo, L"");
 		}
 	}
@@ -99,7 +98,7 @@ std::wstring GetDefaultProfileName()
 	LPSRowSet lpProfRows = NULL;
 
 	HRESULT hRes = S_OK;
-	Logger::Write(logLevelInfo, L"Attempting to retrieve the default MAPI profile name");
+	Logger::Write(LOGLEVEL_INFO, L"Attempting to retrieve the default MAPI profile name");
 
 	// Setting up an enum and a prop tag array with the props we'll use
 	enum { iDisplayName, cptaProps };
@@ -143,7 +142,7 @@ std::wstring GetDefaultProfileName()
 
 	if (lpProfRows->cRows == 0)
 	{
-		Logger::Write(logLevelFailed, L"No default profile set.");
+		Logger::Write(LOGLEVEL_FAILED, L"No default profile set.");
 	}
 	else if (lpProfRows->cRows == 1)
 	{
@@ -152,7 +151,7 @@ std::wstring GetDefaultProfileName()
 	}
 	else
 	{
-		Logger::Write(logLevelError, L"Query resulted in incosinstent results");
+		Logger::Write(LOGLEVEL_ERROR, L"Query resulted in incosinstent results");
 	}
 
 Error:
@@ -408,7 +407,7 @@ HRESULT HrCloneProfile(ProfileInfo * profileInfo)
 	LPSERVICEADMIN2 lpServiceAdmin = NULL;
 	unsigned int uiServiceIndex = 0;
 	profileInfo->wszProfileName = profileInfo->wszProfileName + L"_Clone";
-	Logger::Write(logLevelInfo, L"Creating new profile named: " + profileInfo->wszProfileName);
+	Logger::Write(LOGLEVEL_INFO, L"Creating new profile named: " + profileInfo->wszProfileName);
 	HCKM(HrCreateProfile((LPWSTR)profileInfo->wszProfileName.c_str(), &lpServiceAdmin), L"Calling HrCreateProfile.");
 	if (lpServiceAdmin)
 	{
@@ -416,9 +415,9 @@ HRESULT HrCloneProfile(ProfileInfo * profileInfo)
 		{
 			MAPIUID uidService = { 0 };
 			LPMAPIUID lpServiceUid = &uidService;
-			if (profileInfo->profileServices[i].serviceType == ServiceType::ServiceType_Mailbox)
+			if (profileInfo->profileServices[i].serviceType == SERVICETYPE_EXCHANGEACCOUNT)
 			{
-				Logger::Write(logLevelInfo, L"Adding exchange mailbox: " + profileInfo->profileServices[i].exchangeAccountInfo->wszEmailAddress);
+				Logger::Write(LOGLEVEL_INFO, L"Adding exchange mailbox: " + profileInfo->profileServices[i].exchangeAccountInfo->wszEmailAddress);
 				HCKM(HrCreateMsemsServiceModernExt(false, // sort this out later
 					(LPWSTR)profileInfo->wszProfileName.c_str(),
 					profileInfo->profileServices[i].ulResourceFlags,
@@ -433,7 +432,7 @@ HRESULT HrCloneProfile(ProfileInfo * profileInfo)
 				{
 					if (profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulProfileType == PROFILE_DELEGATE)
 					{
-						Logger::Write(logLevelInfo, L"Adding additional mailbox: " + profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress);
+						Logger::Write(LOGLEVEL_INFO, L"Adding additional mailbox: " + profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress);
 						// this should not add online archives
 						if (TRUE != profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].bIsOnlineArchive)
 							HCKM(HrAddDelegateMailboxModern(false,
@@ -446,9 +445,9 @@ HRESULT HrCloneProfile(ProfileInfo * profileInfo)
 				}
 				uiServiceIndex++;
 			}
-			else if (profileInfo->profileServices[i].serviceType == ServiceType::ServiceType_Pst)
+			else if (profileInfo->profileServices[i].serviceType == SERVICETYPE_DATAFILE)
 			{
-				Logger::Write(logLevelInfo, L"Adding PST file: " + profileInfo->profileServices[i].pstInfo->wszPstPath);
+				Logger::Write(LOGLEVEL_INFO, L"Adding PST file: " + profileInfo->profileServices[i].pstInfo->wszPstPath);
 				HCKM(HrCreatePstService(lpServiceAdmin,
 					&lpServiceUid,
 					(LPWSTR)profileInfo->profileServices[i].wszServiceName.c_str(),
@@ -461,7 +460,7 @@ HRESULT HrCloneProfile(ProfileInfo * profileInfo)
 
 		}
 
-		Logger::Write(logLevelInfo, L"Setting profile as default.");
+		Logger::Write(LOGLEVEL_INFO, L"Setting profile as default.");
 		HCKM(HrSetDefaultProfile((LPWSTR)profileInfo->wszProfileName.c_str()), L"Calling HrSetDefaultProfile.");
 	}
 	goto Cleanup;
@@ -479,7 +478,7 @@ HRESULT HrSimpleCloneProfile(ProfileInfo * profileInfo, bool bSetDefaultProfile)
 	LPSERVICEADMIN2 lpServiceAdmin = NULL;
 	unsigned int uiServiceIndex = 0;
 	profileInfo->wszProfileName = profileInfo->wszProfileName + L"_Clone";
-	Logger::Write(logLevelInfo, L"Creating new profile named: " + profileInfo->wszProfileName);
+	Logger::Write(LOGLEVEL_INFO, L"Creating new profile named: " + profileInfo->wszProfileName);
 	HCKM(HrCreateProfile((LPWSTR)profileInfo->wszProfileName.c_str(), &lpServiceAdmin), L"Calling HrCreateProfile.");
 	if (lpServiceAdmin)
 	{
@@ -487,9 +486,9 @@ HRESULT HrSimpleCloneProfile(ProfileInfo * profileInfo, bool bSetDefaultProfile)
 		{
 			MAPIUID uidService = { 0 };
 			LPMAPIUID lpServiceUid = &uidService;
-			if (profileInfo->profileServices[i].serviceType == ServiceType::ServiceType_Mailbox)
+			if (profileInfo->profileServices[i].serviceType == SERVICETYPE_EXCHANGEACCOUNT)
 			{
-				Logger::Write(logLevelInfo, L"Adding exchange mailbox: " + profileInfo->profileServices[i].exchangeAccountInfo->wszEmailAddress);
+				Logger::Write(LOGLEVEL_INFO, L"Adding exchange mailbox: " + profileInfo->profileServices[i].exchangeAccountInfo->wszEmailAddress);
 				
 				HCKM(HrCreateMsemsServiceMOH(false,
 					(LPWSTR)profileInfo->wszProfileName.c_str(),
@@ -507,7 +506,7 @@ HRESULT HrSimpleCloneProfile(ProfileInfo * profileInfo, bool bSetDefaultProfile)
 		}
 		if (bSetDefaultProfile)
 		{
-			Logger::Write(logLevelInfo, L"Setting profile as default.");
+			Logger::Write(LOGLEVEL_INFO, L"Setting profile as default.");
 			HCKM(HrSetDefaultProfile((LPWSTR)profileInfo->wszProfileName.c_str()), L"Calling HrSetDefaultProfile.");
 		}
 	}
@@ -533,7 +532,7 @@ VOID PrintProfile(ProfileInfo * profileInfo)
 			wprintf(L" -> [%i] Service resource flags: %#x\n", i, profileInfo->profileServices[i].ulResourceFlags);
 			MAPIUID uidService = { 0 };
 			LPMAPIUID lpServiceUid = &uidService;
-			if (profileInfo->profileServices[i].serviceType == ServiceType::ServiceType_Mailbox)
+			if (profileInfo->profileServices[i].serviceType == SERVICETYPE_EXCHANGEACCOUNT)
 			{
 				wprintf(L" -> [%i] Service type: %ls\n", i, L"Exchange Mailbox");
 				wprintf(L" -> [%i] E-mail address: %ls\n", i, profileInfo->profileServices[i].exchangeAccountInfo->wszEmailAddress.c_str());
@@ -557,7 +556,7 @@ VOID PrintProfile(ProfileInfo * profileInfo)
 					}
 				}
 			}
-			else if (profileInfo->profileServices[i].serviceType == ServiceType::ServiceType_Pst)
+			else if (profileInfo->profileServices[i].serviceType == SERVICETYPE_DATAFILE)
 			{
 				wprintf(L" -> [%i] Service type: %ls\n", i, L"PST");
 				wprintf(L" -> [%i] Display name: %ls\n", i, profileInfo->profileServices[i].pstInfo->wszDisplayName.c_str());
@@ -686,7 +685,7 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo)
 				profileInfo->profileServices[i].wszServiceName = ConvertWideCharToStdWstring(ConvertMultiByteToWideChar(lpSvcRows->aRow[i].lpProps[iServiceName].Value.lpszA));
 				profileInfo->profileServices[i].ulResourceFlags = lpSvcRows->aRow[i].lpProps[iServiceResFlags].Value.l;
 				profileInfo->profileServices[i].wszDisplayName = lpSvcRows->aRow[i].lpProps[iDisplayNameW].Value.lpszW;
-				profileInfo->profileServices[i].serviceType = ServiceType::ServiceType_Unknown;;
+				profileInfo->profileServices[i].serviceType = SERVICETYPE_UNKNOWN;;
 				if (profileInfo->profileServices[i].ulResourceFlags & SERVICE_DEFAULT_STORE)
 				{
 					profileInfo->profileServices[i].bDefaultStore = true;
@@ -695,7 +694,7 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo)
 				if (0 == strcmp(lpSvcRows->aRow[i].lpProps[iServiceName].Value.lpszA, "MSEMS"))
 				{
 					profileInfo->profileServices[i].exchangeAccountInfo = new ExchangeAccountInfo();
-					profileInfo->profileServices[i].serviceType = ServiceType::ServiceType_Mailbox;
+					profileInfo->profileServices[i].serviceType = SERVICETYPE_EXCHANGEACCOUNT;
 					LPPROVIDERADMIN lpProvAdmin = NULL;
 
 					if (SUCCEEDED(lpServiceAdmin->AdminProviders((LPMAPIUID)lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb,
@@ -1224,7 +1223,7 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo)
 					profileInfo->profileServices[i].pstInfo->wszDisplayName = std::wstring(L" ");
 					profileInfo->profileServices[i].pstInfo->wszPstPath = std::wstring(L" ");
 					profileInfo->profileServices[i].pstInfo->ulPstConfigFlags = 0;
-					profileInfo->profileServices[i].serviceType = ServiceType::ServiceType_Pst;
+					profileInfo->profileServices[i].serviceType = SERVICETYPE_DATAFILE;
 
 					LPPROVIDERADMIN lpProvAdmin = NULL;
 

@@ -1,3 +1,4 @@
+#pragma once
 #include "ADHelper.h"
 #include "..//Utility/StringOperations.h"
 #include "..//..//InlineAndMacros.h"

@@ -34,8 +34,8 @@ namespace MAPIToolkit
 		int m_iServiceIndex;
 		ULONG m_ulConfigFlags;					// scfgf		| PR_PROFILE_CONFIG_FLAGS
 		ULONG ulResourceFlags;					// srf		| PR_RESOURCES_FLAGS
-		ServiceType m_serviceType;
-		ServiceMode m_serviceMode;
+		ULONG m_serviceType;
+		ULONG m_serviceMode;
 	};
 }
 

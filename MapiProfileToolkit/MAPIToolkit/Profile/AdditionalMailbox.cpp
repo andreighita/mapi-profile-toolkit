@@ -190,16 +190,16 @@ namespace MAPIToolkit
 
 
 
-	HRESULT HrAddDelegateMailbox(ProfileMode profileMode, LPWSTR lpwszProfileName, ServiceMode serviceMode, int iServiceIndex, int iOutlookVersion, ProviderWorker* pProviderWorker)
+	HRESULT HrAddDelegateMailbox(ULONG profileMode, LPWSTR lpwszProfileName, ULONG serviceMode, int iServiceIndex, int iOutlookVersion, ProviderWorker* pProviderWorker)
 	{
 		HRESULT hRes = S_OK;
 
-		if VCHK(profileMode, ProfileMode::Mode_Default)
+		if VCHK(profileMode, PROFILEMODE_DEFAULT)
 		{
 			HCKM(HrAddDelegateMailboxOneProfile((LPWSTR)GetDefaultProfileName().c_str(), iOutlookVersion, serviceMode, iServiceIndex, pProviderWorker), L"Calling HrAddDelegateMailboxOneProfile");
 
 		}
-		else if VCHK(profileMode, ProfileMode::Mode_All)
+		else if VCHK(profileMode, PROFILEMODE_ALL)
 		{
 			ULONG ulProfileCount = GetProfileCount();
 			ProfileInfo* profileInfo = new ProfileInfo[ulProfileCount];
@@ -211,19 +211,19 @@ namespace MAPIToolkit
 		}
 		else
 		{
-			if VCHK(profileMode, ProfileMode::Mode_Specific)
+			if VCHK(profileMode, PROFILEMODE_SPECIFIC)
 			{
 				HCKM(HrAddDelegateMailboxOneProfile(lpwszProfileName, iOutlookVersion, serviceMode, iServiceIndex, pProviderWorker), L"Calling HrAddDelegateMailboxOneProfile");
 			}
 			else
-				Logger::Write(logLevelError, L"The specified profile name is invalid or no profile name was specified.\n");
+				Logger::Write(LOGLEVEL_ERROR, L"The specified profile name is invalid or no profile name was specified.\n");
 		}
 
 	Error:
 		return hRes;
 	}
 
-	HRESULT HrAddDelegateMailboxOneProfile(LPWSTR lpwszProfileName, int iOutlookVersion, ServiceMode serviceMode, int iServiceIndex, ProviderWorker* pProviderWorker)
+	HRESULT HrAddDelegateMailboxOneProfile(LPWSTR lpwszProfileName, int iOutlookVersion, ULONG serviceMode, int iServiceIndex, ProviderWorker* pProviderWorker)
 	{
 		HRESULT hRes = S_OK;
 		switch (iOutlookVersion)
@@ -231,7 +231,7 @@ namespace MAPIToolkit
 		case 2007:
 			HCKM(HrAddDelegateMailboxLegacy(FALSE,
 				lpwszProfileName,
-				VCHK(serviceMode, ServiceMode::Mode_Default),
+				VCHK(serviceMode, SERVICEMODE_DEFAULT),
 				iServiceIndex,
 				(LPWSTR)pProviderWorker->wszMailboxDisplayName.c_str(),
 				(LPWSTR)pProviderWorker->wszMailboxLegacyDN.c_str(),
@@ -242,7 +242,7 @@ namespace MAPIToolkit
 		case 2013:
 			HCKM(HrAddDelegateMailbox(FALSE,
 				lpwszProfileName,
-				VCHK(serviceMode, ServiceMode::Mode_Default),
+				VCHK(serviceMode, SERVICEMODE_DEFAULT),
 				iServiceIndex,
 				(LPWSTR)pProviderWorker->wszMailboxDisplayName.c_str(),
 				(LPWSTR)pProviderWorker->wszMailboxLegacyDN.c_str(),
@@ -257,7 +257,7 @@ namespace MAPIToolkit
 		case 2016:
 			HCKM(HrAddDelegateMailboxModern(FALSE,
 				lpwszProfileName,
-				VCHK(serviceMode, ServiceMode::Mode_Default),
+				VCHK(serviceMode, SERVICEMODE_DEFAULT),
 				iServiceIndex,
 				(LPWSTR)pProviderWorker->wszMailboxDisplayName.c_str(),
 				(LPWSTR)pProviderWorker->wszSmtpAddress.c_str()), L"Calling HrCreateMsemsServiceModern");
@@ -676,7 +676,7 @@ namespace MAPIToolkit
 		return hRes;
 	}
 
-	HRESULT HrPromoteDelegates(LPWSTR lpwszProfileName, BOOL bDefaultProfile, BOOL bAllProfiles, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, int iOutlookVersion, ConnectMode connectMode)
+	HRESULT HrPromoteDelegates(LPWSTR lpwszProfileName, BOOL bDefaultProfile, BOOL bAllProfiles, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, int iOutlookVersion, ULONG connectMode)
 	{
 		HRESULT hRes = S_OK;
 
@@ -707,14 +707,14 @@ namespace MAPIToolkit
 
 			}
 			else
-				Logger::Write(logLevelError, L"The specified profile name is invalid or no profile name was specified.\n");
+				Logger::Write(LOGLEVEL_ERROR, L"The specified profile name is invalid or no profile name was specified.\n");
 		}
 
 	Error:
 		return hRes;
 	}
 
-	HRESULT HrPromoteDelegatesOneProfile(LPWSTR lpwszProfileName, ProfileInfo* pProfileInfo, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, int iOutlookVersion, ConnectMode connectMode)
+	HRESULT HrPromoteDelegatesOneProfile(LPWSTR lpwszProfileName, ProfileInfo* pProfileInfo, int iServiceIndex, BOOL bDefaultService, BOOL bAllServices, int iOutlookVersion, ULONG connectMode)
 	{
 		HRESULT hRes = S_OK;
 
@@ -724,7 +724,7 @@ namespace MAPIToolkit
 			{
 				if (pProfileInfo->profileServices[i].bDefaultStore)
 				{
-					if (pProfileInfo->profileServices[i].serviceType == ServiceType::ServiceType_Mailbox)
+					if (pProfileInfo->profileServices[i].serviceType == SERVICETYPE_EXCHANGEACCOUNT)
 					{
 						for (ULONG j = 0; j <= pProfileInfo->profileServices[i].exchangeAccountInfo->ulMailboxCount; j++)
 						{
@@ -738,7 +738,7 @@ namespace MAPIToolkit
 			}
 			else if (iServiceIndex != -1)
 			{
-				if (pProfileInfo->profileServices[iServiceIndex].serviceType == ServiceType::ServiceType_Mailbox)
+				if (pProfileInfo->profileServices[iServiceIndex].serviceType == SERVICETYPE_EXCHANGEACCOUNT)
 				{
 					for (ULONG j = 0; j <= pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->ulMailboxCount; j++)
 					{
@@ -751,7 +751,7 @@ namespace MAPIToolkit
 			}
 			else if (bAllServices)
 			{
-				if (pProfileInfo->profileServices[i].serviceType == ServiceType::ServiceType_Mailbox)
+				if (pProfileInfo->profileServices[i].serviceType == SERVICETYPE_EXCHANGEACCOUNT)
 				{
 					for (ULONG j = 0; j <= pProfileInfo->profileServices[i].exchangeAccountInfo->ulMailboxCount; j++)
 					{
@@ -769,7 +769,7 @@ namespace MAPIToolkit
 		return hRes;
 	}
 
-	HRESULT HrPromoteOneDelegate(LPWSTR lpwszProfileName, int iOutlookVersion, ConnectMode connectMode, MailboxInfo mailboxInfo)
+	HRESULT HrPromoteOneDelegate(LPWSTR lpwszProfileName, int iOutlookVersion, ULONG connectMode, MailboxInfo mailboxInfo)
 	{
 		HRESULT hRes = S_OK;
 		switch (iOutlookVersion)
@@ -784,15 +784,15 @@ namespace MAPIToolkit
 			//{
 			//	HCKM(HrDeleteProvider(profileName, &pProfileInfo->profileServices[i].muidServiceUid, &mailboxInfo.muidProviderUid, loggingMode), L"Calling HrDeleteProvider");
 			//}
-			Logger::Write(logLevelError, L"This client version is not currently supported.");
+			Logger::Write(LOGLEVEL_ERROR, L"This client version is not currently supported.");
 			break;
 		case 2010:
 		case 2013:
-			if (connectMode == ConnectMode::ConnectMode_RpcOverHttp)
+			if (connectMode == CONNECTMODE_RPCOVERHTTP)
 			{
 				// This id a bit of a hack since delegate mailboxes don't need to have the personalised server name in the delegate provider
 				// I'm just creating these based on the legacyDN and the MailStore so best check that those have value
-				Logger::Write(logLevelError, L"Validating delegate information.");
+				Logger::Write(LOGLEVEL_ERROR, L"Validating delegate information.");
 				if (((mailboxInfo.wszMailStoreInternalUrl != L"") || (mailboxInfo.wszMailStoreExternalUrl != L"")) && (mailboxInfo.wszProfileMailbox != L""))
 				{
 					std::wstring wszParsedSmtpAddress = SubstringToEnd(L"smtp:", mailboxInfo.wszSmtpAddress);
@@ -804,7 +804,7 @@ namespace MAPIToolkit
 
 					std::wstring wszServerDN = SubstringFromStart(L"cn=Recipients", mailboxInfo.wszProfileMailbox) + L"/cn=Configuration/cn=Servers/cn=" + wszPersonalisedServerName;
 
-					Logger::Write(logLevelInfo, L"Creating and configuring new ROH service.");
+					Logger::Write(LOGLEVEL_INFO, L"Creating and configuring new ROH service.");
 					if (SUCCEEDED(HrCreateMsemsServiceROH(FALSE,
 						lpwszProfileName,
 						(LPWSTR)wszParsedSmtpAddress.c_str(),
@@ -818,15 +818,15 @@ namespace MAPIToolkit
 					}
 				}
 				else
-					Logger::Write(logLevelError, L"Not enough information in the profile for ROH mailbox.");
+					Logger::Write(LOGLEVEL_ERROR, L"Not enough information in the profile for ROH mailbox.");
 			}
 			// best not be used for now as I haven't sorted it out
-			else if (connectMode == ConnectMode::ConnectMode_MapiOverHttp)
+			else if (connectMode == CONNECTMODE_MAPIOVERHTTP)
 			{
-				Logger::Write(logLevelError, L"Validating delegate information.");
+				Logger::Write(LOGLEVEL_ERROR, L"Validating delegate information.");
 				if (((mailboxInfo.wszMailStoreInternalUrl != L"") || (mailboxInfo.wszMailStoreExternalUrl != L"")) && (mailboxInfo.wszProfileMailbox != L""))
 				{
-					//Logger::Write(logLevelError, L"MOH logic is not currently available.");
+					//Logger::Write(LOGLEVEL_ERROR, L"MOH logic is not currently available.");
 					std::wstring wszParsedSmtpAddress = SubstringToEnd(L"smtp:", mailboxInfo.wszSmtpAddress);
 					std::wstring wszPersonalisedServerName;
 					if (mailboxInfo.wszMailStoreInternalUrl != L"")
@@ -863,7 +863,7 @@ namespace MAPIToolkit
 
 			break;
 		case 2016:
-			Logger::Write(logLevelInfo, L"Creating and configuring new service.");
+			Logger::Write(LOGLEVEL_INFO, L"Creating and configuring new service.");
 			if (SUCCEEDED(HrCreateMsemsServiceModern(FALSE,
 				lpwszProfileName,
 				(LPWSTR)SubstringToEnd(L"smtp:", mailboxInfo.wszSmtpAddress).c_str(),

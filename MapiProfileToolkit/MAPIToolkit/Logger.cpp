@@ -1,3 +1,4 @@
+#pragma once
 #include "Logger.h"
 #include "ToolkitTypeDefs.h"
 #include <sstream>
@@ -8,7 +9,7 @@ namespace MAPIToolkit
 	std::wstring Logger::m_szLogFilePath;
 	std::wofstream Logger::m_ofsLogFile;
 	bool Logger::m_bIsLogFileOpen;
-	LoggingMode Logger::m_loggingMode = LoggingMode::LoggingModeConsole;
+	ULONG Logger::m_loggingMode = LOGGINGMODE_CONSOLE;
 
 
 	void Logger::Initialise(std::wstring wszPath)
@@ -24,7 +25,7 @@ namespace MAPIToolkit
 			Logger::m_bIsLogFileOpen = true;
 	}
 
-	void Logger::SetLoggingMode(LoggingMode loggingMode)
+	void Logger::SetCachedMode(ULONG loggingMode)
 	{
 		Logger::m_loggingMode = loggingMode;
 	}
@@ -39,11 +40,11 @@ namespace MAPIToolkit
 		}
 	}
 
-	LogCallStatus Logger::Write(LogLevel llLevel, std::wstring szMessage, LoggingMode loggingMode)
+	ULONG Logger::Write(ULONG llLevel, std::wstring szMessage, ULONG loggingMode)
 	{
-		if (loggingMode == LoggingMode::LoggingModeNone)
+		if (loggingMode == LOGGINGMODE_NONE)
 		{
-			return logCallStatusLoggingDisabled;
+			return LOGCALLSTATUS_LOGGINGDISABLED;
 		}
 
 		if (!Logger::m_szLogFilePath.empty() && !Logger::m_bIsLogFileOpen)
@@ -56,8 +57,8 @@ namespace MAPIToolkit
 			{
 				std::wostringstream oss; \
 					oss << L"Error " << std::dec << exception << L" encountered";
-				Logger::Write(logLevelError, oss.str(), loggingMode);
-				return logCallStatusError;
+				Logger::Write(LOGLEVEL_ERROR, oss.str(), loggingMode);
+				return LOGCALLSTATUS_ERROR;
 			}
 		}
 		try
@@ -66,99 +67,99 @@ namespace MAPIToolkit
 
 			struct tm* now = localtime(&timev);
 			std::wstring wszTimeStampNow = std::to_wstring(now->tm_year + 1900) + L"." + std::to_wstring(now->tm_mon + 1) + L"." + std::to_wstring(now->tm_mday) + L" " + std::to_wstring(now->tm_hour) + L":" + std::to_wstring(now->tm_min) + L":" + std::to_wstring(now->tm_sec);
-			if ((loggingMode == LoggingMode::LoggingModeConsoleAndFile || loggingMode == LoggingMode::LoggingModeFile) && Logger::m_bIsLogFileOpen)
+			if ((loggingMode == LOGGINGMODE_ALL || loggingMode == LOGGINGMODE_FILE) && Logger::m_bIsLogFileOpen)
 				Logger::m_ofsLogFile << wszTimeStampNow;
-			else if ((loggingMode == LoggingMode::LoggingModeConsole) || (loggingMode == LoggingMode::LoggingModeConsoleAndFile))
+			else if ((loggingMode == LOGGINGMODE_CONSOLE) || (loggingMode == LOGGINGMODE_ALL))
 			{
 				std::wcout << wszTimeStampNow;
 			}
 
 			switch (llLevel)
 			{
-			case LogLevel::logLevelInfo:
-				if ((loggingMode == LoggingMode::LoggingModeConsoleAndFile || loggingMode == LoggingMode::LoggingModeFile) && Logger::m_bIsLogFileOpen)
+			case LOGLEVEL_INFO:
+				if ((loggingMode == LOGGINGMODE_ALL || loggingMode == LOGGINGMODE_FILE) && Logger::m_bIsLogFileOpen)
 					Logger::m_ofsLogFile << L" INFO ";
-				else if ((loggingMode == LoggingMode::LoggingModeConsole) || (loggingMode == LoggingMode::LoggingModeConsoleAndFile))
+				else if ((loggingMode == LOGGINGMODE_CONSOLE) || (loggingMode == LOGGINGMODE_ALL))
 				{
 					std::wcout << L" INFO ";
 				}
 				break;
-			case LogLevel::logLevelWarning:
-				if ((loggingMode == LoggingMode::LoggingModeConsoleAndFile || loggingMode == LoggingMode::LoggingModeFile) && Logger::m_bIsLogFileOpen)
+			case LOGLEVEL_WARNING:
+				if ((loggingMode == LOGGINGMODE_ALL || loggingMode == LOGGINGMODE_FILE) && Logger::m_bIsLogFileOpen)
 					Logger::m_ofsLogFile << L" WARNING ";
-				else if ((loggingMode == LoggingMode::LoggingModeConsole) || (loggingMode == LoggingMode::LoggingModeConsoleAndFile))
+				else if ((loggingMode == LOGGINGMODE_CONSOLE) || (loggingMode == LOGGINGMODE_ALL))
 				{
 					std::wcout << L" WARNING ";
 				}
 				break;
-			case LogLevel::logLevelError:
-				if ((loggingMode == LoggingMode::LoggingModeConsoleAndFile || loggingMode == LoggingMode::LoggingModeFile) && Logger::m_bIsLogFileOpen)
+			case LOGLEVEL_ERROR:
+				if ((loggingMode == LOGGINGMODE_ALL || loggingMode == LOGGINGMODE_FILE) && Logger::m_bIsLogFileOpen)
 					Logger::m_ofsLogFile << L" ERROR ";
-				else if ((loggingMode == LoggingMode::LoggingModeConsole) || (loggingMode == LoggingMode::LoggingModeConsoleAndFile))
+				else if ((loggingMode == LOGGINGMODE_CONSOLE) || (loggingMode == LOGGINGMODE_ALL))
 				{
 					std::wcout << L" ERROR ";
 				}
 				break;
-			case LogLevel::logLevelSuccess:
-				if ((loggingMode == LoggingMode::LoggingModeConsoleAndFile || loggingMode == LoggingMode::LoggingModeFile) && Logger::m_bIsLogFileOpen)
+			case LOGLEVEL_SUCCESS:
+				if ((loggingMode == LOGGINGMODE_ALL || loggingMode == LOGGINGMODE_FILE) && Logger::m_bIsLogFileOpen)
 					Logger::m_ofsLogFile << L" SUCCESS ";
-				else if ((loggingMode == LoggingMode::LoggingModeConsole) || (loggingMode == LoggingMode::LoggingModeConsoleAndFile))
+				else if ((loggingMode == LOGGINGMODE_CONSOLE) || (loggingMode == LOGGINGMODE_ALL))
 				{
 					std::wcout << L" SUCCESS ";
 				}
 				break;
-			case LogLevel::logLevelFailed:
-				if ((loggingMode == LoggingMode::LoggingModeConsoleAndFile || loggingMode == LoggingMode::LoggingModeFile) && Logger::m_bIsLogFileOpen)
+			case LOGLEVEL_FAILED:
+				if ((loggingMode == LOGGINGMODE_ALL || loggingMode == LOGGINGMODE_FILE) && Logger::m_bIsLogFileOpen)
 					Logger::m_ofsLogFile << L" FAILED ";
-				else if ((loggingMode == LoggingMode::LoggingModeConsole) || (loggingMode == LoggingMode::LoggingModeConsoleAndFile))
+				else if ((loggingMode == LOGGINGMODE_CONSOLE) || (loggingMode == LOGGINGMODE_ALL))
 				{
 					std::wcout << L" FAILED ";
 				}
 				break;
-			case LogLevel::logLevelDebug:
-				if ((loggingMode == LoggingMode::LoggingModeConsoleAndFile || loggingMode == LoggingMode::LoggingModeFile) && Logger::m_bIsLogFileOpen)
+			case LOGLEVEL_DEBUG:
+				if ((loggingMode == LOGGINGMODE_ALL || loggingMode == LOGGINGMODE_FILE) && Logger::m_bIsLogFileOpen)
 					Logger::m_ofsLogFile << L" DEBUG ";
-				else if ((loggingMode == LoggingMode::LoggingModeConsole) || (loggingMode == LoggingMode::LoggingModeConsoleAndFile))
+				else if ((loggingMode == LOGGINGMODE_CONSOLE) || (loggingMode == LOGGINGMODE_ALL))
 				{
 					std::wcout << L" DEBUG ";
 				}
 				break;
 			default:
-				if ((loggingMode == LoggingMode::LoggingModeConsoleAndFile || loggingMode == LoggingMode::LoggingModeFile) && Logger::m_bIsLogFileOpen)
+				if ((loggingMode == LOGGINGMODE_ALL || loggingMode == LOGGINGMODE_FILE) && Logger::m_bIsLogFileOpen)
 					Logger::m_ofsLogFile << L" UNKN ";
-				else if ((loggingMode == LoggingMode::LoggingModeConsole) || (loggingMode == LoggingMode::LoggingModeConsoleAndFile))
+				else if ((loggingMode == LOGGINGMODE_CONSOLE) || (loggingMode == LOGGINGMODE_ALL))
 				{
 					std::wcout << L" UNKN ";
 				}
 				break;
 			}
 
-			if ((loggingMode == LoggingMode::LoggingModeConsoleAndFile || loggingMode == LoggingMode::LoggingModeFile) && Logger::m_bIsLogFileOpen)
+			if ((loggingMode == LOGGINGMODE_ALL || loggingMode == LOGGINGMODE_FILE) && Logger::m_bIsLogFileOpen)
 				Logger::m_ofsLogFile << szMessage << std::endl;
-			else if ((loggingMode == LoggingMode::LoggingModeConsole) || (loggingMode == LoggingMode::LoggingModeConsoleAndFile))
+			else if ((loggingMode == LOGGINGMODE_CONSOLE) || (loggingMode == LOGGINGMODE_ALL))
 			{
 				std::wcout << szMessage << std::endl;
 			}
-			return logCallStatusSuccess;
+			return LOGCALLSTATUS_SUCCESS;
 		}
 		catch (int exception)
 		{
 			std::wostringstream oss; \
 				oss << L"Error " << std::dec << exception << L" encountered";
-			Logger::Write(logLevelError, oss.str(), loggingMode);
-			return logCallStatusError;
+			Logger::Write(LOGLEVEL_ERROR, oss.str(), loggingMode);
+			return LOGCALLSTATUS_ERROR;
 		}
-		return logCallStatusError;
+		return LOGCALLSTATUS_ERROR;
 
 	}
 
-	LogCallStatus Logger::Write(LogLevel llLevel, std::wstring szMessage)
+	ULONG Logger::Write(ULONG llLevel, std::wstring szMessage)
 	{
-		LoggingMode loggingMode = Logger::m_loggingMode;
+		ULONG loggingMode = Logger::m_loggingMode;
 
-		if (loggingMode == LoggingMode::LoggingModeNone)
+		if (loggingMode == LOGGINGMODE_NONE)
 		{
-			return logCallStatusLoggingDisabled;
+			return LOGCALLSTATUS_LOGGINGDISABLED;
 		}
 
 		if (!Logger::m_szLogFilePath.empty() && !Logger::m_bIsLogFileOpen)
@@ -171,8 +172,8 @@ namespace MAPIToolkit
 			{
 				std::wostringstream oss; \
 					oss << L"Error " << std::dec << exception << L" encountered";
-				Logger::Write(logLevelError, oss.str(), loggingMode);
-				return logCallStatusError;
+				Logger::Write(LOGLEVEL_ERROR, oss.str(), loggingMode);
+				return LOGCALLSTATUS_ERROR;
 			}
 		}
 		try
@@ -181,89 +182,89 @@ namespace MAPIToolkit
 
 			struct tm* now = localtime(&timev);
 			std::wstring wszTimeStampNow = std::to_wstring(now->tm_year + 1900) + L"." + std::to_wstring(now->tm_mon + 1) + L"." + std::to_wstring(now->tm_mday) + L" " + std::to_wstring(now->tm_hour) + L":" + std::to_wstring(now->tm_min) + L":" + std::to_wstring(now->tm_sec);
-			if ((loggingMode == LoggingMode::LoggingModeConsoleAndFile || loggingMode == LoggingMode::LoggingModeFile) && Logger::m_bIsLogFileOpen)
+			if ((loggingMode == LOGGINGMODE_ALL || loggingMode == LOGGINGMODE_FILE) && Logger::m_bIsLogFileOpen)
 				Logger::m_ofsLogFile << wszTimeStampNow;
-			else if ((loggingMode == LoggingMode::LoggingModeConsole) || (loggingMode == LoggingMode::LoggingModeConsoleAndFile))
+			else if ((loggingMode == LOGGINGMODE_CONSOLE) || (loggingMode == LOGGINGMODE_ALL))
 			{
 				std::wcout << wszTimeStampNow;
 			}
 
 			switch (llLevel)
 			{
-			case LogLevel::logLevelInfo:
-				if ((loggingMode == LoggingMode::LoggingModeConsoleAndFile || loggingMode == LoggingMode::LoggingModeFile) && Logger::m_bIsLogFileOpen)
+			case LOGLEVEL_INFO:
+				if ((loggingMode == LOGGINGMODE_ALL || loggingMode == LOGGINGMODE_FILE) && Logger::m_bIsLogFileOpen)
 					Logger::m_ofsLogFile << L" INFO ";
-				else if ((loggingMode == LoggingMode::LoggingModeConsole) || (loggingMode == LoggingMode::LoggingModeConsoleAndFile))
+				else if ((loggingMode == LOGGINGMODE_CONSOLE) || (loggingMode == LOGGINGMODE_ALL))
 				{
 					std::wcout << L" INFO ";
 				}
 				break;
-			case LogLevel::logLevelWarning:
-				if ((loggingMode == LoggingMode::LoggingModeConsoleAndFile || loggingMode == LoggingMode::LoggingModeFile) && Logger::m_bIsLogFileOpen)
+			case LOGLEVEL_WARNING:
+				if ((loggingMode == LOGGINGMODE_ALL || loggingMode == LOGGINGMODE_FILE) && Logger::m_bIsLogFileOpen)
 					Logger::m_ofsLogFile << L" WARNING ";
-				else if ((loggingMode == LoggingMode::LoggingModeConsole) || (loggingMode == LoggingMode::LoggingModeConsoleAndFile))
+				else if ((loggingMode == LOGGINGMODE_CONSOLE) || (loggingMode == LOGGINGMODE_ALL))
 				{
 					std::wcout << L" WARNING ";
 				}
 				break;
-			case LogLevel::logLevelError:
-				if ((loggingMode == LoggingMode::LoggingModeConsoleAndFile || loggingMode == LoggingMode::LoggingModeFile) && Logger::m_bIsLogFileOpen)
+			case LOGLEVEL_ERROR:
+				if ((loggingMode == LOGGINGMODE_ALL || loggingMode == LOGGINGMODE_FILE) && Logger::m_bIsLogFileOpen)
 					Logger::m_ofsLogFile << L" ERROR ";
-				else if ((loggingMode == LoggingMode::LoggingModeConsole) || (loggingMode == LoggingMode::LoggingModeConsoleAndFile))
+				else if ((loggingMode == LOGGINGMODE_CONSOLE) || (loggingMode == LOGGINGMODE_ALL))
 				{
 					std::wcout << L" ERROR ";
 				}
 				break;
-			case LogLevel::logLevelSuccess:
-				if ((loggingMode == LoggingMode::LoggingModeConsoleAndFile || loggingMode == LoggingMode::LoggingModeFile) && Logger::m_bIsLogFileOpen)
+			case LOGLEVEL_SUCCESS:
+				if ((loggingMode == LOGGINGMODE_ALL || loggingMode == LOGGINGMODE_FILE) && Logger::m_bIsLogFileOpen)
 					Logger::m_ofsLogFile << L" SUCCESS ";
-				else if ((loggingMode == LoggingMode::LoggingModeConsole) || (loggingMode == LoggingMode::LoggingModeConsoleAndFile))
+				else if ((loggingMode == LOGGINGMODE_CONSOLE) || (loggingMode == LOGGINGMODE_ALL))
 				{
 					std::wcout << L" SUCCESS ";
 				}
 				break;
-			case LogLevel::logLevelFailed:
-				if ((loggingMode == LoggingMode::LoggingModeConsoleAndFile || loggingMode == LoggingMode::LoggingModeFile) && Logger::m_bIsLogFileOpen)
+			case LOGLEVEL_FAILED:
+				if ((loggingMode == LOGGINGMODE_ALL || loggingMode == LOGGINGMODE_FILE) && Logger::m_bIsLogFileOpen)
 					Logger::m_ofsLogFile << L" FAILED ";
-				else if ((loggingMode == LoggingMode::LoggingModeConsole) || (loggingMode == LoggingMode::LoggingModeConsoleAndFile))
+				else if ((loggingMode == LOGGINGMODE_CONSOLE) || (loggingMode == LOGGINGMODE_ALL))
 				{
 					std::wcout << L" FAILED ";
 				}
 				break;
-			case LogLevel::logLevelDebug:
-				if ((loggingMode == LoggingMode::LoggingModeConsoleAndFile || loggingMode == LoggingMode::LoggingModeFile) && Logger::m_bIsLogFileOpen)
+			case LOGLEVEL_DEBUG:
+				if ((loggingMode == LOGGINGMODE_ALL || loggingMode == LOGGINGMODE_FILE) && Logger::m_bIsLogFileOpen)
 					Logger::m_ofsLogFile << L" DEBUG ";
-				else if ((loggingMode == LoggingMode::LoggingModeConsole) || (loggingMode == LoggingMode::LoggingModeConsoleAndFile))
+				else if ((loggingMode == LOGGINGMODE_CONSOLE) || (loggingMode == LOGGINGMODE_ALL))
 				{
 					std::wcout << L" DEBUG ";
 				}
 				break;
 			default:
-				if ((loggingMode == LoggingMode::LoggingModeConsoleAndFile || loggingMode == LoggingMode::LoggingModeFile) && Logger::m_bIsLogFileOpen)
+				if ((loggingMode == LOGGINGMODE_ALL || loggingMode == LOGGINGMODE_FILE) && Logger::m_bIsLogFileOpen)
 					Logger::m_ofsLogFile << L" UNKN ";
-				else if ((loggingMode == LoggingMode::LoggingModeConsole) || (loggingMode == LoggingMode::LoggingModeConsoleAndFile))
+				else if ((loggingMode == LOGGINGMODE_CONSOLE) || (loggingMode == LOGGINGMODE_ALL))
 				{
 					std::wcout << L" UNKN ";
 				}
 				break;
 			}
 
-			if ((loggingMode == LoggingMode::LoggingModeConsoleAndFile || loggingMode == LoggingMode::LoggingModeFile) && Logger::m_bIsLogFileOpen)
+			if ((loggingMode == LOGGINGMODE_ALL || loggingMode == LOGGINGMODE_FILE) && Logger::m_bIsLogFileOpen)
 				Logger::m_ofsLogFile << szMessage << std::endl;
-			else if ((loggingMode == LoggingMode::LoggingModeConsole) || (loggingMode == LoggingMode::LoggingModeConsoleAndFile))
+			else if ((loggingMode == LOGGINGMODE_CONSOLE) || (loggingMode == LOGGINGMODE_ALL))
 			{
 				std::wcout << szMessage << std::endl;
 			}
-			return logCallStatusSuccess;
+			return LOGCALLSTATUS_SUCCESS;
 		}
 		catch (int exception)
 		{
 			std::wostringstream oss; \
 				oss << L"Error " << std::dec << exception << L" encountered";
-			Logger::Write(logLevelError, oss.str(), loggingMode);
-			return logCallStatusError;
+			Logger::Write(LOGLEVEL_ERROR, oss.str(), loggingMode);
+			return LOGCALLSTATUS_ERROR;
 		}
-		return logCallStatusError;
+		return LOGCALLSTATUS_ERROR;
 
 	}
 }

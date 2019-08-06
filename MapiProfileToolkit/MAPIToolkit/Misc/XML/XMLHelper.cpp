@@ -1,3 +1,4 @@
+#pragma once
 #include "XMLHelper.h"
 #include "..//..//Logger.h"
 #include "..//..//ToolkitTypeDefs.h"
@@ -247,7 +248,7 @@ namespace MAPIToolkit
 
 				for (unsigned int j = 0; j < profileInfo[i].ulServiceCount; j++)
 				{
-					if (ServiceType::ServiceType_Mailbox == profileInfo[i].profileServices[j].serviceType)
+					if (SERVICETYPE_EXCHANGEACCOUNT == profileInfo[i].profileServices[j].serviceType)
 					{
 						// create child node for each service
 						IXMLDOMElement* pServiceNode = NULL;
@@ -297,26 +298,26 @@ namespace MAPIToolkit
 						CHK_HR(CreateAndAddElementNode(pXMLDom, L"RohProxyServer", L"\n\t", pServiceNode, &pRohProxyServerNode));
 						CHK_HR(CreateAndAddTextNode(pXMLDom, profileInfo[i].profileServices[j].exchangeAccountInfo->wszRohProxyServer.c_str(), pRohProxyServerNode));
 						SAFE_RELEASE(pRohProxyServerNode);
-						// Add CachedModeEnabledOwner node and value
-						IXMLDOMElement* pCachedModeEnabledOwnerNode = NULL;
-						CHK_HR(CreateAndAddElementNode(pXMLDom, L"CachedModeEnabledOwner", L"\n\t", pServiceNode, &pCachedModeEnabledOwnerNode));
-						CHK_HR(CreateAndAddTextNode(pXMLDom, ConvertStdStringToWideChar(ConvertIntToString(profileInfo[i].profileServices[j].exchangeAccountInfo->bCachedModeEnabledOwner)), pCachedModeEnabledOwnerNode));
-						SAFE_RELEASE(pCachedModeEnabledOwnerNode);
-						// Add CachedModeEnabledShared node and value
-						IXMLDOMElement* pCachedModeEnabledSharedNode = NULL;
-						CHK_HR(CreateAndAddElementNode(pXMLDom, L"CachedModeEnabledShared", L"\n\t", pServiceNode, &pCachedModeEnabledSharedNode));
-						CHK_HR(CreateAndAddTextNode(pXMLDom, ConvertStdStringToWideChar(ConvertIntToString(profileInfo[i].profileServices[j].exchangeAccountInfo->bCachedModeEnabledShared)), pCachedModeEnabledSharedNode));
-						SAFE_RELEASE(pCachedModeEnabledSharedNode);
-						// Add CachedModeEnabledPublicFolders node and value
-						IXMLDOMElement* pCachedModeEnabledPublicFoldersNode = NULL;
-						CHK_HR(CreateAndAddElementNode(pXMLDom, L"CachedModeEnabledPublicFolders", L"\n\t", pServiceNode, &pCachedModeEnabledPublicFoldersNode));
-						CHK_HR(CreateAndAddTextNode(pXMLDom, ConvertStdStringToWideChar(ConvertIntToString(profileInfo[i].profileServices[j].exchangeAccountInfo->bCachedModeEnabledPublicFolders)), pCachedModeEnabledPublicFoldersNode));
-						SAFE_RELEASE(pCachedModeEnabledPublicFoldersNode);
-						// Add CachedModeMonths node and value
-						IXMLDOMElement* pCachedModeMonthsNode = NULL;
-						CHK_HR(CreateAndAddElementNode(pXMLDom, L"CachedModeMonths", L"\n\t", pServiceNode, &pCachedModeMonthsNode));
-						CHK_HR(CreateAndAddTextNode(pXMLDom, ConvertStdStringToWideChar(ConvertIntToString(profileInfo[i].profileServices[j].exchangeAccountInfo->iCachedModeMonths)), pCachedModeMonthsNode));
-						SAFE_RELEASE(pCachedModeMonthsNode);
+						// Add ULONGEnabledOwner node and value
+						IXMLDOMElement* pULONGEnabledOwnerNode = NULL;
+						CHK_HR(CreateAndAddElementNode(pXMLDom, L"ULONGEnabledOwner", L"\n\t", pServiceNode, &pULONGEnabledOwnerNode));
+						CHK_HR(CreateAndAddTextNode(pXMLDom, ConvertStdStringToWideChar(ConvertIntToString(profileInfo[i].profileServices[j].exchangeAccountInfo->bULONGEnabledOwner)), pULONGEnabledOwnerNode));
+						SAFE_RELEASE(pULONGEnabledOwnerNode);
+						// Add ULONGEnabledShared node and value
+						IXMLDOMElement* pULONGEnabledSharedNode = NULL;
+						CHK_HR(CreateAndAddElementNode(pXMLDom, L"ULONGEnabledShared", L"\n\t", pServiceNode, &pULONGEnabledSharedNode));
+						CHK_HR(CreateAndAddTextNode(pXMLDom, ConvertStdStringToWideChar(ConvertIntToString(profileInfo[i].profileServices[j].exchangeAccountInfo->bULONGEnabledShared)), pULONGEnabledSharedNode));
+						SAFE_RELEASE(pULONGEnabledSharedNode);
+						// Add ULONGEnabledPublicFolders node and value
+						IXMLDOMElement* pULONGEnabledPublicFoldersNode = NULL;
+						CHK_HR(CreateAndAddElementNode(pXMLDom, L"ULONGEnabledPublicFolders", L"\n\t", pServiceNode, &pULONGEnabledPublicFoldersNode));
+						CHK_HR(CreateAndAddTextNode(pXMLDom, ConvertStdStringToWideChar(ConvertIntToString(profileInfo[i].profileServices[j].exchangeAccountInfo->bULONGEnabledPublicFolders)), pULONGEnabledPublicFoldersNode));
+						SAFE_RELEASE(pULONGEnabledPublicFoldersNode);
+						// Add ULONGMonths node and value
+						IXMLDOMElement* pULONGMonthsNode = NULL;
+						CHK_HR(CreateAndAddElementNode(pXMLDom, L"ULONGMonths", L"\n\t", pServiceNode, &pULONGMonthsNode));
+						CHK_HR(CreateAndAddTextNode(pXMLDom, ConvertStdStringToWideChar(ConvertIntToString(profileInfo[i].profileServices[j].exchangeAccountInfo->iCachedModeMonths)), pULONGMonthsNode));
+						SAFE_RELEASE(pULONGMonthsNode);
 						// Add UserName node and value
 						IXMLDOMElement* pUserNameNode = NULL;
 						CHK_HR(CreateAndAddElementNode(pXMLDom, L"UserName", L"\n\t", pServiceNode, &pUserNameNode));
@@ -386,7 +387,7 @@ namespace MAPIToolkit
 
 						SAFE_RELEASE(pServiceNode);
 					}
-					if (profileInfo[i].profileServices[j].serviceType == ServiceType::ServiceType_Pst)
+					if (profileInfo[i].profileServices[j].serviceType == SERVICETYPE_DATAFILE)
 					{
 						// create child node for each service
 						IXMLDOMElement* pServiceNode = NULL;
@@ -440,7 +441,7 @@ namespace MAPIToolkit
 		CHK_HR(AppendChildToParent(pRoot, pXMLDom));
 
 		CHK_HR(pXMLDom->get_xml(&bstrXML));
-		Logger::Write(logLevelSuccess, L"Wrote info to xml :" + std::wstring(bstrXML));
+		Logger::Write(LOGLEVEL_SUCCESS, L"Wrote info to xml :" + std::wstring(bstrXML));
 		if (szExportPath != L"")
 		{
 			std::wstring szComputerName = _wgetenv(L"COMPUTERNAME");
@@ -448,7 +449,7 @@ namespace MAPIToolkit
 			std::wstring szFullExportPath = szExportPath + L"\\" + szComputerName + L"_" + szUserName + L".xml";
 			CHK_HR(VariantFromString(szFullExportPath.c_str(), varFileName));
 			CHK_HR(pXMLDom->save(varFileName));
-			Logger::Write(logLevelSuccess, L"Profile information saved to " + szFullExportPath);
+			Logger::Write(LOGLEVEL_SUCCESS, L"Profile information saved to " + szFullExportPath);
 		}
 		else
 		{
@@ -457,7 +458,7 @@ namespace MAPIToolkit
 			std::wstring szFullExportPath = szComputerName + L"_" + szUserName + L".xml";
 			CHK_HR(VariantFromString(szFullExportPath.c_str(), varFileName));
 			CHK_HR(pXMLDom->save(varFileName));
-			Logger::Write(logLevelSuccess, L"Profile information saved to " + szFullExportPath);
+			Logger::Write(LOGLEVEL_SUCCESS, L"Profile information saved to " + szFullExportPath);
 		}
 
 	CleanUp:
