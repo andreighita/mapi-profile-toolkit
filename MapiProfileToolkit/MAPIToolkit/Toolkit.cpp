@@ -205,7 +205,6 @@ namespace MAPIToolkit
 	// The execution will only continue if the bitness is matched.
 	BOOL _cdecl Toolkit::IsCorrectBitness()
 	{
-
 		std::wstring szOLVer = L"";
 		std::wstring szOLBitness = L"";
 		szOLVer = GetRegStringValue(HKEY_CLASSES_ROOT, TEXT("Outlook.Application\\CurVer"), NULL);
@@ -329,6 +328,18 @@ namespace MAPIToolkit
 	{
 		if (m_pProfAdmin) m_pProfAdmin->Release();
 		MAPIUninitialize();
+	}
+
+	BOOL Toolkit::SaveConfig()
+	{
+		if (!WriteRegDwordValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options", L"Action", m_action)) return FALSE;
+		if (!WriteRegDwordValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options", L"OutlookVersion", m_OutlookVersion)) return FALSE;
+		if (!WriteRegDwordValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options", L"LoggingMode", m_loggingMode)) return FALSE;
+		if (!WriteRegDwordValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options", L"ProfileCount", m_profileCount)) return FALSE;
+		if (!WriteRegStringValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options", L"ExportPath", (LPCTSTR)m_wszExportPath.c_str())) return FALSE;
+		if (!WriteRegDwordValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options", L"ExportMode", m_exportMode)) return FALSE;
+		if (!WriteRegStringValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options", L"LogFilePath", (LPCTSTR)m_wszLogFilePath.c_str())) return FALSE;
+		return TRUE;
 	}
 
 	void Toolkit::Run(int argc, wchar_t* argv[])

@@ -23,9 +23,12 @@ namespace MAPIToolkit
 
 		static VOID RunAction();
 		static BOOL ParseParams(int argc, wchar_t* argv[]);
+		static BOOL SaveConfig();
 
 		static BOOL Initialise();
 		static VOID Uninitialise();
+
+		
 
 		static std::map<std::wstring, ULONG> g_actionsMap;
 		static std::map<std::wstring, ULONG> g_profileModeMap;
@@ -43,6 +46,8 @@ namespace MAPIToolkit
 		static std::wstring m_wszLogFilePath;
 		static ULONG m_profileMode; // pm
 		static LPPROFADMIN m_pProfAdmin;
+
+		
 
 	public:
 		 static VOID Run(int argc, wchar_t* argv[]);

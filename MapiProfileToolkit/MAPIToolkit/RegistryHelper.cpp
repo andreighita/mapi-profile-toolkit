@@ -6,6 +6,7 @@
 
 #include <string>
 #include <tchar.h>
+#include "Misc/Utility/StringOperations.h"
 
 #define MAX_KEY_LENGTH 255
 #define MAX_VALUE_NAME 16383
@@ -164,6 +165,39 @@ namespace MAPIToolkit
 		else
 			return L"";
 	}
+	
+	DWORD __cdecl GetRegDwordValue(HKEY hRegistryHive, LPCTSTR lpszKeyName, LPCTSTR lpszValueName)
+	{
+		DWORD* pdwTempValueData = NULL;
+		DWORD dwValueDataSize;
+
+		if (GetValue(hRegistryHive, lpszKeyName, lpszValueName, KEY_READ, REG_DWORD, (LPBYTE*)&pdwTempValueData, &dwValueDataSize))
+		{
+			if (pdwTempValueData)
+			{
+				return *pdwTempValueData;
+			}
+			else return 0;
+		}
+		else if (GetValue(hRegistryHive, lpszKeyName, lpszValueName, KEY_READ | KEY_WOW64_64KEY, REG_SZ, (LPBYTE*)& pdwTempValueData, &dwValueDataSize))
+		{
+			if (pdwTempValueData)
+			{
+				return *pdwTempValueData;
+			}
+			else return 0;
+		}
+		if (GetValue(hRegistryHive, lpszKeyName, lpszValueName, KEY_READ | KEY_WOW64_32KEY, REG_SZ, (LPBYTE*)& pdwTempValueData, &dwValueDataSize))
+		{
+			if (pdwTempValueData)
+			{
+				return *pdwTempValueData;
+			}
+			else return 0;
+		}
+		else
+			return 0;
+	}
 
 	BOOL __cdecl WriteRegStringValue(HKEY hRegistryHive, LPCTSTR lpszKeyName, LPCTSTR lpszValueName, LPCTSTR lpszValueData)
 	{
@@ -177,7 +211,7 @@ namespace MAPIToolkit
 		if (RegSetValueExW(key, lpszValueName, 0, REG_SZ, (LPBYTE)lpszValueData, wcslen(lpszValueData)  * sizeof(wchar_t)) != ERROR_SUCCESS)
 		{
 			RegCloseKey(key);
-			Logger::Write(LOGLEVEL_ERROR, L"Unable to set registry value value_name");
+			Logger::Write(LOGLEVEL_ERROR, L"Unable to set registry value");
 			return FALSE;
 		}
 		else
@@ -189,4 +223,27 @@ namespace MAPIToolkit
 		return TRUE;
 	}
 
+	BOOL __cdecl WriteRegDwordValue(HKEY hRegistryHive, LPCTSTR lpszKeyName, LPCTSTR lpszValueName, DWORD dwValueData)
+	{
+		HKEY key;
+		if (RegOpenKey(hRegistryHive, lpszKeyName, &key) != ERROR_SUCCESS)
+		{
+			Logger::Write(LOGLEVEL_ERROR, L"Unable to open registry key");
+			return FALSE;
+		}
+
+		if (RegSetValueExW(key, lpszValueName, 0, REG_DWORD, (LPBYTE)&dwValueData, sizeof(dwValueData)) != ERROR_SUCCESS)
+		{
+			RegCloseKey(key);
+			Logger::Write(LOGLEVEL_ERROR, L"Unable to set registry value value_name");
+			return FALSE;
+		}
+		else
+		{
+			Logger::Write(LOGLEVEL_SUCCESS, L"value_name was set");
+			return FALSE;
+		}
+		RegCloseKey(key);
+		return TRUE;
+	}
 }
