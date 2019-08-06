@@ -31,4 +31,6 @@ namespace MAPIToolkit
 	BSTR ConvertStdStringToBstr(const wchar_t* szValue);
 
 	std::wstring ConvertIntToString(int t);
+
+	VOID ConvertStringToBinary(std::wstring szValue, BYTE* pbValue);
 }

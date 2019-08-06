@@ -139,4 +139,20 @@ namespace MAPIToolkit
 		return wss.str();
 	}
 
+	VOID ConvertStringToBinary(std::wstring szValue, BYTE* pbValue)
+	{
+		DWORD hex_len = szValue.length() / 2;
+		BYTE* buffer = new BYTE[hex_len];
+		CryptStringToBinary(szValue.c_str(),
+			szValue.length(),
+			CRYPT_STRING_HEX,
+			buffer,
+			&hex_len,
+			NULL,
+			NULL
+		);
+
+		*pbValue = *buffer;
+	}
+
 }

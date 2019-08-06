@@ -46,7 +46,7 @@ namespace MAPIToolkit
 		static std::wstring m_wszLogFilePath;
 		static ULONG m_profileMode; // pm
 		static LPPROFADMIN m_pProfAdmin;
-
+		static ULONG m_serviceType; // pm
 		
 
 	public:

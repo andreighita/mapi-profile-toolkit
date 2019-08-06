@@ -25,10 +25,20 @@ namespace MAPIToolkit
 			void RemoveAllAddressBookServices();
 		
 	public:
-		std::wstring wszProfileName;
-		std::wstring wszABDisplayName;
-		std::wstring wszConfigFilePath;
-		std::wstring wszABServerName;
+		BOOL enableBrowsing;
+		BOOL requireSPA;
+		BOOL useSSL;
+		std::wstring configFilePath;
+		std::wstring customSearchBase;
+		std::wstring displayName;
+		std::wstring maxResults;
+		std::wstring serverName;
+		std::wstring serverPort;
+		std::wstring timeout;
+		std::wstring username;
+		std::wstring password;
+		ULONG defaultSearchBase;
+
 	};
 }
 

@@ -165,13 +165,13 @@ namespace MAPIToolkit
 		else
 			return L"";
 	}
-	
+
 	DWORD __cdecl GetRegDwordValue(HKEY hRegistryHive, LPCTSTR lpszKeyName, LPCTSTR lpszValueName)
 	{
 		DWORD* pdwTempValueData = NULL;
 		DWORD dwValueDataSize;
 
-		if (GetValue(hRegistryHive, lpszKeyName, lpszValueName, KEY_READ, REG_DWORD, (LPBYTE*)&pdwTempValueData, &dwValueDataSize))
+		if (GetValue(hRegistryHive, lpszKeyName, lpszValueName, KEY_READ, REG_DWORD, (LPBYTE*)& pdwTempValueData, &dwValueDataSize))
 		{
 			if (pdwTempValueData)
 			{
@@ -202,23 +202,32 @@ namespace MAPIToolkit
 	BOOL __cdecl WriteRegStringValue(HKEY hRegistryHive, LPCTSTR lpszKeyName, LPCTSTR lpszValueName, LPCTSTR lpszValueData)
 	{
 		HKEY key;
-		if (RegOpenKey(hRegistryHive, lpszKeyName, &key) != ERROR_SUCCESS)
+		HRESULT hres = RegOpenKey(hRegistryHive, lpszKeyName, &key);
+		if (hres != ERROR_SUCCESS)
 		{
-			Logger::Write(LOGLEVEL_ERROR, L"Unable to open registry key");
-			return FALSE;
+			if (hres == ERROR_FILE_NOT_FOUND)
+			{
+				hres = RegCreateKey(hRegistryHive, lpszKeyName, &key);
+				if (hres != ERROR_SUCCESS)
+				{
+					return FALSE;
+				}
+			}
+			else
+			{
+				Logger::Write(LOGLEVEL_ERROR, L"Unable to open registry key");
+				return FALSE;
+			}
 		}
 
-		if (RegSetValueExW(key, lpszValueName, 0, REG_SZ, (LPBYTE)lpszValueData, wcslen(lpszValueData)  * sizeof(wchar_t)) != ERROR_SUCCESS)
+		if (RegSetValueExW(key, lpszValueName, 0, REG_SZ, (LPBYTE)lpszValueData, wcslen(lpszValueData) * sizeof(wchar_t)) != ERROR_SUCCESS)
 		{
 			RegCloseKey(key);
 			Logger::Write(LOGLEVEL_ERROR, L"Unable to set registry value");
 			return FALSE;
 		}
-		else
-		{
-			Logger::Write(LOGLEVEL_SUCCESS, L"value_name was set");
-			return FALSE;
-		}
+
+		Logger::Write(LOGLEVEL_SUCCESS, L"value  was set");
 		RegCloseKey(key);
 		return TRUE;
 	}
@@ -226,23 +235,65 @@ namespace MAPIToolkit
 	BOOL __cdecl WriteRegDwordValue(HKEY hRegistryHive, LPCTSTR lpszKeyName, LPCTSTR lpszValueName, DWORD dwValueData)
 	{
 		HKEY key;
-		if (RegOpenKey(hRegistryHive, lpszKeyName, &key) != ERROR_SUCCESS)
+		HRESULT hres = RegOpenKey(hRegistryHive, lpszKeyName, &key);
+		if (hres != ERROR_SUCCESS)
 		{
-			Logger::Write(LOGLEVEL_ERROR, L"Unable to open registry key");
-			return FALSE;
+			if (hres == ERROR_FILE_NOT_FOUND)
+			{
+				hres = RegCreateKey(hRegistryHive, lpszKeyName, &key);
+				if (hres != ERROR_SUCCESS)
+				{
+					return FALSE;
+				}
+			}
+			else
+			{
+				Logger::Write(LOGLEVEL_ERROR, L"Unable to open registry key");
+				return FALSE;
+			}
 		}
 
-		if (RegSetValueExW(key, lpszValueName, 0, REG_DWORD, (LPBYTE)&dwValueData, sizeof(dwValueData)) != ERROR_SUCCESS)
+		if (RegSetValueExW(key, lpszValueName, 0, REG_DWORD, (LPBYTE)& dwValueData, sizeof(dwValueData)) != ERROR_SUCCESS)
 		{
 			RegCloseKey(key);
 			Logger::Write(LOGLEVEL_ERROR, L"Unable to set registry value value_name");
 			return FALSE;
 		}
-		else
+
+		Logger::Write(LOGLEVEL_SUCCESS, L"value  was set");
+		RegCloseKey(key);
+		return TRUE;
+	}
+
+	BOOL __cdecl WriteRegBinaryValue(HKEY hRegistryHive, LPCTSTR lpszKeyName, LPCTSTR lpszValueName, BYTE* pbValueData)
+	{
+		HKEY key;
+		HRESULT hres = RegOpenKey(hRegistryHive, lpszKeyName, &key);
+		if (hres != ERROR_SUCCESS)
 		{
-			Logger::Write(LOGLEVEL_SUCCESS, L"value_name was set");
+			if (hres == ERROR_FILE_NOT_FOUND)
+			{
+				hres = RegCreateKey(hRegistryHive, lpszKeyName, &key);
+				if (hres != ERROR_SUCCESS)
+				{
+					return FALSE;
+				}
+			}
+			else
+			{
+				Logger::Write(LOGLEVEL_ERROR, L"Unable to open registry key");
+				return FALSE;
+			}
+		}
+
+		if (RegSetValueExW(key, lpszValueName, 0, REG_BINARY, pbValueData, sizeof(pbValueData)) != ERROR_SUCCESS)
+		{
+			RegCloseKey(key);
+			Logger::Write(LOGLEVEL_ERROR, L"Unable to set registry value value_name");
 			return FALSE;
 		}
+
+		Logger::Write(LOGLEVEL_SUCCESS, L"value  was set");
 		RegCloseKey(key);
 		return TRUE;
 	}

@@ -26,6 +26,8 @@
 #include "PublicFoldersWorker.h"
 #include "ProfileWorker.h"
 #include "ProviderWorker.h"
+#include "Misc/Utility/StringOperations.h"
+#include "Misc/XML/XmlParser.h"
 
 
 #pragma comment(lib, "Advapi32.lib")
@@ -102,6 +104,7 @@ namespace MAPIToolkit
 	std::wstring Toolkit::m_wszLogFilePath;
 	ULONG Toolkit::m_profileMode; // pm
 	LPPROFADMIN Toolkit::m_pProfAdmin;
+	ULONG Toolkit::m_serviceType;
 
 	// Is64BitProcess
 // Returns true if 64 bit process or false if 32 bit.
@@ -113,8 +116,6 @@ namespace MAPIToolkit
 		return FALSE;
 #endif
 	}
-
-
 
 	void Toolkit::DisplayUsage()
 	{
@@ -308,7 +309,6 @@ namespace MAPIToolkit
 		m_loggingMode = LOGGINGMODE_CONSOLE;
 		m_serviceWorker = NULL;
 		m_providerWorker = NULL;
-		m_profileWorker = NULL;
 		m_profileCount = 0;
 		m_wszExportPath = L"";
 		m_exportMode = EXPORTMODE_EXPORT; // 0 = no export; 1 = export;
@@ -317,9 +317,10 @@ namespace MAPIToolkit
 		m_pProfAdmin = NULL;
 
 		MAPIINIT_0  MAPIINIT = { 0, MAPI_MULTITHREAD_NOTIFICATIONS };
-
+		CoInitialize(NULL);
 		HCKM(MAPIInitialize(&MAPIINIT), L"Initialising MAPI");
 		HCKM(MAPIAdminProfiles(0, &m_pProfAdmin), L"Getting profile administration interface pointer.");
+
 
 		return TRUE;
 	}
@@ -328,34 +329,54 @@ namespace MAPIToolkit
 	{
 		if (m_pProfAdmin) m_pProfAdmin->Release();
 		MAPIUninitialize();
+		CoUninitialize();
 	}
 
 	BOOL Toolkit::SaveConfig()
 	{
-		if (!WriteRegDwordValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options", L"Action", m_action)) return FALSE;
-		if (!WriteRegDwordValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options", L"OutlookVersion", m_OutlookVersion)) return FALSE;
-		if (!WriteRegDwordValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options", L"LoggingMode", m_loggingMode)) return FALSE;
-		if (!WriteRegDwordValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options", L"ProfileCount", m_profileCount)) return FALSE;
-		if (!WriteRegStringValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options", L"ExportPath", (LPCTSTR)m_wszExportPath.c_str())) return FALSE;
-		if (!WriteRegDwordValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options", L"ExportMode", m_exportMode)) return FALSE;
-		if (!WriteRegStringValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options", L"LogFilePath", (LPCTSTR)m_wszLogFilePath.c_str())) return FALSE;
+		if (!WriteRegDwordValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options", L"action", m_action)) return FALSE;
+		if (!WriteRegDwordValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options", L"outlookversion", m_OutlookVersion)) return FALSE;
+		if (!WriteRegDwordValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options", L"loggingmode", m_loggingMode)) return FALSE;
+		if (!WriteRegDwordValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options", L"profilecount", m_profileCount)) return FALSE;
+		if (!WriteRegStringValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options", L"exportpath", m_wszExportPath.c_str())) return FALSE;
+		if (!WriteRegDwordValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options", L"exportmode", m_exportMode)) return FALSE;
+		if (!WriteRegStringValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options", L"logfilepath", m_wszLogFilePath.c_str())) return FALSE;
+		if (!WriteRegDwordValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options", L"profilemode", m_profileMode)) return FALSE;
+		if (!WriteRegStringValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options", L"profilename", m_profileWorker->profileName.c_str())) return FALSE;
+		if (!WriteRegDwordValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options", L"servicetype", m_serviceType)) return FALSE;
+		if (SERVICETYPE_ADDRESSBOOK == m_serviceType)
+		{
+			if (!WriteRegStringValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options\\AddressBook", L"displayName", ((AddressBookWorker*)m_serviceWorker)->displayName.c_str())) return FALSE;
+			if (!WriteRegStringValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options\\AddressBook", L"serverName", ((AddressBookWorker*)m_serviceWorker)->serverName.c_str())) return FALSE;
+			if (!WriteRegStringValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options\\AddressBook", L"configFilePath", ((AddressBookWorker*)m_serviceWorker)->configFilePath.c_str())) return FALSE;
+			if (!WriteRegStringValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options\\AddressBook", L"customSearchBase", ((AddressBookWorker*)m_serviceWorker)->customSearchBase.c_str())) return FALSE;
+			if (!WriteRegStringValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options\\AddressBook", L"maxResults", ((AddressBookWorker*)m_serviceWorker)->maxResults.c_str())) return FALSE;
+			if (!WriteRegStringValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options\\AddressBook", L"serverPort", ((AddressBookWorker*)m_serviceWorker)->serverPort.c_str())) return FALSE;
+			if (!WriteRegStringValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options\\AddressBook", L"timeout", ((AddressBookWorker*)m_serviceWorker)->timeout.c_str())) return FALSE;
+			if (!WriteRegStringValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options\\AddressBook", L"username", ((AddressBookWorker*)m_serviceWorker)->username.c_str())) return FALSE;
+			if (!WriteRegDwordValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options\\AddressBook", L"useSSL", ((AddressBookWorker*)m_serviceWorker)->useSSL)) return FALSE;
+			if (!WriteRegDwordValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options\\AddressBook", L"requireespa", ((AddressBookWorker*)m_serviceWorker)->requireSPA)) return FALSE;
+			if (!WriteRegDwordValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options\\AddressBook", L"enablebrowsing", ((AddressBookWorker*)m_serviceWorker)->enableBrowsing)) return FALSE;
+			if (!WriteRegDwordValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options\\AddressBook", L"defaultsearchbase", ((AddressBookWorker*)m_serviceWorker)->defaultSearchBase)) return FALSE;
+			BYTE* byteVal = new BYTE();
+			ConvertStringToBinary(((AddressBookWorker*)m_serviceWorker)->password, byteVal);
+			if (!WriteRegBinaryValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options\\AddressBook", L"password", byteVal)) return FALSE;
+		}
 		return TRUE;
 	}
 
 	void Toolkit::Run(int argc, wchar_t* argv[])
 	{
-		m_action = ACTION_UNSPECIFIED;
-		m_OutlookVersion = GetOutlookVersion();
-		m_loggingMode = LOGGINGMODE_CONSOLE;
-		m_serviceWorker = NULL;
-		m_providerWorker = NULL;
+		Initialise();
 
 		if (ParseParams(argc, argv))
 		{
-
+			SaveConfig();
 		}
 		else
 			DisplayUsage();
+
+		Uninitialise();
 	}
 
 	void Toolkit::RunAction()
@@ -492,17 +513,17 @@ namespace MAPIToolkit
 		{
 			if (m_serviceWorker)
 			{
-				if (SERVICETYPE_ADDRESSBOOK == m_serviceWorker->m_serviceType)
+				if (SERVICETYPE_ADDRESSBOOK == m_serviceType)
 				{
 					((AddressBookWorker*)m_serviceWorker)->AddAddressBookService();
 					Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
 				}
-				else if (SERVICETYPE_EXCHANGEACCOUNT == m_serviceWorker->m_serviceType)
+				else if (SERVICETYPE_EXCHANGEACCOUNT == m_serviceType)
 				{
 					((ExchangeAccountWorker*)m_serviceWorker)->AddExchangeAccount();
 					Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
 				}
-				else if (SERVICETYPE_DATAFILE == m_serviceWorker->m_serviceType)
+				else if (SERVICETYPE_DATAFILE == m_serviceType)
 				{
 					((DataFileWorker*)m_serviceWorker)->AddDataFile();
 					Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
@@ -524,7 +545,7 @@ namespace MAPIToolkit
 		{
 			if (m_serviceWorker)
 			{
-				if (SERVICETYPE_ADDRESSBOOK == m_serviceWorker->m_serviceType)
+				if (SERVICETYPE_ADDRESSBOOK == m_serviceType)
 				{
 					((AddressBookWorker*)m_serviceWorker)->ListAddressBookService();
 				}
@@ -537,7 +558,7 @@ namespace MAPIToolkit
 		{
 			if (m_serviceWorker)
 			{
-				if (SERVICETYPE_ADDRESSBOOK == m_serviceWorker->m_serviceType)
+				if (SERVICETYPE_ADDRESSBOOK == m_serviceType)
 				{
 					((AddressBookWorker*)m_serviceWorker)->ListAllAddressBookServices();
 				}
@@ -550,7 +571,7 @@ namespace MAPIToolkit
 		{
 			if (m_serviceWorker)
 			{
-				if (SERVICETYPE_ADDRESSBOOK == m_serviceWorker->m_serviceType)
+				if (SERVICETYPE_ADDRESSBOOK == m_serviceType)
 				{
 					((AddressBookWorker*)m_serviceWorker)->RemoveAddressBookService();
 				}
@@ -563,7 +584,7 @@ namespace MAPIToolkit
 		{
 			if (m_serviceWorker)
 			{
-				if (SERVICETYPE_ADDRESSBOOK == m_serviceWorker->m_serviceType)
+				if (SERVICETYPE_ADDRESSBOOK == m_serviceType)
 				{
 					((AddressBookWorker*)m_serviceWorker)->RemoveAllAddressBookServices();
 				}
@@ -718,6 +739,8 @@ namespace MAPIToolkit
 
 		// profile worker
 		m_profileWorker = new ProfileWorker();
+		m_profileWorker->profileName = GetDefaultProfileName();
+		m_profileCount = GetProfileCount();
 
 		for (int i = 1; i < argc; i++)
 		{
@@ -757,7 +780,8 @@ namespace MAPIToolkit
 					std::transform(wszValue.begin(), wszValue.end(), wszValue.begin(), ::tolower);
 					try
 					{
-						m_action = g_serviceTypeMap.at(wszValue);
+						m_serviceType = g_serviceTypeMap.at(wszValue);
+
 					}
 					catch (const std::exception& e)
 					{
@@ -775,43 +799,44 @@ namespace MAPIToolkit
 
 
 
-		if (m_serviceWorker)
+		// configure address book worker
+		if (m_serviceType == SERVICETYPE_ADDRESSBOOK)
 		{
-			// configure address book worker
-			if (m_serviceWorker->m_serviceType == SERVICETYPE_ADDRESSBOOK)
-			{
-				for (int i = 1; i < argc; i++)
-				{
-					std::wstring wsArg = argv[i];
-					std::transform(wsArg.begin(), wsArg.end(), wsArg.begin(), ::tolower);
+			m_serviceWorker = new AddressBookWorker();
 
-					if ((wsArg == L"-addressbookdisplayname") || (wsArg == L"-abdn"))
+			for (int i = 1; i < argc; i++)
+			{
+				std::wstring wsArg = argv[i];
+				std::transform(wsArg.begin(), wsArg.end(), wsArg.begin(), ::tolower);
+
+				if ((wsArg == L"-addressbookdisplayname") || (wsArg == L"-abdn"))
+				{
+					if (i + 1 < argc)
 					{
-						if (i + 1 < argc)
-						{
-							((AddressBookWorker*)m_serviceWorker)->wszABDisplayName = argv[i + 1];
-							i++;
-						}
+						((AddressBookWorker*)m_serviceWorker)->displayName = argv[i + 1];
+						i++;
 					}
-					else if ((wsArg == L"-addressbookservername") || (wsArg == L"-absn"))
+				}
+				else if ((wsArg == L"-addressbookservername") || (wsArg == L"-absn"))
+				{
+					if (i + 1 < argc)
 					{
-						if (i + 1 < argc)
-						{
-							((AddressBookWorker*)m_serviceWorker)->wszABServerName = argv[i + 1];
-							i++;
-						}
+						((AddressBookWorker*)m_serviceWorker)->serverName = argv[i + 1];
+						i++;
 					}
-					else if ((wsArg == L"-addressbookconfigfilepath") || (wsArg == L"-abcfp"))
+				}
+				else if ((wsArg == L"-addressbookconfigfilepath") || (wsArg == L"-abcfp"))
+				{
+					if (i + 1 < argc)
 					{
-						if (i + 1 < argc)
-						{
-							((AddressBookWorker*)m_serviceWorker)->wszConfigFilePath = argv[i + 1];
-							i++;
-						}
+						((AddressBookWorker*)m_serviceWorker)->configFilePath = argv[i + 1];
+						ParseXml((LPTSTR)((AddressBookWorker*)m_serviceWorker)->configFilePath.c_str(), (AddressBookWorker*)m_serviceWorker);
+						i++;
 					}
 				}
 			}
 		}
+
 
 		// Provider 
 		for (int i = 1; i < argc; i++)

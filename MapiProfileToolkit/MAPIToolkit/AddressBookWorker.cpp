@@ -3,11 +3,14 @@
 
 MAPIToolkit::AddressBookWorker::AddressBookWorker()
 {
-	m_serviceType = SERVICETYPE_ADDRESSBOOK;
+	displayName = L"";
+	serverName = L"";
+	configFilePath = L"";
 }
 
 void MAPIToolkit::AddressBookWorker::AddAddressBookService()
 {
+
 }
 
 void MAPIToolkit::AddressBookWorker::UpdateAddressBookService()

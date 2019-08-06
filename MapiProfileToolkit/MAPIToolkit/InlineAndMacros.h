@@ -5,11 +5,22 @@
 #include <sstream>
 namespace MAPIToolkit
 {
+#define HCKH(_hRes) \
+	do { \
+		hRes = _hRes; \
+		if (FAILED(_hRes)) \
+																{ \
+			std::cout << "FAILED! hr = " << std::hex << hRes << ".  LINE = " << std::dec << __LINE__ << "\n"; \
+			std::cout << " >>> " << std::hex << _hRes <<  "\n"; \
+			goto Error; \
+																} \
+								} while (0)
+
 #define HCK(_hRes) \
 	do { \
 		if (FAILED(_hRes)) \
 																{ \
-			std::cout << "FAILED! hr = " << std::hex << hRes << ".  LINE = " << std::dec << __LINE__ << "\n"; \
+			std::cout << "FAILED! hr = " << std::hex << _hRes << ".  LINE = " << std::dec << __LINE__ << "\n"; \
 			std::cout << " >>> " << std::hex << _hRes <<  "\n"; \
 			goto Error; \
 																} \
