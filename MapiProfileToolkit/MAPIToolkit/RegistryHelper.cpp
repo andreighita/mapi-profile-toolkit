@@ -8,6 +8,7 @@
 #include <tchar.h>
 #include "Misc/Utility/StringOperations.h"
 #include "Toolkit.h"
+#include "InlineAndMacros.h"
 
 #define MAX_KEY_LENGTH 255
 #define MAX_VALUE_NAME 16383
@@ -299,15 +300,11 @@ namespace MAPIToolkit
 		return TRUE;
 	}
 
-	BOOL ReadAllValues(HKEY hRegistryHive, LPCTSTR lpszKeyName)
+	BOOL ReadRegConfig(HKEY hRegistryHive, LPCTSTR lpszKeyName, std::map<std::wstring, std::wstring>* pMapObject)
 	{
+		HRESULT hRes = S_OK;
 		HKEY hKey;
-		HRESULT hres = RegOpenKey(hRegistryHive, lpszKeyName, &hKey);
-		if (hres != ERROR_SUCCESS)
-		{
-			Logger::Write(LOGLEVEL_ERROR, L"Unable to open registry key");
-			return FALSE;
-		}
+		CHK_HR_MSG(RegOpenKey(hRegistryHive, lpszKeyName, &hKey), L"Opening registry key");
 
 		DWORD    cValues;              // number of values for key 
 		DWORD    cbMaxValueData;       // longest value data 
@@ -315,7 +312,7 @@ namespace MAPIToolkit
 		DWORD i, retCode;
 
 		// Get the class name and the value count. 
-		hres = RegQueryInfoKey(
+		CHK_HR_MSG(RegQueryInfoKey(
 			hKey,                    // key handle 
 			NULL,                // buffer for class name 
 			NULL,           // size of class string 
@@ -327,8 +324,8 @@ namespace MAPIToolkit
 			NULL,            // longest value name 
 			&cbMaxValueData,         // longest value data 
 			NULL,   // security descriptor 
-			NULL);       // last write time 
-
+			NULL),     // last write time 
+			L"Getting registry information");
 		DWORD dwType = REG_SZ;
 		LPDWORD lpdwType = &dwType;
 
@@ -341,27 +338,25 @@ namespace MAPIToolkit
 				LPWSTR lpRegValue = NULL;
 				MAPIAllocateBuffer(MAX_VALUE_NAME, (LPVOID*)& lpRegValue);
 
-				retCode = RegEnumValue(hKey, i,
+				CHK_HR_MSG(RegEnumValue(hKey, i,
 					lpRegValue,
 					lpdcValName,
 					NULL,
 					lpdwType,
 					NULL,
-					NULL);
+					NULL), L"Getting reg value names");
 
-				if (retCode == ERROR_SUCCESS)
-				{
 					DWORD dwcValData = MAX_PATH;
 					LPDWORD lpdwcValData = &dwcValData;
 					LPWSTR lpRegValueData = NULL;
 					MAPIAllocateBuffer(MAX_PATH, (LPVOID*)& lpRegValueData);
 
-					LONG dwRes = RegQueryValueEx(hKey, lpRegValue, 0, NULL, (LPBYTE)lpRegValueData, lpdwcValData);
+					CHK_HR_MSG(RegQueryValueEx(hKey, lpRegValue, 0, NULL, (LPBYTE)lpRegValueData, lpdwcValData), L"Getting reg value data");
 					std::wstring wszValue = ConvertWideCharToStdWstring(lpRegValue);
 					std::wstring wszValueData = ConvertWideCharToStdWstring(lpRegValueData);
 					try
 					{
-						Toolkit::g_toolkitMap.at(wszValue) = wszValueData;
+						pMapObject->at(wszValue) = wszValueData;
 					}
 					catch (const std::exception& e)
 					{
@@ -369,11 +364,16 @@ namespace MAPIToolkit
 					}
 					MAPIFreeBuffer(lpdwcValData);
 					MAPIFreeBuffer(lpRegValueData);
-				}
+				
 				MAPIFreeBuffer(lpdcValName);
 				MAPIFreeBuffer(lpRegValue);
 			}
 		}
-
+		RegCloseKey(hKey);
+	Error:
+		goto CleanUp;
+	CleanUp:
+		return true;
 	}
+
 }

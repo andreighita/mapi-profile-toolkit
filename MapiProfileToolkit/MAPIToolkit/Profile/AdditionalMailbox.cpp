@@ -27,7 +27,7 @@ namespace MAPIToolkit
 		LPSERVICEADMIN lpServiceAdmin = NULL;
 		LPMAPITABLE lpServiceTable = NULL;
 
-		HCKM(MAPIAdminProfiles(0, // Flags
+		CHK_HR_MSG(MAPIAdminProfiles(0, // Flags
 			&lpProfAdmin), L"Calling #"); // Pointer to new IProfAdmin
 
 		if (bDefaultProfile)
@@ -35,7 +35,7 @@ namespace MAPIToolkit
 			lpwszProfileName = (LPWSTR)GetDefaultProfileName().c_str();
 		}
 
-		HCKM(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
+		CHK_HR_MSG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
 			LPTSTR(""),            // Password for that profile.
 			NULL,                // Handle to parent window.
 			0,                    // Flags.
@@ -57,15 +57,15 @@ namespace MAPIToolkit
 			SizedSPropTagArray(cptaSvcProps, sptaSvcProps) = { cptaSvcProps, PR_SERVICE_UID, PR_RESOURCE_FLAGS };
 
 			// Allocate memory for the restriction
-			HCKM(MAPIAllocateBuffer(
+			CHK_HR_MSG(MAPIAllocateBuffer(
 				sizeof(SRestriction),
 				(LPVOID*)& lpSvcRes), L"Calling MAPIAllocateBuffer");
 
-			HCKM(MAPIAllocateBuffer(
+			CHK_HR_MSG(MAPIAllocateBuffer(
 				sizeof(SRestriction) * 2,
 				(LPVOID*)& lpsvcResLvl1), L"Calling MAPIAllocateBuffer");
 
-			HCKM(MAPIAllocateBuffer(
+			CHK_HR_MSG(MAPIAllocateBuffer(
 				sizeof(SPropValue),
 				(LPVOID*)& lpSvcPropVal), L"Calling MAPIAllocateBuffer");
 
@@ -87,7 +87,7 @@ namespace MAPIToolkit
 			lpSvcPropVal->Value.lpszA = LPSTR("MSEMS");
 
 			// Query the table to get the the default profile only
-			HCKM(HrQueryAllRows(lpServiceTable,
+			CHK_HR_MSG(HrQueryAllRows(lpServiceTable,
 				(LPSPropTagArray)& sptaSvcProps,
 				lpSvcRes,
 				NULL,
@@ -119,14 +119,14 @@ namespace MAPIToolkit
 							rgval[1].Value.lpszW = lpszwDisplayName;
 
 							// Create the message service with the above properties.
-							HCKM(lpProvAdmin->CreateProvider(LPWSTR("EMSDelegate"),
+							CHK_HR_MSG(lpProvAdmin->CreateProvider(LPWSTR("EMSDelegate"),
 								2,
 								rgval,
 								0,
 								0,
 								lpProviderUid), L"Calling CreateProvider");
 
-							HCKM(HrUpdatePrStoreProviders(lpServiceAdmin, (LPMAPIUID)lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb, &muidProviderUid), L"Calling HrComputePrStoreProviders");
+							CHK_HR_MSG(HrUpdatePrStoreProviders(lpServiceAdmin, (LPMAPIUID)lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb, &muidProviderUid), L"Calling HrComputePrStoreProviders");
 
 							if (FAILED(hRes)) goto Error;
 							if (lpProvAdmin) lpProvAdmin->Release();
@@ -157,7 +157,7 @@ namespace MAPIToolkit
 					rgval[1].Value.lpszW = lpszwDisplayName;
 
 					// Create the message service with the above properties.
-					HCKM(lpProvAdmin->CreateProvider(LPWSTR("EMSDelegate"),
+					CHK_HR_MSG(lpProvAdmin->CreateProvider(LPWSTR("EMSDelegate"),
 						2,
 						rgval,
 						0,
@@ -179,9 +179,9 @@ namespace MAPIToolkit
 		// End process services
 
 	Error:
-		goto Cleanup;
+		goto CleanUp;
 
-	Cleanup:
+	CleanUp:
 		// Clean up.
 		// Free up memory
 		if (lpProfAdmin) lpProfAdmin->Release();
@@ -196,7 +196,7 @@ namespace MAPIToolkit
 
 		if VCHK(profileMode, PROFILEMODE_DEFAULT)
 		{
-			HCKM(HrAddDelegateMailboxOneProfile((LPWSTR)GetDefaultProfileName().c_str(), iOutlookVersion, serviceMode, iServiceIndex, pProviderWorker), L"Calling HrAddDelegateMailboxOneProfile");
+			CHK_HR_MSG(HrAddDelegateMailboxOneProfile((LPWSTR)GetDefaultProfileName().c_str(), iOutlookVersion, serviceMode, iServiceIndex, pProviderWorker), L"Calling HrAddDelegateMailboxOneProfile");
 
 		}
 		else if VCHK(profileMode, PROFILEMODE_ALL)
@@ -206,20 +206,22 @@ namespace MAPIToolkit
 			hRes = HrGetProfiles(ulProfileCount, profileInfo);
 			for (ULONG i = 0; i <= ulProfileCount; i++)
 			{
-				HCKM(HrAddDelegateMailboxOneProfile((LPWSTR)profileInfo[i].wszProfileName.c_str(), iOutlookVersion, serviceMode, iServiceIndex, pProviderWorker), L"Calling HrAddDelegateMailboxOneProfile");
+				CHK_HR_MSG(HrAddDelegateMailboxOneProfile((LPWSTR)profileInfo[i].wszProfileName.c_str(), iOutlookVersion, serviceMode, iServiceIndex, pProviderWorker), L"Calling HrAddDelegateMailboxOneProfile");
 			}
 		}
 		else
 		{
 			if VCHK(profileMode, PROFILEMODE_SPECIFIC)
 			{
-				HCKM(HrAddDelegateMailboxOneProfile(lpwszProfileName, iOutlookVersion, serviceMode, iServiceIndex, pProviderWorker), L"Calling HrAddDelegateMailboxOneProfile");
+				CHK_HR_MSG(HrAddDelegateMailboxOneProfile(lpwszProfileName, iOutlookVersion, serviceMode, iServiceIndex, pProviderWorker), L"Calling HrAddDelegateMailboxOneProfile");
 			}
 			else
 				Logger::Write(LOGLEVEL_ERROR, L"The specified profile name is invalid or no profile name was specified.\n");
 		}
-
 	Error:
+		goto CleanUp;
+
+	CleanUp:
 		return hRes;
 	}
 
@@ -229,7 +231,7 @@ namespace MAPIToolkit
 		switch (iOutlookVersion)
 		{
 		case 2007:
-			HCKM(HrAddDelegateMailboxLegacy(FALSE,
+			CHK_HR_MSG(HrAddDelegateMailboxLegacy(FALSE,
 				lpwszProfileName,
 				VCHK(serviceMode, SERVICEMODE_DEFAULT),
 				iServiceIndex,
@@ -240,7 +242,7 @@ namespace MAPIToolkit
 			break;
 		case 2010:
 		case 2013:
-			HCKM(HrAddDelegateMailbox(FALSE,
+			CHK_HR_MSG(HrAddDelegateMailbox(FALSE,
 				lpwszProfileName,
 				VCHK(serviceMode, SERVICEMODE_DEFAULT),
 				iServiceIndex,
@@ -255,7 +257,7 @@ namespace MAPIToolkit
 				(LPWSTR)pProviderWorker->wszMailStoreInternalUrl.c_str()), L"Calling HrAddDelegateMailbox");
 			break;
 		case 2016:
-			HCKM(HrAddDelegateMailboxModern(FALSE,
+			CHK_HR_MSG(HrAddDelegateMailboxModern(FALSE,
 				lpwszProfileName,
 				VCHK(serviceMode, SERVICEMODE_DEFAULT),
 				iServiceIndex,
@@ -263,8 +265,10 @@ namespace MAPIToolkit
 				(LPWSTR)pProviderWorker->wszSmtpAddress.c_str()), L"Calling HrCreateMsemsServiceModern");
 			break;
 		}
-
 	Error:
+		goto CleanUp;
+
+	CleanUp:
 		return hRes;
 	}
 
@@ -300,7 +304,7 @@ namespace MAPIToolkit
 		enum { iDispName, iSvcName, iSvcUID, iResourceFlags, iEmsMdbSectionUid, cptaSvc };
 		SizedSPropTagArray(cptaSvc, sptCols) = { cptaSvc, PR_DISPLAY_NAME, PR_SERVICE_NAME, PR_SERVICE_UID, PR_RESOURCE_FLAGS, PR_EMSMDB_SECTION_UID };
 
-		HCKM(MAPIAdminProfiles(0, // Flags
+		CHK_HR_MSG(MAPIAdminProfiles(0, // Flags
 			&lpProfAdmin), L"Calling MAPIAdminProfiles."); // Pointer to new IProfAdmin
 
 		if (bDefaultProfile)
@@ -308,7 +312,7 @@ namespace MAPIToolkit
 			lpwszProfileName = (LPWSTR)GetDefaultProfileName().c_str();
 		}
 
-		HCKM(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
+		CHK_HR_MSG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
 			LPTSTR(""),            // Password for that profile.
 			NULL,                // Handle to parent window.
 			0,                    // Flags.
@@ -328,15 +332,15 @@ namespace MAPIToolkit
 			SizedSPropTagArray(cptaSvcProps, sptaSvcProps) = { cptaSvcProps, PR_SERVICE_UID, PR_RESOURCE_FLAGS };
 
 			// Allocate memory for the restriction
-			HCKM(MAPIAllocateBuffer(
+			CHK_HR_MSG(MAPIAllocateBuffer(
 				sizeof(SRestriction),
 				(LPVOID*)& lpSvcRes), L"Calling MAPIAllocateBuffer");
 
-			HCKM(MAPIAllocateBuffer(
+			CHK_HR_MSG(MAPIAllocateBuffer(
 				sizeof(SRestriction) * 2,
 				(LPVOID*)& lpsvcResLvl1), L"Calling MAPIAllocateBuffer");
 
-			HCKM(MAPIAllocateBuffer(
+			CHK_HR_MSG(MAPIAllocateBuffer(
 				sizeof(SPropValue),
 				(LPVOID*)& lpSvcPropVal), L"Calling MAPIAllocateBuffer");
 
@@ -358,7 +362,7 @@ namespace MAPIToolkit
 			lpSvcPropVal->Value.lpszA = LPSTR("MSEMS");
 
 			// Query the table to get the the default profile only
-			HCKM(HrQueryAllRows(lpServiceTable,
+			CHK_HR_MSG(HrQueryAllRows(lpServiceTable,
 				(LPSPropTagArray)& sptaSvcProps,
 				lpSvcRes,
 				NULL,
@@ -506,7 +510,7 @@ namespace MAPIToolkit
 		enum { iDispName, iSvcName, iSvcUID, iResourceFlags, iEmsMdbSectionUid, cptaSvc };
 		SizedSPropTagArray(cptaSvc, sptCols) = { cptaSvc, PR_DISPLAY_NAME, PR_SERVICE_NAME, PR_SERVICE_UID, PR_RESOURCE_FLAGS, PR_EMSMDB_SECTION_UID };
 
-		HCKM(MAPIAdminProfiles(0, // Flags
+		CHK_HR_MSG(MAPIAdminProfiles(0, // Flags
 			&lpProfAdmin), L"Calling MAPIAdminProfiles"); // Pointer to new IProfAdmin
 
 														  // Begin process services
@@ -517,7 +521,7 @@ namespace MAPIToolkit
 			lpwszProfileName = (LPWSTR)GetDefaultProfileName().c_str();
 		}
 
-		HCKM(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
+		CHK_HR_MSG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
 			LPTSTR(""),            // Password for that profile.
 			NULL,                // Handle to parent window.
 			0,                    // Flags.
@@ -538,15 +542,15 @@ namespace MAPIToolkit
 			SizedSPropTagArray(cptaSvcProps, sptaSvcProps) = { cptaSvcProps, PR_SERVICE_UID, PR_RESOURCE_FLAGS };
 
 			// Allocate memory for the restriction
-			HCKM(MAPIAllocateBuffer(
+			CHK_HR_MSG(MAPIAllocateBuffer(
 				sizeof(SRestriction),
 				(LPVOID*)& lpSvcRes), L"Calling MAPIAllocateBuffer");
 
-			HCKM(MAPIAllocateBuffer(
+			CHK_HR_MSG(MAPIAllocateBuffer(
 				sizeof(SRestriction) * 2,
 				(LPVOID*)& lpsvcResLvl1), L"Calling MAPIAllocateBuffer");
 
-			HCKM(MAPIAllocateBuffer(
+			CHK_HR_MSG(MAPIAllocateBuffer(
 				sizeof(SPropValue),
 				(LPVOID*)& lpSvcPropVal), L"Calling MAPIAllocateBuffer");
 
@@ -568,7 +572,7 @@ namespace MAPIToolkit
 			lpSvcPropVal->Value.lpszA = LPSTR("MSEMS");
 
 			// Query the table to get the the default profile only
-			HCKM(HrQueryAllRows(lpServiceTable,
+			CHK_HR_MSG(HrQueryAllRows(lpServiceTable,
 				(LPSPropTagArray)& sptaSvcProps,
 				lpSvcRes,
 				NULL,
@@ -605,7 +609,7 @@ namespace MAPIToolkit
 
 							wprintf(L"Creating EMSDelegate provider.\n");
 							// Create the message service with the above properties.
-							HCKM(lpProvAdmin->CreateProvider(LPWSTR("EMSDelegate"),
+							CHK_HR_MSG(lpProvAdmin->CreateProvider(LPWSTR("EMSDelegate"),
 								4,
 								rgval,
 								0,
@@ -613,7 +617,7 @@ namespace MAPIToolkit
 								lpProviderUid), L"Calling CreateProvider");
 							if (FAILED(hRes)) goto Error;
 
-							HCKM(HrUpdatePrStoreProviders(lpServiceAdmin, (LPMAPIUID)lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb, &muidProviderUid), L"Calling HrComputePrStoreProviders");
+							CHK_HR_MSG(HrUpdatePrStoreProviders(lpServiceAdmin, (LPMAPIUID)lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb, &muidProviderUid), L"Calling HrComputePrStoreProviders");
 						}
 					}
 				}
@@ -683,8 +687,8 @@ namespace MAPIToolkit
 		if (bDefaultProfile)
 		{
 			ProfileInfo* profileInfo = new ProfileInfo();
-			HCKM(HrGetProfile((LPWSTR)GetDefaultProfileName().c_str(), profileInfo), L"Calling GetProfile");
-			HCKM(HrPromoteDelegatesOneProfile((LPWSTR)profileInfo->wszProfileName.c_str(), profileInfo, iServiceIndex, bDefaultService, bAllServices, iOutlookVersion, connectMode), L"Calling HrPromoteDelegatesOneProfile");
+			CHK_HR_MSG(HrGetProfile((LPWSTR)GetDefaultProfileName().c_str(), profileInfo), L"Calling GetProfile");
+			CHK_HR_MSG(HrPromoteDelegatesOneProfile((LPWSTR)profileInfo->wszProfileName.c_str(), profileInfo, iServiceIndex, bDefaultService, bAllServices, iOutlookVersion, connectMode), L"Calling HrPromoteDelegatesOneProfile");
 
 		}
 		else if (bAllProfiles)
@@ -694,7 +698,7 @@ namespace MAPIToolkit
 			hRes = HrGetProfiles(ulProfileCount, profileInfo);
 			for (ULONG i = 0; i <= ulProfileCount; i++)
 			{
-				HCKM(HrPromoteDelegatesOneProfile((LPWSTR)profileInfo[i].wszProfileName.c_str(), &profileInfo[i], iServiceIndex, bDefaultService, bAllServices, iOutlookVersion, connectMode), L"Calling HrPromoteDelegatesOneProfile");
+				CHK_HR_MSG(HrPromoteDelegatesOneProfile((LPWSTR)profileInfo[i].wszProfileName.c_str(), &profileInfo[i], iServiceIndex, bDefaultService, bAllServices, iOutlookVersion, connectMode), L"Calling HrPromoteDelegatesOneProfile");
 			}
 		}
 		else
@@ -703,14 +707,16 @@ namespace MAPIToolkit
 			{
 				ProfileInfo* profileInfo = new ProfileInfo();
 				hRes = HrGetProfile(lpwszProfileName, profileInfo);
-				HCKM(HrPromoteDelegatesOneProfile((LPWSTR)profileInfo->wszProfileName.c_str(), profileInfo, iServiceIndex, bDefaultService, bAllServices, iOutlookVersion, connectMode), L"Calling HrPromoteDelegatesOneProfile");
+				CHK_HR_MSG(HrPromoteDelegatesOneProfile((LPWSTR)profileInfo->wszProfileName.c_str(), profileInfo, iServiceIndex, bDefaultService, bAllServices, iOutlookVersion, connectMode), L"Calling HrPromoteDelegatesOneProfile");
 
 			}
 			else
 				Logger::Write(LOGLEVEL_ERROR, L"The specified profile name is invalid or no profile name was specified.\n");
 		}
-
 	Error:
+		goto CleanUp;
+
+	CleanUp:
 		return hRes;
 	}
 
@@ -730,7 +736,7 @@ namespace MAPIToolkit
 						{
 							if ((pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulProfileType == PROFILE_DELEGATE) && (pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].bIsOnlineArchive == false))
 							{
-								HCKM(HrPromoteOneDelegate(lpwszProfileName, iOutlookVersion, connectMode, pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j]), L"Calling HrPromoteDelegate");
+								CHK_HR_MSG(HrPromoteOneDelegate(lpwszProfileName, iOutlookVersion, connectMode, pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j]), L"Calling HrPromoteDelegate");
 							}
 						}
 					}
@@ -744,7 +750,7 @@ namespace MAPIToolkit
 					{
 						if ((pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->accountMailboxes[j].ulProfileType == PROFILE_DELEGATE) && (pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->accountMailboxes[j].bIsOnlineArchive == false))
 						{
-							HCKM(HrPromoteOneDelegate(lpwszProfileName, iOutlookVersion, connectMode, pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->accountMailboxes[j]), L"Calling HrPromoteDelegate");
+							CHK_HR_MSG(HrPromoteOneDelegate(lpwszProfileName, iOutlookVersion, connectMode, pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->accountMailboxes[j]), L"Calling HrPromoteDelegate");
 						}
 					}
 				}
@@ -757,7 +763,7 @@ namespace MAPIToolkit
 					{
 						if ((pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulProfileType == PROFILE_DELEGATE) && (pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].bIsOnlineArchive == false))
 						{
-							HCKM(HrPromoteOneDelegate(lpwszProfileName, iOutlookVersion, connectMode, pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j]), L"Calling HrPromoteDelegate");
+							CHK_HR_MSG(HrPromoteOneDelegate(lpwszProfileName, iOutlookVersion, connectMode, pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j]), L"Calling HrPromoteDelegate");
 						}
 					}
 				}
@@ -766,6 +772,8 @@ namespace MAPIToolkit
 
 		}
 	Error:
+		goto CleanUp;
+	CleanUp:
 		return hRes;
 	}
 
@@ -782,7 +790,7 @@ namespace MAPIToolkit
 			//	(LPWSTR)mailboxInfo.wszProfileServer.c_str(),
 			//	loggingMode)))
 			//{
-			//	HCKM(HrDeleteProvider(profileName, &pProfileInfo->profileServices[i].muidServiceUid, &mailboxInfo.muidProviderUid, loggingMode), L"Calling HrDeleteProvider");
+			//	CHK_HR_MSG(HrDeleteProvider(profileName, &pProfileInfo->profileServices[i].muidServiceUid, &mailboxInfo.muidProviderUid, loggingMode), L"Calling HrDeleteProvider");
 			//}
 			Logger::Write(LOGLEVEL_ERROR, L"This client version is not currently supported.");
 			break;
@@ -814,7 +822,7 @@ namespace MAPIToolkit
 						(LPWSTR)wszServerDN.c_str(),
 						(LPWSTR)NULL)))
 					{
-						HCKM(HrDeleteProvider(lpwszProfileName, &mailboxInfo.muidServiceUid, &mailboxInfo.muidProviderUid), L"Calling HrDeleteProvider");
+						CHK_HR_MSG(HrDeleteProvider(lpwszProfileName, &mailboxInfo.muidServiceUid, &mailboxInfo.muidProviderUid), L"Calling HrDeleteProvider");
 					}
 				}
 				else
@@ -856,7 +864,7 @@ namespace MAPIToolkit
 						(LPWSTR)mailboxInfo.wszAddressBookInternalUrl.c_str(),
 						(LPWSTR)mailboxInfo.wszAddressBookExternalUrl.c_str())))
 					{
-						HCKM(HrDeleteProvider(lpwszProfileName, &mailboxInfo.muidServiceUid, &mailboxInfo.muidProviderUid), L"Calling HrDeleteProvider");
+						CHK_HR_MSG(HrDeleteProvider(lpwszProfileName, &mailboxInfo.muidServiceUid, &mailboxInfo.muidProviderUid), L"Calling HrDeleteProvider");
 					}
 				}
 			}
@@ -869,13 +877,12 @@ namespace MAPIToolkit
 				(LPWSTR)SubstringToEnd(L"smtp:", mailboxInfo.wszSmtpAddress).c_str(),
 				(LPWSTR)SubstringToEnd(L"smtp:", mailboxInfo.wszSmtpAddress).c_str())))
 			{
-				HCKM(HrDeleteProvider(lpwszProfileName, &mailboxInfo.muidServiceUid, &mailboxInfo.muidProviderUid), L"Calling HrDeleteProvider");
+				CHK_HR_MSG(HrDeleteProvider(lpwszProfileName, &mailboxInfo.muidServiceUid, &mailboxInfo.muidProviderUid), L"Calling HrDeleteProvider");
 			}
 
 			break;
 		}
 
-	Error:
 		return hRes;
 	}
 }

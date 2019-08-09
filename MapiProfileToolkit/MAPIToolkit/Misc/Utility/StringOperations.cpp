@@ -10,6 +10,12 @@ namespace MAPIToolkit
 		return std::string(lpStr);
 	}
 
+	std::wstring ConvertMultiByteToStdWString(LPSTR lpStr)
+	{
+		return std::wstring(ConvertMultiByteToWideChar(lpStr));
+	}
+
+
 	std::wstring ConvertWideCharToStdWstring(LPWSTR lpwStr)
 	{
 		return std::wstring(lpwStr);

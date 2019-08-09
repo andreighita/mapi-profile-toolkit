@@ -6,6 +6,8 @@ namespace MAPIToolkit
 {
 	std::string ConvertMultiByteToStdString(LPSTR lpStr);
 
+	std::wstring ConvertMultiByteToStdWString(LPSTR lpStr);
+
 	std::wstring ConvertWideCharToStdWstring(LPWSTR lpwStr);
 
 	std::string ConvertWideCharToStdString(LPWSTR lpwStr);

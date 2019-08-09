@@ -51,7 +51,27 @@ namespace MAPIToolkit
 	public:
 		static std::map<std::wstring, std::wstring> g_addressBookMap;
 		static std::map<std::wstring, std::wstring> g_toolkitMap;
+		static std::map<std::wstring, std::wstring> g_regKeyMap;
 	public:
 		 static VOID Run(int argc, wchar_t* argv[]);
+
+	private:
+		// ACTION_SERVICE_ADD	
+		static void AddAddressBookService();
+
+		// ACTION_SERVICE_UPDATE	
+		static void UpdateAddressBookService();
+
+		// ACTION_SERVICE_LIST
+		static void ListAddressBookService();
+
+		// ACTION_SERVICE_LISTALL
+		static void ListAllAddressBookServices();
+
+		// ACTION_SERVICE_REMOVE
+		static void RemoveAddressBookService();
+
+		// ACTION_SERVICE_REMOVEALL
+		static void RemoveAllAddressBookServices();
 	};
 }

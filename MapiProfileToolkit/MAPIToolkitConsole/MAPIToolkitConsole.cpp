@@ -4,11 +4,10 @@
 
 #include <iostream>
 #include <tchar.h>
-#include "C:\Users\anixi\Source\Repos\mapi-toolkit\MapiProfileToolkit\MAPIToolkit\Toolkit.h"
+#include "Toolkit.h"
 
 using namespace MAPIToolkit;
 #pragma comment (lib, "MAPIToolkit.lib")
-
 
 int wmain(int argc, wchar_t* argv[])
 {

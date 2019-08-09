@@ -28,6 +28,7 @@
 #include "ProviderWorker.h"
 #include "Misc/Utility/StringOperations.h"
 #include "Misc/XML/AddressBookXmlParser.h"
+#include <vector>
 
 
 #pragma comment(lib, "Advapi32.lib")
@@ -124,6 +125,12 @@ namespace MAPIToolkit
 		{ L"providermode",		L"" },
 		{ L"providertype",		L"" },
 		{ L"configfilepath",	L"" }
+	};
+
+	std::map<std::wstring, std::wstring> Toolkit::g_regKeyMap =
+	{
+		{ L"toolkit",				L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit"},
+		{ L"addressbook",			L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\AddressBook" }
 	};
 
 	ULONG Toolkit::m_action;
@@ -361,6 +368,7 @@ namespace MAPIToolkit
 
 	BOOL Toolkit::Initialise()
 	{
+		HRESULT hRes = S_OK;
 		m_action = ACTION_UNSPECIFIED;
 		m_OutlookVersion = GetOutlookVersion();
 		m_loggingMode = LOGGINGMODE_CONSOLE;
@@ -374,11 +382,12 @@ namespace MAPIToolkit
 		m_pProfAdmin = NULL;
 
 		MAPIINIT_0  MAPIINIT = { 0, MAPI_MULTITHREAD_NOTIFICATIONS };
-		HCKM(CoInitialize(NULL), L"Initialising the COM library on the current thread");
-		HCKM(MAPIInitialize(&MAPIINIT), L"Initialising MAPI");
-		HCKM(MAPIAdminProfiles(0, &m_pProfAdmin), L"Getting profile administration interface pointer.");
-
-
+		CHK_HR_MSG(CoInitialize(NULL), L"Initialising the COM library on the current thread");
+		CHK_HR_MSG(MAPIInitialize(&MAPIINIT), L"Initialising MAPI");
+		CHK_HR_MSG(MAPIAdminProfiles(0, &m_pProfAdmin), L"Getting profile administration interface pointer.");
+	Error:
+		goto CleanUp;
+	CleanUp:
 		return TRUE;
 	}
 
@@ -394,7 +403,7 @@ namespace MAPIToolkit
 		for (auto const& keyValuePair : g_toolkitMap)
 		{
 			if (!keyValuePair.second.empty())
-				if (!WriteRegStringValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit", (LPCTSTR)keyValuePair.first.c_str(), (LPCTSTR)keyValuePair.second.c_str())) return FALSE;
+				if (!WriteRegStringValue(HKEY_CURRENT_USER, (LPCTSTR)g_regKeyMap.at(L"toolkit").c_str(), (LPCTSTR)keyValuePair.first.c_str(), (LPCTSTR)keyValuePair.second.c_str())) return FALSE;
 		}
 
 		if (0 == wcscmp(g_toolkitMap.at(L"servicetype").c_str(), L"addressbook"))
@@ -402,7 +411,7 @@ namespace MAPIToolkit
 			for (auto const& keyValuePair : g_addressBookMap)
 			{
 				if (!keyValuePair.second.empty())
-					if (!WriteRegStringValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\AddressBook", (LPCTSTR)keyValuePair.first.c_str(), (LPCTSTR)keyValuePair.second.c_str())) return FALSE;
+					if (!WriteRegStringValue(HKEY_CURRENT_USER, (LPCTSTR)g_regKeyMap.at(L"addressbook").c_str(), (LPCTSTR)keyValuePair.first.c_str(), (LPCTSTR)keyValuePair.second.c_str())) return FALSE;
 			}
 		}
 		return TRUE;
@@ -410,7 +419,8 @@ namespace MAPIToolkit
 
 	BOOL Toolkit::ReadConfig()
 	{
-		ReadAllValues(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit");
+		ReadRegConfig(HKEY_CURRENT_USER, (LPCTSTR)g_regKeyMap.at(L"toolkit").c_str(), &g_toolkitMap);
+		ReadRegConfig(HKEY_CURRENT_USER, (LPCTSTR)g_regKeyMap.at(L"addressbook").c_str(), &g_addressBookMap);
 		return TRUE;
 	}
 
@@ -420,12 +430,49 @@ namespace MAPIToolkit
 
 		if (ParseParams(argc, argv))
 		{
-			// run actions
+			RunAction();
 		}
 		else
 			DisplayUsage();
 
 		Uninitialise();
+	}
+
+	void Toolkit::AddAddressBookService()
+	{
+		std::vector<std::wstring> vProfileNames;
+		switch (g_profileModeMap.at(g_toolkitMap.at(L"profilemode")))
+		{
+		case PROFILEMODE_ALL:
+			GetProfileNames(m_pProfAdmin, &vProfileNames);
+			break;
+		case PROFILEMODE_SPECIFIC:
+
+			break;
+		case PROFILEMODE_DEFAULT:
+
+			break;
+		}
+	}
+
+	void Toolkit::UpdateAddressBookService()
+	{
+	}
+
+	void Toolkit::ListAddressBookService()
+	{
+	}
+
+	void Toolkit::ListAllAddressBookServices()
+	{
+	}
+
+	void Toolkit::RemoveAddressBookService()
+	{
+	}
+
+	void Toolkit::RemoveAllAddressBookServices()
+	{
 	}
 
 	void Toolkit::RunAction()
@@ -560,23 +607,20 @@ namespace MAPIToolkit
 		}
 		case ACTION_SERVICE_ADD:
 		{
-			if (m_serviceWorker)
+			if (SERVICETYPE_ADDRESSBOOK == m_serviceType)
 			{
-				if (SERVICETYPE_ADDRESSBOOK == m_serviceType)
-				{
-					((AddressBookWorker*)m_serviceWorker)->AddAddressBookService();
-					Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
-				}
-				else if (SERVICETYPE_EXCHANGEACCOUNT == m_serviceType)
-				{
-					((ExchangeAccountWorker*)m_serviceWorker)->AddExchangeAccount();
-					Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
-				}
-				else if (SERVICETYPE_DATAFILE == m_serviceType)
-				{
-					((DataFileWorker*)m_serviceWorker)->AddDataFile();
-					Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
-				}
+				AddAddressBookService();
+				Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
+			}
+			else if (SERVICETYPE_EXCHANGEACCOUNT == m_serviceType)
+			{
+				((ExchangeAccountWorker*)m_serviceWorker)->AddExchangeAccount();
+				Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
+			}
+			else if (SERVICETYPE_DATAFILE == m_serviceType)
+			{
+				((DataFileWorker*)m_serviceWorker)->AddDataFile();
+				Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
 			}
 			break;
 		}
@@ -657,6 +701,10 @@ namespace MAPIToolkit
 
 	BOOL Toolkit::ParseParams(int argc, wchar_t* argv[])
 	{
+		HRESULT hRes = S_OK;
+		// parse the actions
+		std::wstring wszActionItem;
+		std::wstringstream wss(g_toolkitMap.at(L"action"));
 		// check if we're supposed to list the help menu
 		for (int i = 1; i < argc; i++)
 		{
@@ -703,135 +751,6 @@ namespace MAPIToolkit
 
 				}
 				break;
-			}
-		}
-
-		// general toolkit
-		for (int i = 1; i < argc; i++)
-		{
-			std::wstring wsArg = argv[i];
-			std::transform(wsArg.begin(), wsArg.end(), wsArg.begin(), ::tolower);
-
-			if ((wsArg == L"-action") || (wsArg == L"-a"))
-			{
-				if (i + 1 < argc)
-				{
-					std::wstring wszValue = argv[i + 1];
-					std::transform(wszValue.begin(), wszValue.end(), wszValue.begin(), ::tolower);
-					try
-					{
-						m_action = g_actionsMap.at(wszValue);
-					}
-					catch (const std::exception& e)
-					{
-						Logger::Write(LOGLEVEL_FAILED, L"The specified action is not valid. Valid options are 'addprofile', 'addprovider', 'addservice', 'changedatafilepath', 'cloneprofile', 'promotedelegates', 'listallprofiles', 'listallproviders', 'listallservices', 'listprofile', 'listprovider', 'listservice', 'promoteonedelegate', 'removeallprofiles', 'removeallproviders', 'removeallservices', 'removeprofile', 'removeprovider', 'removeservice', 'setcachedmode', 'setdefaultprofile', 'setdefaultservice', 'renameprofile', 'updateprovider', and 'updateservice'");
-						return false;
-					}
-				}
-				else
-				{
-					Logger::Write(LOGLEVEL_FAILED, L"You must specify a valid action. Valid options are 'addprofile', 'addprovider', 'addservice', 'changedatafilepath', 'cloneprofile', 'promotedelegates', 'listallprofiles', 'listallproviders', 'listallservices', 'listprofile', 'listprovider', 'listservice', 'promoteonedelegate', 'removeallprofiles', 'removeallproviders', 'removeallservices', 'removeprofile', 'removeprovider', 'removeservice', 'setcachedmode', 'setdefaultprofile', 'setdefaultservice', 'renameprofile', 'updateprovider', and 'updateservice'");
-					return false;
-				}
-			}
-			else if ((wsArg == L"-exportpath") || (wsArg == L"-ep"))
-			{
-				std::wstring wszExportPath = argv[i + 1];
-				std::transform(wszExportPath.begin(), wszExportPath.end(), wszExportPath.begin(), ::tolower);
-				m_wszExportPath = wszExportPath;
-				i++;
-			}
-			else if ((wsArg == L"-exportmode") || (wsArg == L"-em"))
-			{
-				if (i + 1 < argc)
-				{
-					std::wstring wszValue = argv[i + 1];
-					std::transform(wszValue.begin(), wszValue.end(), wszValue.begin(), ::tolower);
-					if (wszValue == L"export")
-					{
-						m_exportMode = EXPORTMODE_EXPORT;
-						i++;
-
-					}
-					else if (wszValue == L"noexport")
-					{
-						m_exportMode = EXPORTMODE_NOEXPORT;
-						i++;
-
-					}
-					else
-					{
-						Logger::Write(LOGLEVEL_FAILED, L"The specified value is not a valid export mode. Valid options are 'export' and 'noexport'");
-						return false;
-					}
-				}
-				else
-				{
-					Logger::Write(LOGLEVEL_FAILED, L"You must specify a valid export mode. Valid options are 'export' and 'noexport'");
-					return false;
-				}
-			}
-			else if ((wsArg == L"-profilemode") || (wsArg == L"-pm"))
-			{
-				if (i + 1 < argc)
-				{
-					std::wstring wszValue = argv[i + 1];
-					std::transform(wszValue.begin(), wszValue.end(), wszValue.begin(), ::tolower);
-					try
-					{
-						m_action = g_profileModeMap.at(wszValue);
-					}
-					catch (const std::exception& e)
-					{
-						Logger::Write(LOGLEVEL_FAILED, L"The specified profile mode is not valid. Valid options are 'default', 'specific', and 'all'.\n");
-						return false;
-					}
-				}
-				else
-				{
-					Logger::Write(LOGLEVEL_FAILED, L"You must specify a valid profile mode. Valid options are 'default', 'specific', and 'all'.\n");
-					return false;
-				}
-			}
-			else if ((wsArg == L"-loggingMode") || (wsArg == L"-lm"))
-			{
-				if (i + 1 < argc)
-				{
-					std::wstring wszValue = argv[i + 1];
-					std::transform(wszValue.begin(), wszValue.end(), wszValue.begin(), ::tolower);
-					if (wszValue == L"none")
-					{
-						m_loggingMode = LOGGINGMODE_NONE;
-						i++;
-
-					}
-					else if (wszValue == L"console")
-					{
-						m_loggingMode = LOGGINGMODE_CONSOLE;
-						i++;
-
-					}
-					else if (wszValue == L"file")
-					{
-						m_loggingMode = LOGGINGMODE_FILE;
-						i++;
-					}
-					else if (wszValue == L"consoleandfile")
-					{
-						m_loggingMode = LOGGINGMODE_ALL;
-						i++;
-					}
-					else
-					{
-						Logger::Write(LOGLEVEL_FAILED, L"The specified value is not a logging mode. Valid options are 'none', 'console', 'file', and 'consoleandfile'");
-						return false;
-					}
-				}
-				else
-				{
-					Logger::Write(LOGLEVEL_FAILED, L"You must specify a logging mode. Valid options are 'none', 'console', 'file', and 'consoleandfile'");
-					return false;
-				}
 			}
 		}
 
@@ -928,7 +847,7 @@ namespace MAPIToolkit
 				}
 			}
 
-			HCKM(ParseAddressBookXml((LPTSTR)g_addressBookMap.at(L"configfilepath").c_str()), L"Parsing configuration XML file");
+			CHK_HR_MSG(ParseAddressBookXml((LPTSTR)g_addressBookMap.at(L"configfilepath").c_str()), L"Parsing configuration XML file");
 		}
 
 
@@ -976,8 +895,16 @@ namespace MAPIToolkit
 			}
 		}
 
-		SaveConfig();
-		return true;
 
+		while (std::getline(wss, wszActionItem, L'|'))
+			m_action |= g_actionsMap.at(wszActionItem);
+
+		SaveConfig();
+	
+
+	Error:
+		goto CleanUp;
+	CleanUp:
+		return SUCCEEDED(hRes);
 	}
 }
