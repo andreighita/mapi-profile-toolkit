@@ -27,7 +27,7 @@
 #include "ProfileWorker.h"
 #include "ProviderWorker.h"
 #include "Misc/Utility/StringOperations.h"
-#include "Misc/XML/XmlParser.h"
+#include "Misc/XML/AddressBookXmlParser.h"
 
 
 #pragma comment(lib, "Advapi32.lib")
@@ -92,6 +92,40 @@ namespace MAPIToolkit
 		{ L"all",				SERVICETYPE_ALL }
 	};
 
+	std::map<std::wstring, std::wstring> Toolkit::g_addressBookMap =
+	{
+		{ L"displayname",		L""},
+		{ L"servername",		L"" },
+		{ L"serverport",		L"" },
+		{ L"usessl",			L"false" },
+		{ L"username",			L"" },
+		{ L"password",			L"" },
+		{ L"requirespa",		L"false" },
+		{ L"searchtimeout",		L"60" },
+		{ L"maxentries",		L"100" },
+		{ L"defaultsearchbase",	L"true" },
+		{ L"customsearchbase",	L"" },
+		{ L"enablebrowsing",	L"false" },
+		{ L"configfilepath",	L"" }
+	};
+
+	std::map<std::wstring, std::wstring> Toolkit::g_toolkitMap =
+	{
+		{ L"action",			L""},
+		{ L"outlookversion",	L"" },
+		{ L"loggingMode",		L"" },
+		{ L"profileCount",		L"" },
+		{ L"exportpath",		L"" },
+		{ L"exportmode",		L"" },
+		{ L"logfilepath",		L"" },
+		{ L"profilemode",		L"" },
+		{ L"servicemode",		L"" },
+		{ L"servicetype",		L"" },
+		{ L"providermode",		L"" },
+		{ L"providertype",		L"" },
+		{ L"configfilepath",	L"" }
+	};
+
 	ULONG Toolkit::m_action;
 	int Toolkit::m_OutlookVersion;
 	ULONG Toolkit::m_loggingMode;
@@ -105,6 +139,7 @@ namespace MAPIToolkit
 	ULONG Toolkit::m_profileMode; // pm
 	LPPROFADMIN Toolkit::m_pProfAdmin;
 	ULONG Toolkit::m_serviceType;
+	BOOL Toolkit::m_registry = FALSE;
 
 	// Is64BitProcess
 // Returns true if 64 bit process or false if 32 bit.
@@ -120,17 +155,27 @@ namespace MAPIToolkit
 	void Toolkit::DisplayUsage()
 	{
 		std::wprintf(L"MAPIToolkit - MAPI profile utility\n");
-		std::wprintf(L"    Allows management of Outlook / MAPI profiles at the command line.\n");
+		std::wprintf(L"       Allows the management of Outlook / MAPI profiles at the command line.\n");
 		std::wprintf(L"\n");
 		std::wprintf(L"Usage: [-?] \n");
 		std::wprintf(L"       [-action <addservice, listallservices, listservice, removeallservices, removeservice, updateservice>]\n");
 		std::wprintf(L"       [-profilemode <default, specific, all>]\n");
 		std::wprintf(L"       [-profilename name]\n");
 		std::wprintf(L"       [-servicetype <addressbook>]\n");
-		std::wprintf(L"       [-addressbookdisplayname displayname]\n");
-		std::wprintf(L"       [-addressbookservername servername]\n");
-		std::wprintf(L"       [-addressbookconfigfilepath configfilepath]\n");
-		std::wprintf(L"\n");
+		std::wprintf(L"       [-displayname name]\n");
+		std::wprintf(L"       [-servername name]\n");
+		std::wprintf(L"       [-serverport port]\n");
+		std::wprintf(L"       [-usessl <true, false>]\n");
+		std::wprintf(L"       [-username username]\n");
+		std::wprintf(L"       [-password password]\n");
+		std::wprintf(L"       [-requirespa <true, false>]\n");
+		std::wprintf(L"       [-searchtimeout timeout]\n");
+		std::wprintf(L"       [-maxentries maxentries]\n");
+		std::wprintf(L"       [-defaultsearchbase <true, false>]\n");
+		std::wprintf(L"       [-customsearchbase searchbase]\n");
+		std::wprintf(L"       [-enablebrowsing <true, false>]\n");
+		std::wprintf(L"       [-configfilepath path]\n");
+		std::wprintf(L"       \n");
 		std::wprintf(L"Options:\n");
 		std::wprintf(L" -?:			                Displays this information.\n");
 		std::wprintf(L" -action:                    \"addservice\" adds a service with the type specified by \"servicetype\".\n");
@@ -139,38 +184,50 @@ namespace MAPIToolkit
 		std::wprintf(L"                             \"removeallservices\" removes all services with the type specified by \"servicetype\".\n");
 		std::wprintf(L"                             \"removeservice\" removes a specific service with the type specified by \"servicetype\".\n");
 		std::wprintf(L"                             \"updateservice\" updates a specific service with the type specified by \"servicetype\".\n");
+		std::wprintf(L"                             \n");
 		std::wprintf(L" -profilemode:               \"default\" to run the selected action on the default profile.\n");
 		std::wprintf(L"                             \"specific\" to run the selected action on the profile specified by the \"profilename\" value.\n");
 		std::wprintf(L"                             \"all\" to run the selected action against all profiles.\n");
 		std::wprintf(L"                             The default profile will be used if a profile mode is not specified.\n");
-		std::wprintf(L"\n");
+		std::wprintf(L"                             \n");
 		std::wprintf(L" -profilename:               Name of the profile to run the specified actiona against. The profile name is mandatory\n");
 		std::wprintf(L"                             if \"profilename\" is set to \"specific\" \n");
+		std::wprintf(L"                             \n");
 		std::wprintf(L" -servicetype:               \"addressbook\" to run an addressbook specific operation.\n");
+		std::wprintf(L"                             \n");
 		std::wprintf(L" -servicetype:               This is the only operation currently supported.\n");
-		std::wprintf(L" -addressbookdisplayname:    The display name of the address book service to create, update, list or remove.\n");
-		std::wprintf(L" -addressbookservername:     The display name of the LDAP server configured in the address book.\n");
-		std::wprintf(L" -addressbookconfigfilepath: The path towards the address book configuration XML to use.\n");
-		std::wprintf(L"\n");
-		//wprintf(L"       -si:    Index of the account to process from previous export.\n");
-		//wprintf(L"       	       Must be used in conjunction with -pm one -pn profile or -pm default.\n");
-		//wprintf(L"\n");
-		//wprintf(L"       -cmo:   \"enable\" or \"disable\" for enabling or disabling cached Exchange \n");
-		//wprintf(L"               mode on the owner's mailbox.\n");
-		//wprintf(L"       	       Must be used in conjunction with -pm one -pn profile and -si index.\n");
-		//wprintf(L"       -cms:   \"enable\" or \"disable\" for enabling or disabling cached Exchange \n");
-		//wprintf(L"               mode on shared folders (delegate).\n");
-		//wprintf(L"       	       Must be used in conjunction with -pm one -pn profile and -si index.\n");
-		//wprintf(L"       -cmp:   \"enable\" or \"disable\" for enabling or disabling cached Exchange \n");
-		//wprintf(L"               mode on public folders favorites.\n");
-		//wprintf(L"       	       Must be used in conjunction with -pm one -pn profile and -si index.\n");
-		//wprintf(L"       -cmm:   0 for all or 1, 3, 6, 12 or 24 for the same number of months to sync\n");
-		//wprintf(L"       	       Must be used in conjunction with -pm one -pn profile, -si index and.\n");
-		//wprintf(L"       	       -cmo enable.\n");
-		//wprintf(L"\n");
-		//wprintf(L"       -ep:    exportPath for exporting settings to disk.\n");
-		//wprintf(L"\n");
-		std::wprintf(L"       -?      Displays this usage information.\n");
+		std::wprintf(L"                             \n");
+		std::wprintf(L" -displayname:               The display name of the address book service to create, update, list or remove.\n");
+		std::wprintf(L"                             \n");
+		std::wprintf(L" -servername:                The display name of the LDAP server configured in the address book.\n");
+		std::wprintf(L"                             \n");
+		std::wprintf(L" -configfilepath:            The path towards the address book configuration XML to use.\n");
+		std::wprintf(L"                             \n");
+		std::wprintf(L" -serverport:                The LDAP port to connect to. The standard port for Active Directory is 389.\n");
+		std::wprintf(L"                             \n");
+		std::wprintf(L" -usessl:                    \"true\" if a SSL connection is required. The default value is \"false\".\n");
+		std::wprintf(L"                             \n");
+		std::wprintf(L" -username:                  The Username to use for authenticating in the form of domain\\username, UPN or just the username \n");
+		std::wprintf(L"                             if domain name not applicable or not required. Leave blank if a username and password are not required.\n");
+		std::wprintf(L"                             \n");
+		std::wprintf(L" -password:                  The Password to use for authenticating. This must be a clear text passord. It will be encrypted via \n");
+		std::wprintf(L"                             CryptoAPIand stored in the AB settings. \n");
+		std::wprintf(L"                             \n");
+		std::wprintf(L" -requirespa:                \"true\" if Secure Password Authentication is required is required. The default value is \"false\".\n");
+		std::wprintf(L"                             \n");
+		std::wprintf(L" -searchtimeout:             The number of seconds before the search request times out. The default value is 60 seconds.]\n");
+		std::wprintf(L"                             \n");
+		std::wprintf(L" -maxentries:                The maximum number of results returned by a search in this AB. The default value is 100.\n");
+		std::wprintf(L"                             \n");
+		std::wprintf(L" -defaultsearchbase:         \"true\" the default search base is to be used. The default value is \"true\". \n");
+		std::wprintf(L"                             \n");
+		std::wprintf(L" -customsearchbase:          Custom search base in case DefaultSearchBase is set to False. \n");
+		std::wprintf(L"                             \n");
+		std::wprintf(L" -enablebrowsing:            Indicates whether browsing the AB contens is supported.\n");
+		std::wprintf(L"                             \n");
+		std::wprintf(L" -configfilepath:            The path towards the address book configuration XML to use.\n");
+		std::wprintf(L"                             \n");
+		std::wprintf(L" -?                          Displays this usage information.\n");
 	}
 
 	// GetOutlookVersion
@@ -317,7 +374,7 @@ namespace MAPIToolkit
 		m_pProfAdmin = NULL;
 
 		MAPIINIT_0  MAPIINIT = { 0, MAPI_MULTITHREAD_NOTIFICATIONS };
-		CoInitialize(NULL);
+		HCKM(CoInitialize(NULL), L"Initialising the COM library on the current thread");
 		HCKM(MAPIInitialize(&MAPIINIT), L"Initialising MAPI");
 		HCKM(MAPIAdminProfiles(0, &m_pProfAdmin), L"Getting profile administration interface pointer.");
 
@@ -334,34 +391,26 @@ namespace MAPIToolkit
 
 	BOOL Toolkit::SaveConfig()
 	{
-		if (!WriteRegDwordValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options", L"action", m_action)) return FALSE;
-		if (!WriteRegDwordValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options", L"outlookversion", m_OutlookVersion)) return FALSE;
-		if (!WriteRegDwordValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options", L"loggingmode", m_loggingMode)) return FALSE;
-		if (!WriteRegDwordValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options", L"profilecount", m_profileCount)) return FALSE;
-		if (!WriteRegStringValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options", L"exportpath", m_wszExportPath.c_str())) return FALSE;
-		if (!WriteRegDwordValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options", L"exportmode", m_exportMode)) return FALSE;
-		if (!WriteRegStringValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options", L"logfilepath", m_wszLogFilePath.c_str())) return FALSE;
-		if (!WriteRegDwordValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options", L"profilemode", m_profileMode)) return FALSE;
-		if (!WriteRegStringValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options", L"profilename", m_profileWorker->profileName.c_str())) return FALSE;
-		if (!WriteRegDwordValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options", L"servicetype", m_serviceType)) return FALSE;
-		if (SERVICETYPE_ADDRESSBOOK == m_serviceType)
+		for (auto const& keyValuePair : g_toolkitMap)
 		{
-			if (!WriteRegStringValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options\\AddressBook", L"displayName", ((AddressBookWorker*)m_serviceWorker)->displayName.c_str())) return FALSE;
-			if (!WriteRegStringValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options\\AddressBook", L"serverName", ((AddressBookWorker*)m_serviceWorker)->serverName.c_str())) return FALSE;
-			if (!WriteRegStringValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options\\AddressBook", L"configFilePath", ((AddressBookWorker*)m_serviceWorker)->configFilePath.c_str())) return FALSE;
-			if (!WriteRegStringValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options\\AddressBook", L"customSearchBase", ((AddressBookWorker*)m_serviceWorker)->customSearchBase.c_str())) return FALSE;
-			if (!WriteRegStringValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options\\AddressBook", L"maxResults", ((AddressBookWorker*)m_serviceWorker)->maxResults.c_str())) return FALSE;
-			if (!WriteRegStringValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options\\AddressBook", L"serverPort", ((AddressBookWorker*)m_serviceWorker)->serverPort.c_str())) return FALSE;
-			if (!WriteRegStringValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options\\AddressBook", L"timeout", ((AddressBookWorker*)m_serviceWorker)->timeout.c_str())) return FALSE;
-			if (!WriteRegStringValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options\\AddressBook", L"username", ((AddressBookWorker*)m_serviceWorker)->username.c_str())) return FALSE;
-			if (!WriteRegDwordValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options\\AddressBook", L"useSSL", ((AddressBookWorker*)m_serviceWorker)->useSSL)) return FALSE;
-			if (!WriteRegDwordValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options\\AddressBook", L"requireespa", ((AddressBookWorker*)m_serviceWorker)->requireSPA)) return FALSE;
-			if (!WriteRegDwordValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options\\AddressBook", L"enablebrowsing", ((AddressBookWorker*)m_serviceWorker)->enableBrowsing)) return FALSE;
-			if (!WriteRegDwordValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options\\AddressBook", L"defaultsearchbase", ((AddressBookWorker*)m_serviceWorker)->defaultSearchBase)) return FALSE;
-			BYTE* byteVal = new BYTE();
-			ConvertStringToBinary(((AddressBookWorker*)m_serviceWorker)->password, byteVal);
-			if (!WriteRegBinaryValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\Options\\AddressBook", L"password", byteVal)) return FALSE;
+			if (!keyValuePair.second.empty())
+				if (!WriteRegStringValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit", (LPCTSTR)keyValuePair.first.c_str(), (LPCTSTR)keyValuePair.second.c_str())) return FALSE;
 		}
+
+		if (0 == wcscmp(g_toolkitMap.at(L"servicetype").c_str(), L"addressbook"))
+		{
+			for (auto const& keyValuePair : g_addressBookMap)
+			{
+				if (!keyValuePair.second.empty())
+					if (!WriteRegStringValue(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\AddressBook", (LPCTSTR)keyValuePair.first.c_str(), (LPCTSTR)keyValuePair.second.c_str())) return FALSE;
+			}
+		}
+		return TRUE;
+	}
+
+	BOOL Toolkit::ReadConfig()
+	{
+		ReadAllValues(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit");
 		return TRUE;
 	}
 
@@ -371,7 +420,7 @@ namespace MAPIToolkit
 
 		if (ParseParams(argc, argv))
 		{
-			SaveConfig();
+			// run actions
 		}
 		else
 			DisplayUsage();
@@ -608,6 +657,55 @@ namespace MAPIToolkit
 
 	BOOL Toolkit::ParseParams(int argc, wchar_t* argv[])
 	{
+		// check if we're supposed to list the help menu
+		for (int i = 1; i < argc; i++)
+		{
+			std::wstring wsArg = argv[i];
+			std::transform(wsArg.begin(), wsArg.end(), wsArg.begin(), ::tolower);
+
+			if (wsArg == L"-?")
+			{
+				return false;
+			}
+		}
+
+		// check if we're supposed to read the configuration from the registry
+		for (int i = 1; i < argc; i++)
+		{
+			std::wstring wsArg = argv[i];
+			std::transform(wsArg.begin(), wsArg.end(), wsArg.begin(), ::tolower);
+
+			if (wsArg == L"-registry")
+			{
+				ReadConfig();
+			}
+		}
+
+		// general toolkit
+		for (int i = 1; i < argc; i++)
+		{
+			switch (argv[i][0])
+			{
+			case '-':
+				std::wstring wsArg = SubstringFromStart(1, argv[i]);
+				std::transform(wsArg.begin(), wsArg.end(), wsArg.begin(), ::tolower);
+
+				try
+				{
+					if (i + 1 < argc)
+					{
+						g_toolkitMap.at(wsArg) = argv[i + 1];
+						i++;
+					};
+				}
+				catch (const std::exception& e)
+				{
+
+				}
+				break;
+			}
+		}
+
 		// general toolkit
 		for (int i = 1; i < argc; i++)
 		{
@@ -806,35 +904,31 @@ namespace MAPIToolkit
 
 			for (int i = 1; i < argc; i++)
 			{
-				std::wstring wsArg = argv[i];
-				std::transform(wsArg.begin(), wsArg.end(), wsArg.begin(), ::tolower);
+				switch (argv[i][0])
+				{
+				case '-':
+				case '/':
+				case '\\':
+					std::wstring wsArg = SubstringFromStart(1, argv[i]);
+					std::transform(wsArg.begin(), wsArg.end(), wsArg.begin(), ::tolower);
 
-				if ((wsArg == L"-addressbookdisplayname") || (wsArg == L"-abdn"))
-				{
-					if (i + 1 < argc)
+					try
 					{
-						((AddressBookWorker*)m_serviceWorker)->displayName = argv[i + 1];
-						i++;
+						if (i + 1 < argc)
+						{
+							g_addressBookMap.at(wsArg) = argv[i + 1];
+							i++;
+						};
 					}
-				}
-				else if ((wsArg == L"-addressbookservername") || (wsArg == L"-absn"))
-				{
-					if (i + 1 < argc)
+					catch (const std::exception& e)
 					{
-						((AddressBookWorker*)m_serviceWorker)->serverName = argv[i + 1];
-						i++;
+
 					}
-				}
-				else if ((wsArg == L"-addressbookconfigfilepath") || (wsArg == L"-abcfp"))
-				{
-					if (i + 1 < argc)
-					{
-						((AddressBookWorker*)m_serviceWorker)->configFilePath = argv[i + 1];
-						ParseXml((LPTSTR)((AddressBookWorker*)m_serviceWorker)->configFilePath.c_str(), (AddressBookWorker*)m_serviceWorker);
-						i++;
-					}
+					break;
 				}
 			}
+
+			HCKM(ParseAddressBookXml((LPTSTR)g_addressBookMap.at(L"configfilepath").c_str()), L"Parsing configuration XML file");
 		}
 
 
@@ -882,6 +976,7 @@ namespace MAPIToolkit
 			}
 		}
 
+		SaveConfig();
 		return true;
 
 	}

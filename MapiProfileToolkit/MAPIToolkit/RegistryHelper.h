@@ -9,4 +9,5 @@ namespace MAPIToolkit
 	BOOL __cdecl WriteRegStringValue(HKEY hRegistryHive, LPCTSTR lpszKeyName, LPCTSTR lpszValueName, LPCTSTR lpszValueData);
 	BOOL __cdecl WriteRegDwordValue(HKEY hRegistryHive, LPCTSTR lpszKeyName, LPCTSTR lpszValueName, DWORD dwValueData);
 	BOOL __cdecl WriteRegBinaryValue(HKEY hRegistryHive, LPCTSTR lpszKeyName, LPCTSTR lpszValueName, BYTE* pbValueData);
+	BOOL ReadAllValues(HKEY hRegistryHive, LPCTSTR lpszKeyName);
 }

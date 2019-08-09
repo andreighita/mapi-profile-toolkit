@@ -85,6 +85,7 @@ namespace MAPIToolkit
 	}
 
 
+
 	std::wstring SubstringFromStart(std::wstring wszStringToFind, std::wstring wszStringToTrim)
 	{
 		std::transform(wszStringToTrim.begin(), wszStringToTrim.end(), wszStringToTrim.begin(), ::tolower);
@@ -99,6 +100,24 @@ namespace MAPIToolkit
 			return wszStringToTrim;
 		}
 	}
+
+	std::wstring StringToLower(std::wstring wszSource)
+	{
+		std::transform(wszSource.begin(), wszSource.end(), wszSource.begin(), ::tolower);
+		return wszSource;
+	}
+
+	std::wstring SubstringFromStart(size_t pos, std::wstring wszStringToTrim)
+	{
+		if (pos < wszStringToTrim.length())
+		{
+			return wszStringToTrim.substr(pos, wszStringToTrim.length() - 1);
+		}
+		else
+		{
+			return wszStringToTrim;
+		}
+	} 
 
 	std::wstring ConvertStringToWstring(std::wstring& szString)
 	{

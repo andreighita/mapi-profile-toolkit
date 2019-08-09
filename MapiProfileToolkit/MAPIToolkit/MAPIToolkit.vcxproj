@@ -182,7 +182,7 @@
     <ClInclude Include="Misc\ADSI\ADHelper.h" />
     <ClInclude Include="Misc\Utility\StringOperations.h" />
     <ClInclude Include="Misc\XML\XMLHelper.h" />
-    <ClInclude Include="Misc\XML\XmlParser.h" />
+    <ClInclude Include="Misc\XML\AddressBookXmlParser.h" />
     <ClInclude Include="PopAccountWorker.h" />
     <ClInclude Include="PrimaryMailboxWorker.h" />
     <ClInclude Include="ProfileWorker.h" />

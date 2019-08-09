@@ -105,9 +105,6 @@
     <ClInclude Include="Misc\XML\XMLHelper.h">
       <Filter>Misc\XML</Filter>
     </ClInclude>
-    <ClInclude Include="Misc\XML\XmlParser.h">
-      <Filter>Misc\XML</Filter>
-    </ClInclude>
     <ClInclude Include="ExtraMAPIDefs.h">
       <Filter>MAPI</Filter>
     </ClInclude>
@@ -128,6 +125,9 @@
     </ClInclude>
     <ClInclude Include="Toolkit.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Misc\XML\AddressBookXmlParser.h">
+      <Filter>Misc\XML</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

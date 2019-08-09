@@ -8,6 +8,7 @@
 #include <atlbase.h>
 #include "wchar.h"
 
+
 HRESULT ParseXml(LPTSTR lpszABConfigurationPath, ABProvider* abProvider)
 {
 	HRESULT hRes = S_OK;

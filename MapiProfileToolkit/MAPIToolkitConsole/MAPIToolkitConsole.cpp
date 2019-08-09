@@ -4,7 +4,7 @@
 
 #include <iostream>
 #include <tchar.h>
-#include "C:\Users\anixi\Source\Repos\andreighita\mapi-profile-toolkit\MapiProfileToolkit\MAPIToolkit\Toolkit.h"
+#include "C:\Users\anixi\Source\Repos\mapi-toolkit\MapiProfileToolkit\MAPIToolkit\Toolkit.h"
 
 using namespace MAPIToolkit;
 #pragma comment (lib, "MAPIToolkit.lib")

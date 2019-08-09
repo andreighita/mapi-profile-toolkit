@@ -33,4 +33,8 @@ namespace MAPIToolkit
 	std::wstring ConvertIntToString(int t);
 
 	VOID ConvertStringToBinary(std::wstring szValue, BYTE* pbValue);
+
+	std::wstring SubstringFromStart(size_t pos, std::wstring wszStringToTrim);
+
+	std::wstring StringToLower(std::wstring wszSource);
 }
