@@ -133,6 +133,26 @@ namespace MAPIToolkit
 		{ L"addressbook",			L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\AddressBook" }
 	};
 
+	std::map <int, std::wstring > g_hexMap =
+	{
+		{ 0, L"0"},
+		{ 1, L"1"},
+		{ 2, L"2"},
+		{ 3, L"3"},
+		{ 4, L"4"},
+		{ 5, L"5"},
+		{ 6, L"6"},
+		{ 7, L"7"},
+		{ 8, L"8"},
+		{ 9, L"9"},
+		{ 10, L"A"},
+		{ 11, L"B"},
+		{ 12, L"C"},
+		{ 13, L"D"},
+		{ 14, L"E"},
+		{ 15, L"F"}
+	};
+
 	ULONG Toolkit::m_action;
 	int Toolkit::m_OutlookVersion;
 	ULONG Toolkit::m_loggingMode;
@@ -440,19 +460,7 @@ namespace MAPIToolkit
 
 	void Toolkit::AddAddressBookService()
 	{
-		std::vector<std::wstring> vProfileNames;
-		switch (g_profileModeMap.at(g_toolkitMap.at(L"profilemode")))
-		{
-		case PROFILEMODE_ALL:
-			GetProfileNames(m_pProfAdmin, &vProfileNames);
-			break;
-		case PROFILEMODE_SPECIFIC:
 
-			break;
-		case PROFILEMODE_DEFAULT:
-
-			break;
-		}
 	}
 
 	void Toolkit::UpdateAddressBookService()
@@ -477,6 +485,7 @@ namespace MAPIToolkit
 
 	void Toolkit::RunAction()
 	{
+		HRESULT hRes = S_OK;
 		switch (m_action)
 		{
 
@@ -575,6 +584,124 @@ namespace MAPIToolkit
 			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
 			break;
 		}
+		default:
+		{
+			std::vector<std::wstring> vProfileNames;
+			switch (g_profileModeMap.at(g_toolkitMap.at(L"profilemode")))
+			{
+			case PROFILEMODE_ALL:
+				CHK_BOOL_MSG(GetProfileNames(m_pProfAdmin, &vProfileNames), L"Retrieving profile names");
+				for (auto const& profileName : vProfileNames) {
+					if (RunActionOneProfile(profileName))
+					{
+						Logger::Write(LOGLEVEL_SUCCESS, L"Action succesfully run on profile: " + profileName);
+					}
+					else
+					{
+						Logger::Write(LOGLEVEL_FAILED, L"Unable to run action on profile: " + profileName);
+					}
+				}
+				break;
+			case PROFILEMODE_SPECIFIC:
+				if (RunActionOneProfile(g_toolkitMap.at(L"profilename")))
+				{
+					Logger::Write(LOGLEVEL_SUCCESS, L"Action succesfully run on profile: " + g_toolkitMap.at(L"profilename"));
+				}
+				else
+				{
+					Logger::Write(LOGLEVEL_FAILED, L"Unable to run action on profile: " + g_toolkitMap.at(L"profilename"));
+				}
+				break;
+			}
+			break;
+		}
+
+		}
+
+	Error:
+		goto CleanUp;
+	CleanUp:
+		return;
+	}
+
+	BOOL Toolkit::RunActionOneProfile(std::wstring wszProfileName)
+	{
+		HRESULT hRes = NULL;
+		LPSERVICEADMIN2 pServiceAdmin = NULL;
+		CHK_HR_MSG(m_pProfAdmin->AdminServices((LPTSTR)wszProfileName.c_str(), NULL, NULL, MAPI_UNICODE, (LPSERVICEADMIN*)&pServiceAdmin), L"Getting admin services interface pointer for profile " + wszProfileName);
+		switch (m_action)
+		{
+
+		case ACTION_SERVICE_ADD:
+		{
+			switch (g_serviceTypeMap.at(g_toolkitMap.at(L"servicetype")))
+			{
+			case SERVICETYPE_ADDRESSBOOK:
+			{
+				AddAddressBookService();
+				Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
+				break;
+			}
+			case SERVICETYPE_EXCHANGEACCOUNT:
+			{
+				((ExchangeAccountWorker*)m_serviceWorker)->AddExchangeAccount();
+				Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
+				break;
+			}
+			case SERVICETYPE_DATAFILE:
+			{
+				((DataFileWorker*)m_serviceWorker)->AddDataFile();
+				Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
+				break;
+			}
+			}
+			break;
+		}
+		case ACTION_SERVICE_LISTALL:
+		{
+			if (m_serviceWorker)
+			{
+				if (SERVICETYPE_ADDRESSBOOK == m_serviceType)
+				{
+					((AddressBookWorker*)m_serviceWorker)->ListAllAddressBookServices();
+				}
+			}
+			else
+				Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
+			break;
+		}
+		case ACTION_SERVICE_REMOVEALL:
+		{
+			if (m_serviceWorker)
+			{
+				if (SERVICETYPE_ADDRESSBOOK == m_serviceType)
+				{
+					((AddressBookWorker*)m_serviceWorker)->RemoveAllAddressBookServices();
+				}
+			}
+			else
+				Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
+			break;
+		}
+
+		}
+
+	Error:
+		goto CleanUp;
+	CleanUp:
+		return SUCCEEDED(hRes);
+	}
+
+	BOOL Toolkit::RunActionOneService(LPSERVICEADMIN2 pServiceAdmin, LPMAPIUID pMapiUid)
+	{
+		HRESULT hRes = NULL;
+		LPPROVIDERADMIN pProviderAdmin = NULL;
+		std::wstring wstr(reinterpret_cast<wchar_t*>(pMapiUid), 16 / sizeof(wchar_t));
+		CHK_HR_MSG(pServiceAdmin->AdminProviders(pMapiUid, NULL, &pProviderAdmin), L"Getting profider admin interface pointer for service with UID: " + MapiUidToString(pMapiUid));
+
+		switch (m_action)
+		{
+
 		case ACTION_PROVIDER_ADD:
 		{
 			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
@@ -605,25 +732,6 @@ namespace MAPIToolkit
 			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
 			break;
 		}
-		case ACTION_SERVICE_ADD:
-		{
-			if (SERVICETYPE_ADDRESSBOOK == m_serviceType)
-			{
-				AddAddressBookService();
-				Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
-			}
-			else if (SERVICETYPE_EXCHANGEACCOUNT == m_serviceType)
-			{
-				((ExchangeAccountWorker*)m_serviceWorker)->AddExchangeAccount();
-				Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
-			}
-			else if (SERVICETYPE_DATAFILE == m_serviceType)
-			{
-				((DataFileWorker*)m_serviceWorker)->AddDataFile();
-				Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
-			}
-			break;
-		}
 		case ACTION_SERVICE_UPDATE:
 		{
 			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
@@ -647,19 +755,6 @@ namespace MAPIToolkit
 				Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
 			break;
 		}
-		case ACTION_SERVICE_LISTALL:
-		{
-			if (m_serviceWorker)
-			{
-				if (SERVICETYPE_ADDRESSBOOK == m_serviceType)
-				{
-					((AddressBookWorker*)m_serviceWorker)->ListAllAddressBookServices();
-				}
-			}
-			else
-				Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
-			break;
-		}
 		case ACTION_SERVICE_REMOVE:
 		{
 			if (m_serviceWorker)
@@ -667,19 +762,6 @@ namespace MAPIToolkit
 				if (SERVICETYPE_ADDRESSBOOK == m_serviceType)
 				{
 					((AddressBookWorker*)m_serviceWorker)->RemoveAddressBookService();
-				}
-			}
-			else
-				Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
-			break;
-		}
-		case ACTION_SERVICE_REMOVEALL:
-		{
-			if (m_serviceWorker)
-			{
-				if (SERVICETYPE_ADDRESSBOOK == m_serviceType)
-				{
-					((AddressBookWorker*)m_serviceWorker)->RemoveAllAddressBookServices();
 				}
 			}
 			else
@@ -697,6 +779,11 @@ namespace MAPIToolkit
 			break;
 		}
 		}
+
+	Error:
+		goto CleanUp;
+	CleanUp:
+		return SUCCEEDED(hRes);
 	}
 
 	BOOL Toolkit::ParseParams(int argc, wchar_t* argv[])
@@ -777,10 +864,15 @@ namespace MAPIToolkit
 		}
 
 		// If a specific profile is needed then make sure a profile name was specified
-		if (VCHK(m_profileMode, PROFILEMODE_SPECIFIC) && m_profileWorker->profileName.empty())
+		if (VCHK(g_profileModeMap.at(g_toolkitMap.at(L"profilemode")), PROFILEMODE_SPECIFIC) && g_toolkitMap.at(L"profilename").c_str())
 		{
 			Logger::Write(LOGLEVEL_FAILED, L"You must either specify a profile name or pass 'default' for the value of thethe 'profilemode' parameter.");
 			return false;
+		}
+		else if (VCHK(g_profileModeMap.at(g_toolkitMap.at(L"profilemode")), PROFILEMODE_DEFAULT))
+		{
+			g_toolkitMap.at(L"profilename") == GetDefaultProfileName();
+			g_toolkitMap.at(L"profilemode") == L"specific";
 		}
 
 		// create service worker

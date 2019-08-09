@@ -882,7 +882,9 @@ namespace MAPIToolkit
 
 			break;
 		}
-
+	Error:
+		goto CleanUp;
+	CleanUp:
 		return hRes;
 	}
 }

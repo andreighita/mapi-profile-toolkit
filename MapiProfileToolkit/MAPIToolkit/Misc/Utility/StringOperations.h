@@ -39,4 +39,6 @@ namespace MAPIToolkit
 	std::wstring SubstringFromStart(size_t pos, std::wstring wszStringToTrim);
 
 	std::wstring StringToLower(std::wstring wszSource);
+
+	std::wstring MapiUidToString(LPMAPIUID pMapiUid);
 }

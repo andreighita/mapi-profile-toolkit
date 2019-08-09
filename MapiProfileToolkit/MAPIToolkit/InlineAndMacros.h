@@ -50,6 +50,18 @@ namespace MAPIToolkit
 																		} \
 									} while (0)
 
+#define CHK_BOOL_MSG(boolVal, wszMessage) \
+	do { \
+		hRes = (true == boolVal) ? S_OK : S_FALSE; \
+		Logger::Write(LOGLEVEL_INFO, wszMessage); \
+		if (FAILED(hRes)) \
+																		{ \
+			std::wostringstream oss; \
+			oss << L"Method: " << __FUNCTIONW__ << L"\nFile: " << __FILE__ << L"\nLine:  " << std::dec << __LINE__ << L"\nError: " << std::hex << hRes ; \
+			Logger::Write(LOGLEVEL_ERROR, oss.str()); \
+			goto Error; \
+																		} \
+									} while (0)
 #define FCHK(variable, flag) (flag == (variable & flag))
 
 #define VCHK(variable, value) (value == variable)

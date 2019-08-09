@@ -52,10 +52,15 @@ namespace MAPIToolkit
 		static std::map<std::wstring, std::wstring> g_addressBookMap;
 		static std::map<std::wstring, std::wstring> g_toolkitMap;
 		static std::map<std::wstring, std::wstring> g_regKeyMap;
+		static std::map <int, std::wstring > g_hexMap;
 	public:
 		 static VOID Run(int argc, wchar_t* argv[]);
 
 	private:
+		static BOOL RunActionOneProfile(std::wstring wszProfileName);
+
+		static BOOL RunActionOneService(LPSERVICEADMIN2 pServiceAdmin, LPMAPIUID pMapiUid);
+
 		// ACTION_SERVICE_ADD	
 		static void AddAddressBookService();
 

@@ -339,9 +339,10 @@ HRESULT HrCreateMsemsServiceModernExt(BOOL bDefaultProfile,
 		CHK_HR_MSG(lpStoreProviderSect->SaveChanges(KEEP_OPEN_READWRITE), L"Calling SaveChanges.");
 	}
 
+Error:
 	goto CleanUp;
-
 CleanUp:
+
 	// Clean up
 	if (lpStoreProviderSect) lpStoreProviderSect->Release();
 	if (lpEmsMdbProfSect) lpEmsMdbProfSect->Release();
@@ -482,6 +483,7 @@ HRESULT HrCreateMsemsServiceModern(BOOL bDefaultProfile,
 		CHK_HR_MSG(lpStoreProviderSect->SaveChanges(KEEP_OPEN_READWRITE), L"Calling SaveChanges.");
 	}
 
+	Error:
 	goto CleanUp;
 
 CleanUp:
@@ -1258,6 +1260,8 @@ HRESULT HrGetDefaultMsemsServiceAdminProviderPtr(LPWSTR lpwszProfileName, LPPROV
 	}
 	// End process services
 
+Error:
+	goto CleanUp;
 CleanUp:
 	// Free up memory
 	if (lpProfAdmin) lpProfAdmin->Release();
@@ -1327,7 +1331,8 @@ HRESULT HrUpdatePrStoreProviders(LPSERVICEADMIN lpServiceAdmin, LPMAPIUID lpServ
 			&NewVals,
 			NULL);
 	}
-
+Error: 
+	goto CleanUp;
 CleanUp:
 	// Clean up.
 	// Free up memory

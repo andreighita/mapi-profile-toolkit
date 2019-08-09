@@ -603,6 +603,7 @@ VOID PrintProfile(ProfileInfo * profileInfo)
 Error:
 	goto CleanUp;
 CleanUp:
+	return;
 }
 
 HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo)

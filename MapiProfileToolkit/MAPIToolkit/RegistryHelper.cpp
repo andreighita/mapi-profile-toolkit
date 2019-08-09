@@ -304,6 +304,8 @@ namespace MAPIToolkit
 	{
 		HRESULT hRes = S_OK;
 		HKEY hKey;
+		DWORD dwType = REG_SZ;
+		LPDWORD lpdwType = &dwType;
 		CHK_HR_MSG(RegOpenKey(hRegistryHive, lpszKeyName, &hKey), L"Opening registry key");
 
 		DWORD    cValues;              // number of values for key 
@@ -326,8 +328,7 @@ namespace MAPIToolkit
 			NULL,   // security descriptor 
 			NULL),     // last write time 
 			L"Getting registry information");
-		DWORD dwType = REG_SZ;
-		LPDWORD lpdwType = &dwType;
+
 
 		if (cValues)
 		{

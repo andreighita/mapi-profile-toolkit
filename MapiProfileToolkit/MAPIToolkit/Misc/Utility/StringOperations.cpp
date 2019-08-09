@@ -3,6 +3,9 @@
 #include <oleauto.h>
 #include <algorithm>
 #include <sstream>
+#include <MAPIDefS.h>
+#include "..//..//Toolkit.h";
+
 namespace MAPIToolkit
 {
 	std::string ConvertMultiByteToStdString(LPSTR lpStr)
@@ -180,4 +183,14 @@ namespace MAPIToolkit
 		*pbValue = *buffer;
 	}
 
+	std::wstring MapiUidToString(LPMAPIUID pMapiUid)
+	{
+		std::wstring returnStr = L"";
+		for (int i = 0; i < 32; i++)
+		{
+			returnStr += Toolkit::g_hexMap.at(pMapiUid->ab[i++]);
+			returnStr += Toolkit::g_hexMap.at(pMapiUid->ab[i]);
+		}
+		return returnStr;
+	}
 }

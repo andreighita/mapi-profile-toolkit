@@ -695,9 +695,8 @@ namespace MAPIToolkit
 			nullptr), L"Calling SetProps.");
 
 		CHK_HR_MSG(lpStoreProviderSect->SaveChanges(KEEP_OPEN_READWRITE), L"Calling SaveChanges.");
-
+	Error:
 		goto CleanUp;
-
 	CleanUp:
 		// Clean up
 		if (lpStoreProviderSect) lpStoreProviderSect->Release();
