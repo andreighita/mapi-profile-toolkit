@@ -167,6 +167,13 @@ namespace MAPIToolkit
 		return wss.str();
 	}
 
+	std::wstring ConvertIntToHexString(int t)
+	{
+		std::wstringstream wss;
+		wss << std::hex<< t;
+		return wss.str();
+	}
+
 	VOID ConvertStringToBinary(std::wstring szValue, BYTE* pbValue)
 	{
 		DWORD hex_len = szValue.length() / 2;
@@ -183,13 +190,13 @@ namespace MAPIToolkit
 		*pbValue = *buffer;
 	}
 
-	std::wstring MapiUidToString(LPMAPIUID pMapiUid)
+	std::wstring MapiUidToString(MAPIUID * pMapiUid)
 	{
 		std::wstring returnStr = L"";
-		for (int i = 0; i < 32; i++)
+		wchar_t chr;
+		for (unsigned int i = 0; i < 16; i++)
 		{
-			returnStr += Toolkit::g_hexMap.at(pMapiUid->ab[i++]);
-			returnStr += Toolkit::g_hexMap.at(pMapiUid->ab[i]);
+			returnStr += ConvertIntToHexString(pMapiUid->ab[i]);
 		}
 		return returnStr;
 	}

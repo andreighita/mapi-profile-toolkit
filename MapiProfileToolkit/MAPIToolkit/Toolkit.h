@@ -1,13 +1,8 @@
 #pragma once
 #include <Windows.h>
 #include <tchar.h>
-
-#include "ProfileWorker.h"
 #include "ToolkitTypeDefs.h"
-#include "AddressBookWorker.h"
-#include "DataFileWorker.h"
-#include "ExchangeAccountWorker.h"
-#include "ProviderWorker.h"
+
 
 #include <MAPIX.h>
 namespace MAPIToolkit
@@ -35,18 +30,18 @@ namespace MAPIToolkit
 		static std::map<std::wstring, ULONG> g_serviceModeMap;
 		static std::map<std::wstring, ULONG> g_serviceTypeMap;
 		static ULONG m_action;
-		static int m_OutlookVersion;
-		static ULONG m_loggingMode;
-		static ServiceWorker* m_serviceWorker;
-		static ProviderWorker* m_providerWorker;
-		static ProfileWorker* m_profileWorker;
-		static ULONG m_profileCount;
-		static std::wstring m_wszExportPath;
-		static ULONG m_exportMode; // 0 = no export; 1 = export;
-		static std::wstring m_wszLogFilePath;
-		static ULONG m_profileMode; // pm
+		//static int m_OutlookVersion;
+		//static ULONG m_loggingMode;
+		//static ServiceWorker* m_serviceWorker;
+		//static ProviderWorker* m_providerWorker;
+		//static ProfileWorker* m_profileWorker;
+		//static ULONG m_profileCount;
+		//static std::wstring m_wszExportPath;
+		//static ULONG m_exportMode; // 0 = no export; 1 = export;
+		//static std::wstring m_wszLogFilePath;
+		//static ULONG m_profileMode; // pm
 		static LPPROFADMIN m_pProfAdmin;
-		static ULONG m_serviceType; // pm
+		//static ULONG m_serviceType; // pm
 		static BOOL m_registry;
 	public:
 		static std::map<std::wstring, std::wstring> g_addressBookMap;
@@ -61,22 +56,26 @@ namespace MAPIToolkit
 		static BOOL RunActionOneService(LPSERVICEADMIN2 pServiceAdmin, LPMAPIUID pMapiUid);
 
 		// ACTION_SERVICE_ADD	
-		static BOOL AddService(LPSERVICEADMIN2 pServiceAdmin);
+		static VOID AddService(LPSERVICEADMIN2 pServiceAdmin);
 		static BOOL AddAddressBookService(LPSERVICEADMIN2 pServiceAdmin);
 
 		// ACTION_SERVICE_UPDATE	
-		static void UpdateAddressBookService();
+		static VOID UpdateAddressBookService();
 
 		// ACTION_SERVICE_LIST
-		static void ListAddressBookService();
+		static VOID ListService(LPSERVICEADMIN2 pServiceAdmin, LPMAPIUID lpMAPIUid);
+		//static VOID ListAddressBookService(LPSERVICEADMIN2 pServiceAdmin, LPMAPIUID lpMAPIUid);
 
 		// ACTION_SERVICE_LISTALL
-		static void ListAllAddressBookServices();
+		static VOID ListAllServices(LPSERVICEADMIN2 pServiceAdmin);
+		static VOID ListAllAddressBookServices(LPSERVICEADMIN2 pServiceAdmin);
 
 		// ACTION_SERVICE_REMOVE
-		static void RemoveAddressBookService();
+		static VOID RemoveService(LPSERVICEADMIN2 pServiceAdmin, LPMAPIUID pMapiUid);
+		static BOOL RemoveAddressBookService(LPSERVICEADMIN2 pServiceAdmin, LPMAPIUID lpMAPIUid);
 
 		// ACTION_SERVICE_REMOVEALL
-		static void RemoveAllAddressBookServices();
+		static VOID RemoveAllServices(LPSERVICEADMIN2 pServiceAdmin);
+		static VOID RemoveAllAddressBookServices();
 	};
 }

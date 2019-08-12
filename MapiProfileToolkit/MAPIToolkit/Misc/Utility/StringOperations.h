@@ -41,5 +41,7 @@ namespace MAPIToolkit
 
 	std::wstring StringToLower(std::wstring wszSource);
 
-	std::wstring MapiUidToString(LPMAPIUID pMapiUid);
+	std::wstring MapiUidToString(MAPIUID* pMapiUid);
+
+	std::wstring ConvertIntToHexString(int t);
 }

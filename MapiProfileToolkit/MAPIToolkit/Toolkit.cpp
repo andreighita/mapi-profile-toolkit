@@ -13,19 +13,10 @@
 #include "RegistryHelper.h"
 #include <iterator> 
 #include <algorithm>
-#include "ServiceWorker.h"
-#include "ExchangeAccountWorker.h"
-#include "AddressBookWorker.h"
-#include "DataFileWorker.h"
 #include "Logger.h"
 #include "Toolkit.h"
 #include "InlineAndMacros.h"
 #include "Profile//Profile.h"
-#include "PrimaryMailboxWorker.h"
-#include "DelegateWorker.h"
-#include "PublicFoldersWorker.h"
-#include "ProfileWorker.h"
-#include "ProviderWorker.h"
 #include "Misc/Utility/StringOperations.h"
 #include "Misc/XML/AddressBookXmlParser.h"
 #include <vector>
@@ -122,6 +113,7 @@ namespace MAPIToolkit
 		{ L"logfilepath",		L"" },
 		{ L"profilemode",		L"default" },
 		{ L"profilename",		L""},
+		{ L"profilecount",		L""},
 		{ L"servicemode",		L"default" },
 		{ L"servicetype",		L"" },
 		{ L"providermode",		L"default" },
@@ -156,18 +148,18 @@ namespace MAPIToolkit
 	};
 
 	ULONG Toolkit::m_action;
-	int Toolkit::m_OutlookVersion;
-	ULONG Toolkit::m_loggingMode;
-	ServiceWorker* Toolkit::m_serviceWorker;
-	ProviderWorker* Toolkit::m_providerWorker;
-	ProfileWorker* Toolkit::m_profileWorker;
-	ULONG Toolkit::m_profileCount;
-	std::wstring Toolkit::m_wszExportPath;
-	ULONG Toolkit::m_exportMode; // 0 = no export; 1 = export;
-	std::wstring Toolkit::m_wszLogFilePath;
-	ULONG Toolkit::m_profileMode; // pm
+	//int Toolkit::m_OutlookVersion;
+	//ULONG Toolkit::m_loggingMode;
+	//ServiceWorker* Toolkit::m_serviceWorker;
+	//ProviderWorker* Toolkit::m_providerWorker;
+	//ProfileWorker* Toolkit::m_profileWorker;
+	//ULONG Toolkit::m_profileCount;
+	//std::wstring Toolkit::m_wszExportPath;
+	//ULONG Toolkit::m_exportMode; // 0 = no export; 1 = export;
+	//std::wstring Toolkit::m_wszLogFilePath;
+	//ULONG Toolkit::m_profileMode; // pm
 	LPPROFADMIN Toolkit::m_pProfAdmin;
-	ULONG Toolkit::m_serviceType;
+	//ULONG Toolkit::m_serviceType;
 	BOOL Toolkit::m_registry = FALSE;
 
 	// Is64BitProcess
@@ -392,15 +384,6 @@ namespace MAPIToolkit
 	{
 		HRESULT hRes = S_OK;
 		m_action = ACTION_UNSPECIFIED;
-		m_OutlookVersion = GetOutlookVersion();
-		m_loggingMode = LOGGINGMODE_CONSOLE;
-		m_serviceWorker = NULL;
-		m_providerWorker = NULL;
-		m_profileCount = 0;
-		m_wszExportPath = L"";
-		m_exportMode = EXPORTMODE_EXPORT; // 0 = no export; 1 = export;
-		m_wszLogFilePath = L"";
-		m_profileMode = PROFILEMODE_DEFAULT;
 		m_pProfAdmin = NULL;
 
 		MAPIINIT_0  MAPIINIT = { 0, MAPI_MULTITHREAD_NOTIFICATIONS };
@@ -460,7 +443,7 @@ namespace MAPIToolkit
 		Uninitialise();
 	}
 
-	BOOL Toolkit::AddService(LPSERVICEADMIN2 pServiceAdmin)
+	VOID Toolkit::AddService(LPSERVICEADMIN2 pServiceAdmin)
 	{
 		switch (g_serviceTypeMap.at(g_toolkitMap.at(L"servicetype")))
 		{
@@ -472,18 +455,15 @@ namespace MAPIToolkit
 		}
 		case SERVICETYPE_EXCHANGEACCOUNT:
 		{
-			((ExchangeAccountWorker*)m_serviceWorker)->AddExchangeAccount();
 			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
 			break;
 		}
 		case SERVICETYPE_DATAFILE:
 		{
-			((DataFileWorker*)m_serviceWorker)->AddDataFile();
 			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
 			break;
 		}
 		}
-		return 0;
 	}
 
 	BOOL Toolkit::AddAddressBookService(LPSERVICEADMIN2 pServiceAdmin)
@@ -497,11 +477,12 @@ namespace MAPIToolkit
 				g_addressBookMap.at(L"displayname") = g_addressBookMap.at(L"servername");
 			}
 			BOOL bServiceExists = false;
-			CHK_HR_MSG(CheckABServiceExists(pServiceAdmin, (LPTSTR)g_addressBookMap.at(L"displayname").c_str(), (LPTSTR)g_addressBookMap.at(L"servicename").c_str(), 0, &bServiceExists), L"Cheking if service already exists");
+			ULONG ulCServices;
+
+			CHK_HR_MSG(CheckABServiceExists(pServiceAdmin, (LPTSTR)g_addressBookMap.at(L"displayname").c_str(), (LPTSTR)g_addressBookMap.at(L"servername").c_str(), &bServiceExists), L"Cheking if service already exists");
 			if (!bServiceExists)
 				return (SUCCEEDED(CreateABService(pServiceAdmin)));
 		}
-
 	Error:
 		goto CleanUp;
 	CleanUp:
@@ -513,16 +494,72 @@ namespace MAPIToolkit
 	{
 	}
 
-	void Toolkit::ListAddressBookService()
+	VOID Toolkit::ListService(LPSERVICEADMIN2 pServiceAdmin, LPMAPIUID lpMAPIUid)
 	{
+		switch (g_serviceTypeMap.at(g_toolkitMap.at(L"servicetype")))
+		{
+		case SERVICETYPE_ADDRESSBOOK:
+		{
+			if SUCCEEDED(ListABService(pServiceAdmin, lpMAPIUid))
+				Logger::Write(LOGLEVEL_SUCCESS, L"Address book service succesfully listed.");
+			break;
+		}
+		case SERVICETYPE_EXCHANGEACCOUNT:
+		{
+			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
+			break;
+		}
+		case SERVICETYPE_DATAFILE:
+		{
+			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
+			break;
+		}
+		}
 	}
 
-	void Toolkit::ListAllAddressBookServices()
+	BOOL Toolkit::RemoveAddressBookService(LPSERVICEADMIN2 pServiceAdmin, LPMAPIUID lpMAPIUid)
 	{
+		return true;
 	}
 
-	void Toolkit::RemoveAddressBookService()
+	VOID Toolkit::RemoveAllServices(LPSERVICEADMIN2 pServiceAdmin)
 	{
+		switch (g_serviceTypeMap.at(g_toolkitMap.at(L"servicetype")))
+		{
+		case SERVICETYPE_ADDRESSBOOK:
+		{
+			// Get service UID(s) for the services we want to remove	
+			ULONG cServices = 0;
+			if SUCCEEDED(GetABServiceUid(pServiceAdmin, &cServices, NULL), L"Getting service count");
+			if (cServices > 0)
+			{
+
+				MAPIUID* pMAPIUid = new MAPIUID[cServices];
+				ZeroMemory(pMAPIUid, sizeof(MAPIUID) * cServices);
+				
+				if SUCCEEDED(GetABServiceUid(pServiceAdmin, &cServices, pMAPIUid), L"Fetching existing service UIDs")
+					if ((cServices > 0) && pMAPIUid)
+					{
+						for (int i = 0; i < cServices; i++)
+						{
+							if SUCCEEDED(RemoveABService(pServiceAdmin, &pMAPIUid[i]))
+								Logger::Write(LOGLEVEL_SUCCESS, L"Success!.");
+						}
+					}
+			}
+			break;
+		}
+		case SERVICETYPE_EXCHANGEACCOUNT:
+		{
+			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
+			break;
+		}
+		case SERVICETYPE_DATAFILE:
+		{
+			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
+			break;
+		}
+		}
 	}
 
 	void Toolkit::RemoveAllAddressBookServices()
@@ -542,100 +579,62 @@ namespace MAPIToolkit
 		}
 		case ACTION_PROFILE_ADD:
 		{
-			if (m_profileWorker)
-			{
-				m_profileWorker->AddProfile();
-			}
 			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
 			break;
 		}
 		case ACTION_PROFILE_CLONE:
 		{
-			if (m_profileWorker)
-			{
-				m_profileWorker->CloneProfile();
-			}
 			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
 			break;
 		}
 		case ACTION_PROFILE_RENAME:
 		{
-			if (m_profileWorker)
-			{
-				m_profileWorker->RenameProfile();
-			}
 			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
 			break;
 		}
 		case ACTION_PROFILE_LIST:
 		{
-			if (m_profileWorker)
-			{
-				m_profileWorker->ListProfile();
-			}
 			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
 			break;
 		}
 		case ACTION_PROFILE_LISTALL:
 		{
-			if (m_profileWorker)
-			{
-				m_profileWorker->ListAllProfiles();
-			}
 			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
 			break;
 		}
 		case ACTION_PROFILE_REMOVE:
 		{
-			if (m_profileWorker)
-			{
-				m_profileWorker->RemoveProfile();
-			}
 			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
 			break;
 		}
 		case ACTION_PROFILE_REMOVEALL:
 		{
-			if (m_profileWorker)
-			{
-				m_profileWorker->RemoveAllProfiles();
-			}
 			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
 			break;
 		}
 		case ACTION_PROFILE_SETDEFAULT:
 		{
-			if (m_profileWorker)
-			{
-				m_profileWorker->SetDefaultProfile();
-			}
 			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
 			break;
 		}
 		case ACTION_PROFILE_PROMOTEDELEGATES:
 		{
-			if (m_profileWorker)
-			{
-				m_profileWorker->PromoteDelegates();
-			}
 			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
 			break;
 		}
 		case ACTION_PROFILE_PROMOTEONEDELEGATE:
 		{
-			if (m_profileWorker)
-			{
-				m_profileWorker->PromoteOneDelegate();
-			}
 			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
 			break;
 		}
 		default:
 		{
 			std::vector<std::wstring> vProfileNames;
+
 			switch (g_profileModeMap.at(g_toolkitMap.at(L"profilemode")))
 			{
 			case PROFILEMODE_ALL:
+				
 				CHK_BOOL_MSG(GetProfileNames(m_pProfAdmin, &vProfileNames), L"Retrieving profile names");
 				for (auto const& profileName : vProfileNames) {
 					if (RunActionOneProfile(profileName))
@@ -677,46 +676,69 @@ namespace MAPIToolkit
 		LPSERVICEADMIN2 pServiceAdmin2 = NULL;
 		// Retrieves pointers to the supported interfaces on an object.
 
-		CHK_HR_MSG(m_pProfAdmin->AdminServices((LPTSTR)wszProfileName.c_str(), NULL, NULL, MAPI_UNICODE, (LPSERVICEADMIN*)&pServiceAdmin), L"Getting admin services interface pointer for profile " + wszProfileName);
+		CHK_HR_MSG(m_pProfAdmin->AdminServices((LPTSTR)wszProfileName.c_str(), NULL, NULL, MAPI_UNICODE, (LPSERVICEADMIN*)& pServiceAdmin), L"Getting admin services interface pointer for profile " + wszProfileName);
 		CHK_HR_MSG(pServiceAdmin->QueryInterface(IID_IMsgServiceAdmin2, (LPVOID*)& pServiceAdmin2), L"Getting LPSERVICEADMIN2 interface pointer for profile ");
-		
+
 		switch (m_action)
 		{
 
 		case ACTION_SERVICE_ADD:
 		{
-			if (AddService(pServiceAdmin2))
-			{
-
-			}
+			AddService(pServiceAdmin2);
 			break;
 		}
 		case ACTION_SERVICE_LISTALL:
 		{
-			if (m_serviceWorker)
-			{
-				if (SERVICETYPE_ADDRESSBOOK == m_serviceType)
-				{
-					((AddressBookWorker*)m_serviceWorker)->ListAllAddressBookServices();
-				}
-			}
-			else
-				Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
+			ListAllServices(pServiceAdmin2);
+			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
 			break;
 		}
+
 		case ACTION_SERVICE_REMOVEALL:
 		{
-			if (m_serviceWorker)
-			{
-				if (SERVICETYPE_ADDRESSBOOK == m_serviceType)
-				{
-					((AddressBookWorker*)m_serviceWorker)->RemoveAllAddressBookServices();
-				}
-			}
-			else
-				Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
+			RemoveAllServices(pServiceAdmin2);
+		
 			break;
 		}
+		case ACTION_SERVICE_REMOVE:
+		{
+			switch (g_serviceTypeMap.at(g_toolkitMap.at(L"servicetype")))
+			{
+			case SERVICETYPE_ADDRESSBOOK:
+			{
+				// Get service UID(s) for the services we want to remove	
+				ULONG cServices = 0;
+				if SUCCEEDED(GetABServiceUid(pServiceAdmin2, (LPTSTR)g_addressBookMap.at(L"displayname").c_str(), (LPTSTR)g_addressBookMap.at(L"servername").c_str(), &cServices, NULL))
+				{
+					if (cServices > 0)
+					{
+						MAPIUID* pMAPIUid = new MAPIUID[cServices];
+						hRes = GetABServiceUid(pServiceAdmin2, (LPTSTR)g_addressBookMap.at(L"displayname").c_str(), (LPTSTR)g_addressBookMap.at(L"servername").c_str(), &cServices, pMAPIUid), L"Fetching existing service UIDs";
+						if ((cServices > 0) && pMAPIUid)
+						{
+							for (int i = 0; i < cServices; i++)
+							{
+								if (RunActionOneService(pServiceAdmin2, &pMAPIUid[i]))
+									Logger::Write(LOGLEVEL_SUCCESS, L"Address book service succesfully removed");
+							}
+						}
+					}
+				}
+				break;
+			}
+			case SERVICETYPE_EXCHANGEACCOUNT:
+			{
+				Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
+				break;
+			}
+			case SERVICETYPE_DATAFILE:
+			{
+				Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
+				break;
+			}
+			}
+		}
+
 
 		}
 
@@ -730,7 +752,6 @@ namespace MAPIToolkit
 	{
 		HRESULT hRes = NULL;
 		LPPROVIDERADMIN pProviderAdmin = NULL;
-		std::wstring wstr(reinterpret_cast<wchar_t*>(pMapiUid), 16 / sizeof(wchar_t));
 		CHK_HR_MSG(pServiceAdmin->AdminProviders(pMapiUid, NULL, &pProviderAdmin), L"Getting profider admin interface pointer for service with UID: " + MapiUidToString(pMapiUid));
 
 		switch (m_action)
@@ -778,28 +799,12 @@ namespace MAPIToolkit
 		}
 		case ACTION_SERVICE_LIST:
 		{
-			if (m_serviceWorker)
-			{
-				if (SERVICETYPE_ADDRESSBOOK == m_serviceType)
-				{
-					((AddressBookWorker*)m_serviceWorker)->ListAddressBookService();
-				}
-			}
-			else
-				Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
+			ListService(pServiceAdmin, pMapiUid);
 			break;
 		}
 		case ACTION_SERVICE_REMOVE:
 		{
-			if (m_serviceWorker)
-			{
-				if (SERVICETYPE_ADDRESSBOOK == m_serviceType)
-				{
-					((AddressBookWorker*)m_serviceWorker)->RemoveAddressBookService();
-				}
-			}
-			else
-				Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
+			RemoveService(pServiceAdmin, pMapiUid);
 			break;
 		}
 		case ACTION_SERVICE_CHANGEDATAFILEPATH:
@@ -820,12 +825,65 @@ namespace MAPIToolkit
 		return SUCCEEDED(hRes);
 	}
 
+
+	VOID Toolkit::ListAllServices(LPSERVICEADMIN2 pServiceAdmin)
+	{
+		switch (g_serviceTypeMap.at(g_toolkitMap.at(L"servicetype")))
+		{
+		case SERVICETYPE_ADDRESSBOOK:
+		{
+			ListAllAddressBookServices(pServiceAdmin);
+			break;
+		}
+		case SERVICETYPE_EXCHANGEACCOUNT:
+		{
+			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
+			break;
+		}
+		case SERVICETYPE_DATAFILE:
+		{
+			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
+			break;
+		}
+		}
+	}
+
+	VOID Toolkit::ListAllAddressBookServices(LPSERVICEADMIN2 pServiceAdmin)
+	{
+		if SUCCEEDED(ListAllABServices(pServiceAdmin))
+			Logger::Write(LOGLEVEL_SUCCESS, L"Address book services succesfully listed");
+	}
+
+	VOID Toolkit::RemoveService(LPSERVICEADMIN2 pServiceAdmin, LPMAPIUID pMapiUid)
+	{
+		switch (g_serviceTypeMap.at(g_toolkitMap.at(L"servicetype")))
+		{
+		case SERVICETYPE_ADDRESSBOOK:
+		{
+			if SUCCEEDED(RemoveABService(pServiceAdmin, pMapiUid))
+				Logger::Write(LOGLEVEL_SUCCESS, L"Address book service succesfully added");
+			break;
+		}
+		case SERVICETYPE_EXCHANGEACCOUNT:
+		{
+			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
+			break;
+		}
+		case SERVICETYPE_DATAFILE:
+		{
+			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
+			break;
+		}
+		}
+	}
+
 	BOOL Toolkit::ParseParams(int argc, wchar_t* argv[])
 	{
 		HRESULT hRes = S_OK;
 		// parse the actions
 		std::wstring wszActionItem;
-		std::wstringstream wss(g_toolkitMap.at(L"action"));
+		std::wstringstream wss;
+
 		// check if we're supposed to list the help menu
 		for (int i = 1; i < argc; i++)
 		{
@@ -874,11 +932,7 @@ namespace MAPIToolkit
 				break;
 			}
 		}
-
-		// profile worker
-		m_profileWorker = new ProfileWorker();
-		m_profileWorker->profileName = GetDefaultProfileName();
-		m_profileCount = GetProfileCount();
+		g_toolkitMap.at(L"profilecount") = ConvertIntToString(GetProfileCount());
 
 		for (int i = 1; i < argc; i++)
 		{
@@ -890,8 +944,8 @@ namespace MAPIToolkit
 				if (i + 1 < argc)
 				{
 
-					m_profileWorker->profileName = argv[i + 1];
-					m_profileMode = PROFILEMODE_SPECIFIC;
+					g_toolkitMap.at(L"profileName") = argv[i + 1];
+					g_toolkitMap.at(L"profilemode") = L"specific";
 					i++;
 				}
 			}
@@ -905,8 +959,8 @@ namespace MAPIToolkit
 		}
 		else if (VCHK(g_profileModeMap.at(g_toolkitMap.at(L"profilemode")), PROFILEMODE_DEFAULT))
 		{
-			g_toolkitMap.at(L"profilename") == GetDefaultProfileName();
-			g_toolkitMap.at(L"profilemode") == L"specific";
+			g_toolkitMap.at(L"profilename") = GetDefaultProfileName();
+			g_toolkitMap.at(L"profilemode") = L"specific";
 		}
 
 		// create service worker
@@ -923,7 +977,7 @@ namespace MAPIToolkit
 					std::transform(wszValue.begin(), wszValue.end(), wszValue.begin(), ::tolower);
 					try
 					{
-						m_serviceType = g_serviceTypeMap.at(wszValue);
+						g_toolkitMap.at(L"servicetype") = wszValue;
 
 					}
 					catch (const std::exception& e)
@@ -943,90 +997,41 @@ namespace MAPIToolkit
 
 
 		// configure address book worker
-		if (m_serviceType == SERVICETYPE_ADDRESSBOOK)
-		{
-			m_serviceWorker = new AddressBookWorker();
 
-			for (int i = 1; i < argc; i++)
-			{
-				switch (argv[i][0])
-				{
-				case '-':
-				case '/':
-				case '\\':
-					std::wstring wsArg = SubstringFromStart(1, argv[i]);
-					std::transform(wsArg.begin(), wsArg.end(), wsArg.begin(), ::tolower);
-
-					try
-					{
-						if (i + 1 < argc)
-						{
-							g_addressBookMap.at(wsArg) = argv[i + 1];
-							i++;
-						};
-					}
-					catch (const std::exception& e)
-					{
-
-					}
-					break;
-				}
-			}
-
-			CHK_HR_MSG(ParseAddressBookXml((LPTSTR)g_addressBookMap.at(L"configfilepath").c_str()), L"Parsing configuration XML file");
-		}
-
-
-		// Provider 
 		for (int i = 1; i < argc; i++)
 		{
-			std::wstring wsArg = argv[i];
-			std::transform(wsArg.begin(), wsArg.end(), wsArg.begin(), ::tolower);
-
-			if ((wsArg == L"-providertype") || (wsArg == L"-mt"))
+			switch (argv[i][0])
 			{
-				if (i + 1 < argc)
+			case '-':
+			case '/':
+			case '\\':
+				std::wstring wsArg = SubstringFromStart(1, argv[i]);
+				std::transform(wsArg.begin(), wsArg.end(), wsArg.begin(), ::tolower);
+
+				try
 				{
-					std::wstring wszValue = argv[i + 1];
-					std::transform(wszValue.begin(), wszValue.end(), wszValue.begin(), ::tolower);
-					if (wszValue == L"primarymailbox")
+					if (i + 1 < argc)
 					{
-						m_providerWorker = new PrimaryMailboxWorker();
-						m_providerWorker->providerType = PROVIDERTYPE_PRIMARYMAILBOX;
+						g_addressBookMap.at(wsArg) = argv[i + 1];
 						i++;
-					}
-					else if (wszValue == L"delegate")
-					{
-						m_providerWorker = new DelegateWorker();
-						m_providerWorker->providerType = PROVIDERTYPE_DELEGATE;
-						i++;
-					}
-					else if (wszValue == L"publicfolders")
-					{
-						m_providerWorker = new PublicFoldersWorker();
-						m_providerWorker->providerType = PROVIDERTYPE_PUBLICFOLDERS;
-						i++;
-					}
-					else
-					{
-						Logger::Write(LOGLEVEL_FAILED, L"The provider type specified is not valid. Valid entries are 'primarymailbox', 'delegate', and 'publicfolders'.");
-						return false;
-					}
+					};
 				}
-				else
+				catch (const std::exception& e)
 				{
-					Logger::Write(LOGLEVEL_FAILED, L"You must specify a provider type. Valid entries are 'primarymailbox', 'delegate', and 'publicfolders'.");
-					return false;
+
 				}
+				break;
 			}
 		}
 
+		CHK_HR_MSG(ParseAddressBookXml((LPTSTR)g_addressBookMap.at(L"configfilepath").c_str()), L"Parsing configuration XML file");
 
+		wss << g_toolkitMap.at(L"action");
 		while (std::getline(wss, wszActionItem, L'|'))
 			m_action |= g_actionsMap.at(wszActionItem);
 
 		SaveConfig();
-	
+
 
 	Error:
 		goto CleanUp;

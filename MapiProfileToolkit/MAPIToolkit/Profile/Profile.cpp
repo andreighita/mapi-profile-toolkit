@@ -1601,8 +1601,61 @@ CleanUp:
 	return hRes;
 }
 
+HRESULT ListABService(LPSERVICEADMIN2 lpSvcAdmin2, LPMAPIUID pMAPIUid)
+{
+	HRESULT hRes = S_OK;
+	LPMAPITABLE		lpMsgSvcTable = NULL; // MAPI table pointer.
+	LPSRowSet		lpSvcRows = NULL;
+	LPSRestriction	lpRes = NULL;
+	LPSPropValue	lpspvSvcUid = NULL;
 
-HRESULT ListAllABServices(LPSERVICEADMIN lpSvcAdmin)
+	enum { iServiceUid, iDisplayName, iAbServerName, iAbServerPort, iAbUsername, iAbSearchBase, iAbSearchTimeout, iAbMaxEntries, iAbUseSSL, iAbRequireSpa, AbEnableBrowsing, iAbDefaultSearchBase, cptaProps };
+	SizedSPropTagArray(cptaProps, sptaProps) = { cptaProps, PR_SERVICE_UID, PR_DISPLAY_NAME, PROP_AB_PROVIDER_SERVER_NAME, PROP_AB_PROVIDER_SERVER_PORT,
+		PROP_AB_PROVIDER_USER_NAME, PROP_AB_PROVIDER_SEARCH_BASE, PROP_AB_PROVIDER_SEARCH_TIMEOUT, PROP_AB_PROVIDER_MAX_ENTRIES, PROP_AB_PROVIDER_USE_SSL,
+		PROP_AB_PROVIDER_SERVER_SPA, PROP_AB_PROVIDER_ENABLE_BROWSING, PROP_AB_PROVIDER_SEARCH_BASE_DEFAULT };
+
+	LPPROFSECT lpProfSect = NULL;
+	LPMAPIPROP lpMapiProp = NULL;
+	ULONG ulPropVal = 0;
+	LPSPropValue lpsPropValues = NULL;
+	HCK(lpSvcAdmin2->OpenProfileSection(pMAPIUid, NULL, MAPI_MODIFY | MAPI_FORCE_ACCESS, &lpProfSect));
+
+	HCK(lpProfSect->GetProps((LPSPropTagArray)& sptaProps, NULL, &ulPropVal, &lpsPropValues));
+	if (lpsPropValues)
+	{
+		wprintf(L"Listing entry \n");
+		wprintf(L"  Display Name        : %s\n", ConvertMultiByteToWideChar(lpsPropValues[iDisplayName].Value.lpszA));
+		wprintf(L"  Ldap Server Name    : %s\n", ConvertMultiByteToWideChar(lpsPropValues[iAbServerName].Value.lpszA));
+		wprintf(L"  Ldap Server Port    : %s\n", ConvertMultiByteToWideChar(lpsPropValues[iAbServerPort].Value.lpszA));
+		wprintf(L"  Username            : %s\n", ConvertMultiByteToWideChar(lpsPropValues[iAbUsername].Value.lpszA));
+		wprintf(L"  Search Base         : %s\n", ConvertMultiByteToWideChar(lpsPropValues[iAbSearchBase].Value.lpszA));
+		wprintf(L"  Search Timeout      : %s\n", ConvertMultiByteToWideChar(lpsPropValues[iAbSearchTimeout].Value.lpszA));
+		wprintf(L"  Maximum entries     : %s\n", ConvertMultiByteToWideChar(lpsPropValues[iAbMaxEntries].Value.lpszA));
+		if (lpsPropValues[iAbUseSSL].Value.b)
+			wprintf(L"  Use SSL             : true\n");
+		else
+			wprintf(L"  Use SSL             : false\n");
+		if (lpsPropValues[iAbRequireSpa].Value.b)
+			wprintf(L"  Use SSL             : true\n");
+		else
+			wprintf(L"  Use SSL             : false\n");
+		if (lpsPropValues[AbEnableBrowsing].Value.b)
+			wprintf(L"  Use SSL             : true\n");
+		else
+			wprintf(L"  Use SSL             : false\n");
+		if (lpsPropValues[iAbDefaultSearchBase].Value.i == 1)
+			wprintf(L"  Use SSL             : true\n");
+		else
+			wprintf(L"  Use SSL             : false\n");
+	}
+	else
+		wprintf(L"Unable to retrieve Ldap AB properties.\n");
+
+Error:
+	return hRes;
+}
+
+HRESULT ListAllABServices(LPSERVICEADMIN2 lpSvcAdmin2)
 {
 	HRESULT hRes = S_OK;
 	LPMAPITABLE		lpMsgSvcTable = NULL; // MAPI table pointer.
@@ -1616,7 +1669,7 @@ HRESULT ListAllABServices(LPSERVICEADMIN lpSvcAdmin)
 		PROP_AB_PROVIDER_SERVER_SPA, PROP_AB_PROVIDER_ENABLE_BROWSING, PROP_AB_PROVIDER_SEARCH_BASE_DEFAULT };
 
 	// Get access to the message service table, a list of the message services in the profile.
-	HCK(lpSvcAdmin->GetMsgServiceTable(0, // Flags        
+	HCK(lpSvcAdmin2->GetMsgServiceTable(0, // Flags        
 		&lpMsgSvcTable)); // Pointer to table
 	wprintf(L"Retrieved message service table from profile.\n");
 
@@ -1636,10 +1689,10 @@ HRESULT ListAllABServices(LPSERVICEADMIN lpSvcAdmin)
 	ZeroMemory(lpspvSvcName, sizeof(SPropValue));
 
 	lpRes->rt = RES_CONTENT;
-	lpRes->res.resContent.ulFuzzyLevel = FL_FULLSTRING;
-	lpRes->res.resContent.ulPropTag = PR_SERVICE_NAME;
+	lpRes->res.resContent.ulFuzzyLevel = FL_IGNORECASE | FL_FULLSTRING;
+	lpRes->res.resContent.ulPropTag = PR_SERVICE_NAME_A;
 	lpRes->res.resContent.lpProp = lpspvSvcName;
-	lpspvSvcName->ulPropTag = PR_SERVICE_NAME;
+	lpspvSvcName->ulPropTag = PR_SERVICE_NAME_A;
 	lpspvSvcName->Value.lpszA = ConvertWideCharToMultiByte(L"EMABLT");
 
 	wprintf(L"Set up restriction for searching Ldap AB services.\n");
@@ -1657,8 +1710,9 @@ HRESULT ListAllABServices(LPSERVICEADMIN lpSvcAdmin)
 	{
 		for (unsigned int i = 0; i < lpSvcRows->cRows; i++)
 		{
-			LPPROFSECT lpProfSect = NULL;			LPMAPIPROP lpMapiProp = NULL;
-			HCK(lpSvcAdmin->OpenProfileSection(LPMAPIUID(lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb), NULL, MAPI_MODIFY | MAPI_FORCE_ACCESS, &lpProfSect));
+			LPPROFSECT lpProfSect = NULL;			
+			LPMAPIPROP lpMapiProp = NULL;
+			HCK(lpSvcAdmin2->OpenProfileSection(LPMAPIUID(lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb), NULL, MAPI_MODIFY | MAPI_FORCE_ACCESS, &lpProfSect));
 			ULONG ulPropVal = 0;
 			LPSPropValue lpsPropValues = NULL;
 			HCK(lpProfSect->GetProps((LPSPropTagArray)& sptaProps, NULL, &ulPropVal, &lpsPropValues));
@@ -1666,12 +1720,12 @@ HRESULT ListAllABServices(LPSERVICEADMIN lpSvcAdmin)
 			{
 				wprintf(L"Listing entry #%i:\n", i);
 				wprintf(L"  Display Name        : %s\n", lpsPropValues[iDisplayName].Value.lpszW);
-				wprintf(L"  Ldap Server Name    : %s\n", lpsPropValues[iAbServerName].Value.lpszW);
-				wprintf(L"  Ldap Server Port    : %s\n", lpsPropValues[iAbServerPort].Value.lpszW);
-				wprintf(L"  Username            : %s\n", lpsPropValues[iAbUsername].Value.lpszW);
-				wprintf(L"  Search Base         : %s\n", lpsPropValues[iAbSearchBase].Value.lpszW);
-				wprintf(L"  Search Timeout      : %s\n", lpsPropValues[iAbSearchTimeout].Value.lpszW);
-				wprintf(L"  Maximum entries     : %s\n", lpsPropValues[iAbMaxEntries].Value.lpszW);
+				wprintf(L"  Ldap Server Name    : %s\n", ConvertMultiByteToWideChar(lpsPropValues[iAbServerName].Value.lpszA));
+				wprintf(L"  Ldap Server Port    : %s\n", ConvertMultiByteToWideChar(lpsPropValues[iAbServerPort].Value.lpszA));
+				wprintf(L"  Username            : %s\n", ConvertMultiByteToWideChar(lpsPropValues[iAbUsername].Value.lpszA));
+				wprintf(L"  Search Base         : %s\n", ConvertMultiByteToWideChar(lpsPropValues[iAbSearchBase].Value.lpszA));
+				wprintf(L"  Search Timeout      : %s\n", ConvertMultiByteToWideChar(lpsPropValues[iAbSearchTimeout].Value.lpszA));
+				wprintf(L"  Maximum entries     : %s\n", ConvertMultiByteToWideChar(lpsPropValues[iAbMaxEntries].Value.lpszA));
 				if (lpsPropValues[iAbUseSSL].Value.b)
 					wprintf(L"  Use SSL             : true\n");
 				else
@@ -1704,6 +1758,10 @@ Error:
 	return hRes;
 }
 
+HRESULT CreateService(LPSERVICEADMIN2 lpSvcAdmin2, LPMAPIUID lpuidService)
+{
+	return S_OK;
+}
 // CreateABService
 // Creates a new EMABLT service and populates the parameters
 HRESULT CreateABService(LPSERVICEADMIN2 lpSvcAdmin2)
@@ -1718,7 +1776,8 @@ HRESULT CreateABService(LPSERVICEADMIN2 lpSvcAdmin2)
 	LPMAPIUID			lpuidService = &uidService;
 
 	LPWSTR lpszwPassword = (LPWSTR)Toolkit::g_addressBookMap.at(L"password").c_str();
-
+	LPTSTR lpszServiceName = (LPTSTR)Toolkit::g_addressBookMap.at(L"servicename").c_str();
+	LPTSTR lpszDisplayName = (LPTSTR)Toolkit::g_addressBookMap.at(L"displayname").c_str();
 	std::vector<SPropValue> rgvalVector;
 	SPropValue sPropValue;
 
@@ -1733,7 +1792,7 @@ HRESULT CreateABService(LPSERVICEADMIN2 lpSvcAdmin2)
 	}
 	wprintf(L"Attempting to Create AB service...");
 	// Adds a message service to the current profile and returns that newly added service UID.
-	hRes = lpSvcAdmin2->CreateMsgServiceEx((LPTSTR)Toolkit::g_addressBookMap.at(L"servicename").c_str(), (LPTSTR)Toolkit::g_addressBookMap.at(L"displayname").c_str(), NULL, 0, &uidService);
+	hRes = lpSvcAdmin2->CreateMsgServiceEx((LPTSTR)ConvertWideCharToMultiByte((LPWSTR)Toolkit::g_addressBookMap.at(L"servicename").c_str()), (LPTSTR)ConvertWideCharToMultiByte((LPWSTR)Toolkit::g_addressBookMap.at(L"displayname").c_str()), NULL, 0, &uidService);
 	if (SUCCEEDED(hRes))
 		wprintf(L"DONE\n");
 	else
@@ -1759,10 +1818,13 @@ HRESULT CreateABService(LPSERVICEADMIN2 lpSvcAdmin2)
 	sPropValue.Value.lpszA = ConvertWideCharToMultiByte(Toolkit::g_addressBookMap.at(L"serverport").c_str());
 	rgvalVector.push_back(sPropValue);
 
-	ZeroMemory(&sPropValue, sizeof(SPropValue));
-	sPropValue.ulPropTag = PROP_AB_PROVIDER_USER_NAME;
-	sPropValue.Value.lpszA = ConvertWideCharToMultiByte(Toolkit::g_addressBookMap.at(L"username").c_str());
-	rgvalVector.push_back(sPropValue);
+	if (0 < wcslen(Toolkit::g_addressBookMap.at(L"username").c_str()))
+	{
+		ZeroMemory(&sPropValue, sizeof(SPropValue));
+		sPropValue.ulPropTag = PROP_AB_PROVIDER_USER_NAME;
+		sPropValue.Value.lpszA = ConvertWideCharToMultiByte(Toolkit::g_addressBookMap.at(L"username").c_str());
+		rgvalVector.push_back(sPropValue);
+	}
 
 	ZeroMemory(&sPropValue, sizeof(SPropValue));
 	sPropValue.ulPropTag = PROP_AB_PROVIDER_SEARCH_BASE;
@@ -1775,7 +1837,7 @@ HRESULT CreateABService(LPSERVICEADMIN2 lpSvcAdmin2)
 	rgvalVector.push_back(sPropValue);
 
 	ZeroMemory(&sPropValue, sizeof(SPropValue));
-	sPropValue.ulPropTag = PROP_AB_PROVIDER_SEARCH_TIMEOUT;
+	sPropValue.ulPropTag = PROP_AB_PROVIDER_MAX_ENTRIES;
 	sPropValue.Value.lpszA = ConvertWideCharToMultiByte(Toolkit::g_addressBookMap.at(L"maxentries").c_str());
 	rgvalVector.push_back(sPropValue);
 
@@ -1785,7 +1847,7 @@ HRESULT CreateABService(LPSERVICEADMIN2 lpSvcAdmin2)
 	rgvalVector.push_back(sPropValue);
 
 	ZeroMemory(&sPropValue, sizeof(SPropValue));
-	sPropValue.ulPropTag = PROP_AB_PROVIDER_USE_SSL;
+	sPropValue.ulPropTag = PROP_AB_PROVIDER_SERVER_SPA;
 	sPropValue.Value.b = (0 == wcscmp(Toolkit::g_addressBookMap.at(L"requirespa").c_str(), L"true"));
 	rgvalVector.push_back(sPropValue);
 
@@ -1811,13 +1873,14 @@ HRESULT CreateABService(LPSERVICEADMIN2 lpSvcAdmin2)
 			hRes = E_FAIL;
 			goto Error;
 		}
+		ZeroMemory(&sPropValue, sizeof(SPropValue));
+		sPropValue.ulPropTag = PROP_AB_PROVIDER_USER_PASSWORD_ENCODED;
+		sPropValue.Value.bin.cb = dataBlobOut.cbData;
+		sPropValue.Value.bin.lpb = dataBlobOut.pbData;
+		rgvalVector.push_back(sPropValue);
 	}
 
-	ZeroMemory(&sPropValue, sizeof(SPropValue));
-	sPropValue.ulPropTag = PROP_AB_PROVIDER_USER_PASSWORD_ENCODED;
-	sPropValue.Value.bin.cb = dataBlobOut.cbData;
-	sPropValue.Value.bin.lpb = dataBlobOut.pbData;
-	rgvalVector.push_back(sPropValue);
+
 
 	ZeroMemory(&sPropValue, sizeof(SPropValue));
 	sPropValue.ulPropTag = PROP_AB_PROVIDER_ENABLE_BROWSING;
@@ -1826,7 +1889,7 @@ HRESULT CreateABService(LPSERVICEADMIN2 lpSvcAdmin2)
 
 	ZeroMemory(&sPropValue, sizeof(SPropValue));
 	sPropValue.ulPropTag = PROP_AB_PROVIDER_SEARCH_BASE_DEFAULT;
-	sPropValue.Value.b = (0 == wcscmp(Toolkit::g_addressBookMap.at(L"defaultsearchbase").c_str(), L"true"));
+	sPropValue.Value.ul = (0 == wcscmp(Toolkit::g_addressBookMap.at(L"defaultsearchbase").c_str(), L"true"));
 	rgvalVector.push_back(sPropValue);
 
 	wprintf(L"Attempting to Configure AB service...");
@@ -1844,9 +1907,9 @@ Error:
 	return hRes;
 }
 
-// CheckABServiceExists
+// GetABServiceUid
 // Searches for an AB service with a given Display name and returns a service UID
-HRESULT CheckABServiceExists(LPSERVICEADMIN2 lpSvcAdmin2, LPTSTR lppszDisplayName, LPMAPIUID lpMapiUid, BOOL* success)
+HRESULT GetABServiceUid(LPSERVICEADMIN2 lpSvcAdmin2, LPTSTR lppszDisplayName, ULONG * ulcMapiUid, MAPIUID* pMapiUid)
 {
 	HRESULT hRes = S_OK;
 	LPMAPITABLE		lpMsgSvcTable = NULL; // MAPI table pointer.
@@ -1855,7 +1918,7 @@ HRESULT CheckABServiceExists(LPSERVICEADMIN2 lpSvcAdmin2, LPTSTR lppszDisplayNam
 	LPSRestriction	lpResLevel1 = NULL;
 	LPSPropValue	lpspvSvcName = NULL;
 	LPSPropValue	lpspvDispName = NULL;
-
+	LPMAPIUID* pTempMAPIUid = NULL;
 	enum { iServiceUid, cptaProps };
 	SizedSPropTagArray(cptaProps, sptaProps) = { cptaProps, PR_SERVICE_UID };
 
@@ -1923,24 +1986,14 @@ HRESULT CheckABServiceExists(LPSERVICEADMIN2 lpSvcAdmin2, LPTSTR lppszDisplayNam
 
 	if (lpSvcRows->cRows > 0)
 	{
-		if (lpSvcRows->cRows = 1)
-		{
-			// 1 row expected
-			wprintf(L"Found one entry.\n");
-			*lpMapiUid = *(LPMAPIUID)lpSvcRows->aRow->lpProps[iServiceUid].Value.bin.lpb;
-
-			*success = true;
-		}
-		else
-		{
-			// if more than 1 row then return the 1st row only
-			wprintf(L"Found multiple entries. Processing first entry only!\n");
-			*lpMapiUid = *(LPMAPIUID)lpSvcRows->aRow[0].lpProps[iServiceUid].Value.bin.lpb;
-			*success = true;
-		}
+		if (ulcMapiUid)
+			* ulcMapiUid = lpSvcRows->cRows;
+		if (pMapiUid)
+			for (int i = 0; i < lpSvcRows->cRows; i++)
+			{
+				*(&pMapiUid[i]) = *(LPMAPIUID)lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb;
+			}
 	}
-	else
-		*success = false;
 
 Error:
 	MAPIFreeBuffer(lpspvDispName);
@@ -1952,9 +2005,81 @@ Error:
 	return hRes;
 }
 
-// CheckABServiceExists
+// GetABServiceUid
 // Searches for an AB service with a given Display name and Server name and returns a service UID
-HRESULT CheckABServiceExists(LPSERVICEADMIN2 lpSvcAdmin2, LPTSTR lppszDisplayName, LPTSTR lppszServerName, LPMAPIUID lpMapiUid, BOOL* success)
+HRESULT GetABServiceUid(LPSERVICEADMIN2 lpSvcAdmin2, ULONG* ulcMapiUid, MAPIUID* pMapiUid)
+{
+	HRESULT hRes = S_OK;
+	LPMAPITABLE		lpMsgSvcTable = NULL; // MAPI table pointer.
+	LPSRowSet		lpSvcRows = NULL;
+	LPSRestriction	lpRes = NULL;
+	LPMAPIUID* pTempMAPIUid = NULL;
+	LPSPropValue	lpspvSvcName = NULL;
+	enum { iServiceUid, cptaProps };
+	SizedSPropTagArray(cptaProps, sptaProps) = { cptaProps, PR_SERVICE_UID };
+
+	// Provides access to the message service table, a list of the message services in the profile.
+	hRes = lpSvcAdmin2->GetMsgServiceTable(0, // Flags        
+		&lpMsgSvcTable); // Pointer to table
+	if (FAILED(hRes)) goto Error;
+	wprintf(L"Retrieved message service table from profile.\n");
+
+	// Set up restriction to query table.
+
+	// Allocate and create our SRestriction
+	// Allocate base memory:
+	HCK(MAPIAllocateBuffer(
+		sizeof(SRestriction),
+		(LPVOID*)& lpRes));
+
+	HCK(MAPIAllocateMore(
+		sizeof(SPropValue),
+		lpRes,
+		(LPVOID*)& lpspvSvcName));
+
+	ZeroMemory(lpRes, sizeof(SRestriction));
+
+	lpRes->rt = RES_CONTENT;
+	lpRes->res.resContent.ulFuzzyLevel = FL_FULLSTRING;
+	lpRes->res.resContent.ulPropTag = PR_SERVICE_NAME_A;
+	lpRes->res.resContent.lpProp = lpspvSvcName;
+	lpspvSvcName->ulPropTag = PR_SERVICE_NAME_A;
+	lpspvSvcName->Value.lpszA = ConvertWideCharToMultiByte(L"EMABLT");
+
+	wprintf(L"Set up restriction for searching Ldap AB service.\n");
+
+	// Query the table to get the entry for the Exchange message service.
+	HCK(HrQueryAllRows(lpMsgSvcTable,
+		(LPSPropTagArray)& sptaProps,
+		lpRes,
+		NULL,
+		0,
+		&lpSvcRows));
+	wprintf(L"Queried service table for Ldap AB service.\n");
+
+	if (lpSvcRows->cRows > 0)
+	{
+		if (ulcMapiUid)
+			* ulcMapiUid = lpSvcRows->cRows;
+		if (pMapiUid)
+			for (int i = 0; i < lpSvcRows->cRows; i++)
+			{
+				*(&pMapiUid[i]) = *(LPMAPIUID)lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb;
+			}
+	}
+
+Error:
+	MAPIFreeBuffer(lpspvSvcName);
+	MAPIFreeBuffer(lpRes);
+	if (lpSvcRows) FreeProws(lpSvcRows);
+	if (lpMsgSvcTable) lpMsgSvcTable->Release();
+	return hRes;
+}
+
+
+// GetABServiceUid
+// Searches for an AB service with a given Display name and Server name and returns a service UID
+HRESULT GetABServiceUid(LPSERVICEADMIN2 lpSvcAdmin2, LPTSTR lppszDisplayName, LPTSTR lppszServerName, ULONG * ulcMapiUid, MAPIUID* pMapiUid)
 {
 	HRESULT hRes = S_OK;
 	LPMAPITABLE		lpMsgSvcTable = NULL; // MAPI table pointer.
@@ -1965,7 +2090,7 @@ HRESULT CheckABServiceExists(LPSERVICEADMIN2 lpSvcAdmin2, LPTSTR lppszDisplayNam
 	LPSPropValue	lpspvSvcName = NULL;
 	LPSPropValue	lpspvDispName = NULL;
 	LPSPropValue	lpspvSrvName = NULL;
-
+	LPMAPIUID* pTempMAPIUid = NULL;
 	enum { iServiceUid, cptaProps };
 	SizedSPropTagArray(cptaProps, sptaProps) = { cptaProps, PR_SERVICE_UID };
 
@@ -2022,9 +2147,9 @@ HRESULT CheckABServiceExists(LPSERVICEADMIN2 lpSvcAdmin2, LPTSTR lppszDisplayNam
 
 	lpResLevel0[0].rt = RES_CONTENT;
 	lpResLevel0[0].res.resContent.ulFuzzyLevel = FL_FULLSTRING;
-	lpResLevel0[0].res.resContent.ulPropTag = PR_SERVICE_NAME;
+	lpResLevel0[0].res.resContent.ulPropTag = PR_SERVICE_NAME_A;
 	lpResLevel0[0].res.resContent.lpProp = lpspvSvcName;
-	lpspvSvcName->ulPropTag = PR_SERVICE_NAME;
+	lpspvSvcName->ulPropTag = PR_SERVICE_NAME_A;
 	lpspvSvcName->Value.lpszA = ConvertWideCharToMultiByte(L"EMABLT");
 	//Get the services matching the supplied Display Name
 
@@ -2033,14 +2158,14 @@ HRESULT CheckABServiceExists(LPSERVICEADMIN2 lpSvcAdmin2, LPTSTR lppszDisplayNam
 	lpResLevel0[1].res.resOr.lpRes = lpResLevel1;
 
 	lpResLevel1[0].rt = RES_CONTENT;
-	lpResLevel1[0].res.resContent.ulFuzzyLevel = FL_IGNORECASE;
-	lpResLevel1[0].res.resContent.ulPropTag = PR_DISPLAY_NAME;
+	lpResLevel1[0].res.resContent.ulFuzzyLevel = FL_FULLSTRING | FL_IGNORECASE;
+	lpResLevel1[0].res.resContent.ulPropTag = PR_DISPLAY_NAME_A;
 	lpResLevel1[0].res.resContent.lpProp = lpspvDispName;
-	lpspvDispName->ulPropTag = PR_DISPLAY_NAME;
+	lpspvDispName->ulPropTag = PR_DISPLAY_NAME_A;
 	lpspvDispName->Value.lpszA = ConvertWideCharToMultiByte(lppszDisplayName);
 	//Get the services matching the supplied ldap server name
 	lpResLevel1[1].rt = RES_CONTENT;
-	lpResLevel1[1].res.resContent.ulFuzzyLevel = FL_IGNORECASE;
+	lpResLevel1[1].res.resContent.ulFuzzyLevel = FL_FULLSTRING | FL_IGNORECASE;
 	lpResLevel1[1].res.resContent.ulPropTag = PROP_AB_PROVIDER_SERVER_NAME;
 	lpResLevel1[1].res.resContent.lpProp = lpspvSrvName;
 	lpspvSrvName->ulPropTag = PROP_AB_PROVIDER_SERVER_NAME;
@@ -2058,27 +2183,18 @@ HRESULT CheckABServiceExists(LPSERVICEADMIN2 lpSvcAdmin2, LPTSTR lppszDisplayNam
 
 	if (lpSvcRows->cRows > 0)
 	{
-		if (1 == lpSvcRows->cRows)
-		{
-			// 1 row expected
-			wprintf(L"Found one entry.\n");
-			if (lpMapiUid)
-				* lpMapiUid = *(LPMAPIUID)lpSvcRows->aRow->lpProps[iServiceUid].Value.bin.lpb;
-			*success = true;
-		}
-		else
-		{
-			// if more than 1 row, return the 1st row only
-			wprintf(L"Found multiple entries. Processing first entry only!\n");
-			if (lpMapiUid)
-				* lpMapiUid = *(LPMAPIUID)lpSvcRows->aRow[0].lpProps[iServiceUid].Value.bin.lpb;
-			*success = true;
-		}
+		if (ulcMapiUid)
+			* ulcMapiUid = lpSvcRows->cRows;
+		if (pMapiUid)
+			for (int i = 0; i < lpSvcRows->cRows; i++)
+			{
+				*(&pMapiUid[i]) = *(LPMAPIUID)lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb;
+			}
 	}
-	else
-		*success = false;
+
 
 Error:
+	MAPIFreeBuffer(pTempMAPIUid);
 	MAPIFreeBuffer(lpspvSrvName);
 	MAPIFreeBuffer(lpspvDispName);
 	MAPIFreeBuffer(lpspvSvcName);
@@ -2091,7 +2207,7 @@ Error:
 
 // UpdateABService
 // Updates the AB service with the given service UID
-HRESULT UpdateABService(LPSERVICEADMIN lpSvcAdmin, ABProvider* pABProvider, LPMAPIUID lpMapiUid)
+HRESULT UpdateABService(LPSERVICEADMIN2 lpSvcAdmin2, ABProvider* pABProvider, LPMAPIUID lpMapiUid)
 {
 	HRESULT				hRes = S_OK;
 	SPropValue			rgval[12];						// Property value structure to hold configuration info.
@@ -2197,7 +2313,7 @@ HRESULT UpdateABService(LPSERVICEADMIN lpSvcAdmin, ABProvider* pABProvider, LPMA
 	wprintf(L"Attempting to update AB service...");
 
 	// Reconfigures a message service with the new props.
-	hRes = lpSvcAdmin->ConfigureMsgService(lpMapiUid, NULL, 0, 12, rgval);
+	hRes = lpSvcAdmin2->ConfigureMsgService(lpMapiUid, NULL, 0, 12, rgval);
 	if (SUCCEEDED(hRes))
 		wprintf(L"DONE\n");
 	else
@@ -2215,20 +2331,230 @@ Error:
 
 // RemoveABService
 // Removes the AB sercie with the given service UID
-HRESULT RemoveABService(LPSERVICEADMIN lpSvcAdmin, LPMAPIUID lpMapiUid)
+HRESULT RemoveABService(LPSERVICEADMIN2 lpSvcAdmin2, LPMAPIUID lpMapiUid)
 {
 	HRESULT hRes = S_OK;
 	wprintf(L"Attempting to delete AB service...");
 	// Deletes a message service from a profile.
-	hRes = lpSvcAdmin->DeleteMsgService(lpMapiUid);
+	hRes = lpSvcAdmin2->DeleteMsgService(lpMapiUid);
 	if SUCCEEDED(hRes)
 		wprintf(L"DONE\n");
 	else
 		wprintf(L"FAILED\n");
+	HCK(hRes);
+Error:
+	
+	return hRes;
+}
+
+HRESULT CheckABServiceExists(LPSERVICEADMIN2 lpSvcAdmin2, LPTSTR lppszDisplayName, LPTSTR lppszServerName, BOOL* success)
+{
+	HRESULT hRes = S_OK;
+	LPMAPITABLE		lpMsgSvcTable = NULL; // MAPI table pointer.
+	LPSRowSet		lpSvcRows = NULL;
+	LPSRestriction	lpRes = NULL;
+	LPSRestriction	lpResLevel0 = NULL;
+	LPSRestriction	lpResLevel1 = NULL;
+	LPSPropValue	lpspvSvcName = NULL;
+	LPSPropValue	lpspvDispName = NULL;
+	LPSPropValue	lpspvSrvName = NULL;
+	LPMAPIUID* pTempMAPIUid = NULL;
+	enum { iServiceUid, cptaProps };
+	SizedSPropTagArray(cptaProps, sptaProps) = { cptaProps, PR_SERVICE_UID };
+
+	// Provides access to the message service table, a list of the message services in the profile.
+	hRes = lpSvcAdmin2->GetMsgServiceTable(0, // Flags        
+		&lpMsgSvcTable); // Pointer to table
+	if (FAILED(hRes)) goto Error;
+	wprintf(L"Retrieved message service table from profile.\n");
+
+	// Set up restriction to query table.
+
+	// Allocate and create our SRestriction
+	// Allocate base memory:
+	HCK(MAPIAllocateBuffer(
+		sizeof(SRestriction),
+		(LPVOID*)& lpRes));
+
+	HCK(MAPIAllocateMore(
+		sizeof(SRestriction) * 2,
+		lpRes,
+		(LPVOID*)& lpResLevel0));
+
+	HCK(MAPIAllocateMore(
+		sizeof(SRestriction) * 2,
+		lpRes,
+		(LPVOID*)& lpResLevel1));
+
+	HCK(MAPIAllocateMore(
+		sizeof(SPropValue),
+		lpRes,
+		(LPVOID*)& lpspvSvcName));
+
+	HCK(MAPIAllocateMore(
+		sizeof(SPropValue),
+		lpRes,
+		(LPVOID*)& lpspvDispName));
+
+	HCK(MAPIAllocateMore(
+		sizeof(SPropValue),
+		lpRes,
+		(LPVOID*)& lpspvSrvName));
+
+	ZeroMemory(lpRes, sizeof(SRestriction));
+	ZeroMemory(lpResLevel0, sizeof(SRestriction) * 2);
+	ZeroMemory(lpResLevel1, sizeof(SRestriction) * 2);
+	ZeroMemory(lpspvSvcName, sizeof(SPropValue));
+	ZeroMemory(lpspvDispName, sizeof(SPropValue));
+	ZeroMemory(lpspvSrvName, sizeof(SPropValue));
+
+	lpRes->rt = RES_AND;
+	lpRes->res.resAnd.cRes = 2;
+	lpRes->res.resAnd.lpRes = lpResLevel0;
+	//Get the services matching the EMABLT Service Name
+
+	lpResLevel0[0].rt = RES_CONTENT;
+	lpResLevel0[0].res.resContent.ulFuzzyLevel = FL_FULLSTRING;
+	lpResLevel0[0].res.resContent.ulPropTag = PR_SERVICE_NAME_A;
+	lpResLevel0[0].res.resContent.lpProp = lpspvSvcName;
+	lpspvSvcName->ulPropTag = PR_SERVICE_NAME_A;
+	lpspvSvcName->Value.lpszA = ConvertWideCharToMultiByte(L"EMABLT");
+	//Get the services matching the supplied Display Name
+
+	lpResLevel0[1].rt = RES_OR;
+	lpResLevel0[1].res.resOr.cRes = 2;
+	lpResLevel0[1].res.resOr.lpRes = lpResLevel1;
+
+	lpResLevel1[0].rt = RES_CONTENT;
+	lpResLevel1[0].res.resContent.ulFuzzyLevel = FL_FULLSTRING | FL_IGNORECASE;
+	lpResLevel1[0].res.resContent.ulPropTag = PR_DISPLAY_NAME_A;
+	lpResLevel1[0].res.resContent.lpProp = lpspvDispName;
+	lpspvDispName->ulPropTag = PR_DISPLAY_NAME_A;
+	lpspvDispName->Value.lpszA = ConvertWideCharToMultiByte(lppszDisplayName);
+	//Get the services matching the supplied ldap server name
+	lpResLevel1[1].rt = RES_CONTENT;
+	lpResLevel1[1].res.resContent.ulFuzzyLevel = FL_FULLSTRING | FL_IGNORECASE;
+	lpResLevel1[1].res.resContent.ulPropTag = PROP_AB_PROVIDER_SERVER_NAME;
+	lpResLevel1[1].res.resContent.lpProp = lpspvSrvName;
+	lpspvSrvName->ulPropTag = PROP_AB_PROVIDER_SERVER_NAME;
+	lpspvSrvName->Value.lpszA = ConvertWideCharToMultiByte(lppszServerName);
+	wprintf(L"Set up restriction for searching Ldap AB service.\n");
+	wprintf(L"Set up restriction for searching Ldap AB service.\n");
+
+	// Query the table to get the entry for the EMABLT service.
+	HCK(HrQueryAllRows(lpMsgSvcTable,
+		(LPSPropTagArray)& sptaProps,
+		lpRes,
+		NULL,
+		0,
+		&lpSvcRows));
+	wprintf(L"Queried service table for Ldap AB service.\n");
+
+	if (lpSvcRows->cRows > 0)
+	{
+		*success = true;
+	}
+	else
+		*success = false;
 
 Error:
-	if (hRes != S_OK)
-		HCK(hRes);
+	MAPIFreeBuffer(lpspvDispName);
+	MAPIFreeBuffer(lpspvSvcName);
+	MAPIFreeBuffer(lpResLevel1);
+	MAPIFreeBuffer(lpRes);
+	if (lpSvcRows) FreeProws(lpSvcRows);
+	if (lpMsgSvcTable) lpMsgSvcTable->Release();
+	return hRes;
+}
+HRESULT CheckABServiceExists(LPSERVICEADMIN2 lpSvcAdmin2, LPTSTR lppszDisplayName, BOOL* success)
+{
+	HRESULT hRes = S_OK;
+	LPMAPITABLE		lpMsgSvcTable = NULL; // MAPI table pointer.
+	LPSRowSet		lpSvcRows = NULL;
+	LPSRestriction	lpRes = NULL;
+	LPSRestriction	lpResLevel1 = NULL;
+	LPSPropValue	lpspvSvcName = NULL;
+	LPSPropValue	lpspvDispName = NULL;
+
+	enum { iServiceUid, cptaProps };
+	SizedSPropTagArray(cptaProps, sptaProps) = { cptaProps, PR_SERVICE_UID };
+
+	// Provides access to the message service table, a list of the message services in the profile.
+	HCK(lpSvcAdmin2->GetMsgServiceTable(0, // Flags        
+		&lpMsgSvcTable)); // Pointer to table
+	wprintf(L"Retrieved message service table from profile.\n");
+
+	// Set up restriction to query table.
+	// Allocate and create our SRestriction
+	// Allocate base memory:
+	HCK(MAPIAllocateBuffer(
+		sizeof(SRestriction),
+		(LPVOID*)& lpRes));
+
+	HCK(MAPIAllocateMore(
+		sizeof(SRestriction) * 2,
+		lpRes,
+		(LPVOID*)& lpResLevel1));
+
+	HCK(MAPIAllocateMore(
+		sizeof(SPropValue),
+		lpRes,
+		(LPVOID*)& lpspvSvcName));
+
+	HCK(MAPIAllocateMore(
+		sizeof(SPropValue),
+		lpRes,
+		(LPVOID*)& lpspvDispName));
+
+	ZeroMemory(lpRes, sizeof(SRestriction));
+	ZeroMemory(lpResLevel1, sizeof(SRestriction) * 2);
+
+	ZeroMemory(lpspvSvcName, sizeof(SPropValue));
+	ZeroMemory(lpspvDispName, sizeof(SPropValue));
+
+	lpRes->rt = RES_AND;
+	lpRes->res.resAnd.cRes = 2;
+	lpRes->res.resAnd.lpRes = lpResLevel1;
+
+	//Get the services matching the EMABLT service Name
+	lpResLevel1[0].rt = RES_CONTENT;
+	lpResLevel1[0].res.resContent.ulFuzzyLevel = FL_FULLSTRING;
+	lpResLevel1[0].res.resContent.ulPropTag = PR_SERVICE_NAME;
+	lpResLevel1[0].res.resContent.lpProp = lpspvSvcName;
+	lpspvSvcName->ulPropTag = PR_SERVICE_NAME;
+	lpspvSvcName->Value.lpszA = ConvertWideCharToMultiByte(L"EMABLT");
+	//Get the services matching the supplied display Name
+	lpResLevel1[1].rt = RES_CONTENT;
+	lpResLevel1[1].res.resContent.ulFuzzyLevel = FL_FULLSTRING;
+	lpResLevel1[1].res.resContent.ulPropTag = PR_DISPLAY_NAME;
+	lpResLevel1[1].res.resContent.lpProp = lpspvDispName;
+	lpspvDispName->ulPropTag = PR_DISPLAY_NAME;
+	lpspvDispName->Value.lpszA = ConvertWideCharToMultiByte(lppszDisplayName);
+	wprintf(L"Set up restriction for searching Ldap AB service.\n");
+
+	// Query the table to get the entry for the EMABLT service.
+	HCK(HrQueryAllRows(lpMsgSvcTable,
+		(LPSPropTagArray)& sptaProps,
+		lpRes,
+		NULL,
+		0,
+		&lpSvcRows));
+	wprintf(L"Queried service table for Ldap AB service.\n");
+
+	if (lpSvcRows->cRows > 0)
+	{
+		*success = true;
+	}
+	else
+		*success = false;
+
+Error:
+	MAPIFreeBuffer(lpspvDispName);
+	MAPIFreeBuffer(lpspvSvcName);
+	MAPIFreeBuffer(lpResLevel1);
+	MAPIFreeBuffer(lpRes);
+	if (lpSvcRows) FreeProws(lpSvcRows);
+	if (lpMsgSvcTable) lpMsgSvcTable->Release();
 	return hRes;
 }
 }

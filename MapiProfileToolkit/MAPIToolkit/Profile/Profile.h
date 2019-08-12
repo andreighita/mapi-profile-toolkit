@@ -71,13 +71,18 @@ namespace MAPIToolkit
 #pragma endregion
 
 #pragma region AddressBook
-
-	HRESULT ListAllABServices(LPSERVICEADMIN lpSvcAdmin);
+	HRESULT ListABService(LPSERVICEADMIN2 lpSvcAdmin2, LPMAPIUID pMAPIUid);
+	HRESULT ListAllABServices(LPSERVICEADMIN2 lpSvcAdmin2);
 	HRESULT CreateABService(LPSERVICEADMIN2 lpSvcAdmin2);
-	HRESULT UpdateABService(LPSERVICEADMIN lpSvcAdmin, ABProvider* pABProvider, LPMAPIUID lpMapiUid);
-	HRESULT RemoveABService(LPSERVICEADMIN lpSvcAdmin, LPMAPIUID lpMapiUid);
-	HRESULT CheckABServiceExists(LPSERVICEADMIN2 lpSvcAdmin2, LPTSTR lppszDisplayName, LPTSTR lppszServerName, LPMAPIUID lppMapiUid, BOOL* success);
-	HRESULT CheckABServiceExists(LPSERVICEADMIN2 lpSvcAdmin2, LPTSTR lppszDisplayName, LPMAPIUID lppMapiUid, BOOL* success);
+	HRESULT UpdateABService(LPSERVICEADMIN2 lpSvcAdmin2, ABProvider* pABProvider, LPMAPIUID lpMapiUid);
+	HRESULT RemoveABService(LPSERVICEADMIN2 lpSvcAdmin2, LPMAPIUID lpMapiUid);
+	HRESULT GetABServiceUid(LPSERVICEADMIN2 lpSvcAdmin2, ULONG* ulcMapiUid, MAPIUID* pMapiUid);
+	HRESULT GetABServiceUid(LPSERVICEADMIN2 lpSvcAdmin2, LPTSTR lppszDisplayName, LPTSTR lppszServerName, ULONG * ulcMapiUid, MAPIUID* pMapiUid);
+	HRESULT GetABServiceUid(LPSERVICEADMIN2 lpSvcAdmin2, LPTSTR lppszDisplayName, ULONG * ulcMapiUid, MAPIUID* pMapiUid);
+	HRESULT CheckABServiceExists(LPSERVICEADMIN2 lpSvcAdmin2, LPTSTR lppszDisplayName, LPTSTR lppszServerName, BOOL* success);
+	HRESULT CheckABServiceExists(LPSERVICEADMIN2 lpSvcAdmin2, LPTSTR lppszDisplayName, BOOL* success);
 
 #pragma endregion
+
+	HRESULT CreateService(LPSERVICEADMIN2 lpSvcAdmin2, LPMAPIUID lpuidService);
 }

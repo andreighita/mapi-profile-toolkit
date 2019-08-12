@@ -169,13 +169,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="AddressBookWorker.h" />
-    <ClInclude Include="DataFileWorker.h" />
-    <ClInclude Include="DelegateWorker.h" />
-    <ClInclude Include="ExchangeAccountWorker.h" />
     <ClInclude Include="ExtraMAPIDefs.h" />
     <ClInclude Include="framework.h" />
-    <ClInclude Include="ImapAccountWorker.h" />
     <ClInclude Include="InlineAndMacros.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="Toolkit.h" />
@@ -183,45 +178,28 @@
     <ClInclude Include="Misc\Utility\StringOperations.h" />
     <ClInclude Include="Misc\XML\XMLHelper.h" />
     <ClInclude Include="Misc\XML\AddressBookXmlParser.h" />
-    <ClInclude Include="PopAccountWorker.h" />
-    <ClInclude Include="PrimaryMailboxWorker.h" />
-    <ClInclude Include="ProfileWorker.h" />
     <ClInclude Include="Profile\AdditionalMailbox.h" />
     <ClInclude Include="Profile\CachedMode.h" />
     <ClInclude Include="Profile\ExchangeAccount.h" />
     <ClInclude Include="Profile\LdapAb.h" />
     <ClInclude Include="Profile\Profile.h" />
     <ClInclude Include="Profile\PST.h" />
-    <ClInclude Include="ProviderWorker.h" />
-    <ClInclude Include="PublicFoldersWorker.h" />
     <ClInclude Include="RegistryHelper.h" />
-    <ClInclude Include="ServiceWorker.h" />
     <ClInclude Include="ToolkitTypeDefs.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AddressBookWorker.cpp" />
-    <ClCompile Include="DataFileWorker.cpp" />
-    <ClCompile Include="DelegateWorker.cpp" />
-    <ClCompile Include="ExchangeAccountWorker.cpp" />
-    <ClCompile Include="ImapAccountWorker.cpp" />
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="Toolkit.cpp" />
     <ClCompile Include="Misc\ADSI\ADHelper.cpp" />
     <ClCompile Include="Misc\Utility\StringOperations.cpp" />
     <ClCompile Include="Misc\XML\XMLHelper.cpp" />
-    <ClCompile Include="PopAccountWorker.cpp" />
-    <ClCompile Include="PrimaryMailboxWorker.cpp" />
-    <ClCompile Include="ProfileWorker.cpp" />
     <ClCompile Include="Profile\AdditionalMailbox.cpp" />
     <ClCompile Include="Profile\CachedMode.cpp" />
     <ClCompile Include="Profile\ExchangeAccount.cpp" />
     <ClCompile Include="Profile\LdapAb.cpp" />
     <ClCompile Include="Profile\Profile.cpp" />
     <ClCompile Include="Profile\PST.cpp" />
-    <ClCompile Include="ProviderWorker.cpp" />
-    <ClCompile Include="PublicFoldersWorker.cpp" />
     <ClCompile Include="RegistryHelper.cpp" />
-    <ClCompile Include="ServiceWorker.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
