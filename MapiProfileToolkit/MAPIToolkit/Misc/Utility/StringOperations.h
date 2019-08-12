@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <Windows.h>
+#include <MAPIDefS.h>
 
 namespace MAPIToolkit
 {

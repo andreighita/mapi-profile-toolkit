@@ -73,11 +73,11 @@ namespace MAPIToolkit
 #pragma region AddressBook
 
 	HRESULT ListAllABServices(LPSERVICEADMIN lpSvcAdmin);
-	HRESULT CreateABService(LPSERVICEADMIN lpSvcAdmin, ABProvider* pABProvider);
+	HRESULT CreateABService(LPSERVICEADMIN2 lpSvcAdmin2);
 	HRESULT UpdateABService(LPSERVICEADMIN lpSvcAdmin, ABProvider* pABProvider, LPMAPIUID lpMapiUid);
 	HRESULT RemoveABService(LPSERVICEADMIN lpSvcAdmin, LPMAPIUID lpMapiUid);
-	HRESULT CheckABServiceExists(LPSERVICEADMIN lpSvcAdmin, LPTSTR lppszDisplayName, LPTSTR lppszServerName, LPMAPIUID lppMapiUid, BOOL* success);
-	HRESULT CheckABServiceExists(LPSERVICEADMIN lpSvcAdmin, LPTSTR lppszDisplayName, LPMAPIUID lppMapiUid, BOOL* success);
+	HRESULT CheckABServiceExists(LPSERVICEADMIN2 lpSvcAdmin2, LPTSTR lppszDisplayName, LPTSTR lppszServerName, LPMAPIUID lppMapiUid, BOOL* success);
+	HRESULT CheckABServiceExists(LPSERVICEADMIN2 lpSvcAdmin2, LPTSTR lppszDisplayName, LPMAPIUID lppMapiUid, BOOL* success);
 
 #pragma endregion
 }

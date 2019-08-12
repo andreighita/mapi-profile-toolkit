@@ -95,9 +95,10 @@ namespace MAPIToolkit
 
 	std::map<std::wstring, std::wstring> Toolkit::g_addressBookMap =
 	{
+		{ L"servicename",		L"EMABLT"},
 		{ L"displayname",		L""},
 		{ L"servername",		L"" },
-		{ L"serverport",		L"" },
+		{ L"serverport",		L"389" },
 		{ L"usessl",			L"false" },
 		{ L"username",			L"" },
 		{ L"password",			L"" },
@@ -119,10 +120,11 @@ namespace MAPIToolkit
 		{ L"exportpath",		L"" },
 		{ L"exportmode",		L"" },
 		{ L"logfilepath",		L"" },
-		{ L"profilemode",		L"" },
-		{ L"servicemode",		L"" },
+		{ L"profilemode",		L"default" },
+		{ L"profilename",		L""},
+		{ L"servicemode",		L"default" },
 		{ L"servicetype",		L"" },
-		{ L"providermode",		L"" },
+		{ L"providermode",		L"default" },
 		{ L"providertype",		L"" },
 		{ L"configfilepath",	L"" }
 	};
@@ -133,7 +135,7 @@ namespace MAPIToolkit
 		{ L"addressbook",			L"SOFTWARE\\Microsoft Ltd\\MAPIToolkit\\AddressBook" }
 	};
 
-	std::map <int, std::wstring > g_hexMap =
+	std::map <int, std::wstring > Toolkit::g_hexMap =
 	{
 		{ 0, L"0"},
 		{ 1, L"1"},
@@ -458,8 +460,52 @@ namespace MAPIToolkit
 		Uninitialise();
 	}
 
-	void Toolkit::AddAddressBookService()
+	BOOL Toolkit::AddService(LPSERVICEADMIN2 pServiceAdmin)
 	{
+		switch (g_serviceTypeMap.at(g_toolkitMap.at(L"servicetype")))
+		{
+		case SERVICETYPE_ADDRESSBOOK:
+		{
+			if (AddAddressBookService(pServiceAdmin))
+				Logger::Write(LOGLEVEL_SUCCESS, L"Address book service succesfully added");
+			break;
+		}
+		case SERVICETYPE_EXCHANGEACCOUNT:
+		{
+			((ExchangeAccountWorker*)m_serviceWorker)->AddExchangeAccount();
+			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
+			break;
+		}
+		case SERVICETYPE_DATAFILE:
+		{
+			((DataFileWorker*)m_serviceWorker)->AddDataFile();
+			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
+			break;
+		}
+		}
+		return 0;
+	}
+
+	BOOL Toolkit::AddAddressBookService(LPSERVICEADMIN2 pServiceAdmin)
+	{
+		HRESULT hRes = S_OK;
+		if (!g_addressBookMap.at(L"servername").empty())
+		{
+			// if no display name specified, use the server name instead
+			if (g_addressBookMap.at(L"displayname").empty())
+			{
+				g_addressBookMap.at(L"displayname") = g_addressBookMap.at(L"servername");
+			}
+			BOOL bServiceExists = false;
+			CHK_HR_MSG(CheckABServiceExists(pServiceAdmin, (LPTSTR)g_addressBookMap.at(L"displayname").c_str(), (LPTSTR)g_addressBookMap.at(L"servicename").c_str(), 0, &bServiceExists), L"Cheking if service already exists");
+			if (!bServiceExists)
+				return (SUCCEEDED(CreateABService(pServiceAdmin)));
+		}
+
+	Error:
+		goto CleanUp;
+	CleanUp:
+		return (SUCCEEDED(hRes));
 
 	}
 
@@ -627,33 +673,21 @@ namespace MAPIToolkit
 	BOOL Toolkit::RunActionOneProfile(std::wstring wszProfileName)
 	{
 		HRESULT hRes = NULL;
-		LPSERVICEADMIN2 pServiceAdmin = NULL;
+		LPSERVICEADMIN pServiceAdmin = NULL;
+		LPSERVICEADMIN2 pServiceAdmin2 = NULL;
+		// Retrieves pointers to the supported interfaces on an object.
+
 		CHK_HR_MSG(m_pProfAdmin->AdminServices((LPTSTR)wszProfileName.c_str(), NULL, NULL, MAPI_UNICODE, (LPSERVICEADMIN*)&pServiceAdmin), L"Getting admin services interface pointer for profile " + wszProfileName);
+		CHK_HR_MSG(pServiceAdmin->QueryInterface(IID_IMsgServiceAdmin2, (LPVOID*)& pServiceAdmin2), L"Getting LPSERVICEADMIN2 interface pointer for profile ");
+		
 		switch (m_action)
 		{
 
 		case ACTION_SERVICE_ADD:
 		{
-			switch (g_serviceTypeMap.at(g_toolkitMap.at(L"servicetype")))
+			if (AddService(pServiceAdmin2))
 			{
-			case SERVICETYPE_ADDRESSBOOK:
-			{
-				AddAddressBookService();
-				Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
-				break;
-			}
-			case SERVICETYPE_EXCHANGEACCOUNT:
-			{
-				((ExchangeAccountWorker*)m_serviceWorker)->AddExchangeAccount();
-				Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
-				break;
-			}
-			case SERVICETYPE_DATAFILE:
-			{
-				((DataFileWorker*)m_serviceWorker)->AddDataFile();
-				Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
-				break;
-			}
+
 			}
 			break;
 		}

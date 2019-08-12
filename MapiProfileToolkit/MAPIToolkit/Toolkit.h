@@ -58,11 +58,11 @@ namespace MAPIToolkit
 
 	private:
 		static BOOL RunActionOneProfile(std::wstring wszProfileName);
-
 		static BOOL RunActionOneService(LPSERVICEADMIN2 pServiceAdmin, LPMAPIUID pMapiUid);
 
 		// ACTION_SERVICE_ADD	
-		static void AddAddressBookService();
+		static BOOL AddService(LPSERVICEADMIN2 pServiceAdmin);
+		static BOOL AddAddressBookService(LPSERVICEADMIN2 pServiceAdmin);
 
 		// ACTION_SERVICE_UPDATE	
 		static void UpdateAddressBookService();
