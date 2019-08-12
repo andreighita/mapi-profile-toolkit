@@ -1781,8 +1781,6 @@ HRESULT CreateABService(LPSERVICEADMIN2 lpSvcAdmin2)
 	std::vector<SPropValue> rgvalVector;
 	SPropValue sPropValue;
 
-	wprintf(L"Attempting ot obtain an IMsgServiceAdmin2 interface pointer...");
-
 	if (SUCCEEDED(hRes))
 		wprintf(L"DONE\n");
 	else
@@ -1790,16 +1788,8 @@ HRESULT CreateABService(LPSERVICEADMIN2 lpSvcAdmin2)
 		wprintf(L"FAILED\n");
 		HCK(hRes);
 	}
-	wprintf(L"Attempting to Create AB service...");
 	// Adds a message service to the current profile and returns that newly added service UID.
-	hRes = lpSvcAdmin2->CreateMsgServiceEx((LPTSTR)ConvertWideCharToMultiByte((LPWSTR)Toolkit::g_addressBookMap.at(L"servicename").c_str()), (LPTSTR)ConvertWideCharToMultiByte((LPWSTR)Toolkit::g_addressBookMap.at(L"displayname").c_str()), NULL, 0, &uidService);
-	if (SUCCEEDED(hRes))
-		wprintf(L"DONE\n");
-	else
-	{
-		wprintf(L"FAILED\n");
-		HCK(hRes);
-	}
+	CHK_HR_MSG(lpSvcAdmin2->CreateMsgServiceEx((LPTSTR)ConvertWideCharToMultiByte((LPWSTR)Toolkit::g_addressBookMap.at(L"servicename").c_str()), (LPTSTR)ConvertWideCharToMultiByte((LPWSTR)Toolkit::g_addressBookMap.at(L"displayname").c_str()), NULL, 0, &uidService), L"Creating address book message service");
 
 	rgvalVector.resize(0);
 
@@ -1892,17 +1882,9 @@ HRESULT CreateABService(LPSERVICEADMIN2 lpSvcAdmin2)
 	sPropValue.Value.ul = (0 == wcscmp(Toolkit::g_addressBookMap.at(L"defaultsearchbase").c_str(), L"true"));
 	rgvalVector.push_back(sPropValue);
 
-	wprintf(L"Attempting to Configure AB service...");
-
 	// Reconfigures a message service with the new props.
-	hRes = lpSvcAdmin2->ConfigureMsgService(lpuidService, NULL, 0, (ULONG)rgvalVector.size(), rgvalVector.data());
-	if (SUCCEEDED(hRes))
-		wprintf(L"DONE\n");
-	else
-	{
-		wprintf(L"FAILED\n");
-		HCK(hRes);
-	}
+	CHK_HR_MSG(lpSvcAdmin2->ConfigureMsgService(lpuidService, NULL, 0, (ULONG)rgvalVector.size(), rgvalVector.data()), L"Configuring the address book service with the new properties");
+
 Error:
 	return hRes;
 }
@@ -1925,7 +1907,6 @@ HRESULT GetABServiceUid(LPSERVICEADMIN2 lpSvcAdmin2, LPTSTR lppszDisplayName, UL
 	// Provides access to the message service table, a list of the message services in the profile.
 	HCK(lpSvcAdmin2->GetMsgServiceTable(0, // Flags        
 		&lpMsgSvcTable)); // Pointer to table
-	wprintf(L"Retrieved message service table from profile.\n");
 
 	// Set up restriction to query table.
 	// Allocate and create our SRestriction
@@ -1973,16 +1954,14 @@ HRESULT GetABServiceUid(LPSERVICEADMIN2 lpSvcAdmin2, LPTSTR lppszDisplayName, UL
 	lpResLevel1[1].res.resContent.lpProp = lpspvDispName;
 	lpspvDispName->ulPropTag = PR_DISPLAY_NAME;
 	lpspvDispName->Value.lpszA = ConvertWideCharToMultiByte(lppszDisplayName);
-	wprintf(L"Set up restriction for searching Ldap AB service.\n");
 
 	// Query the table to get the entry for the EMABLT service.
-	HCK(HrQueryAllRows(lpMsgSvcTable,
+	CHK_HR_MSG(HrQueryAllRows(lpMsgSvcTable,
 		(LPSPropTagArray)& sptaProps,
 		lpRes,
 		NULL,
 		0,
-		&lpSvcRows));
-	wprintf(L"Queried service table for Ldap AB service.\n");
+		&lpSvcRows), L"Querrying service rows");
 
 	if (lpSvcRows->cRows > 0)
 	{
@@ -2019,10 +1998,8 @@ HRESULT GetABServiceUid(LPSERVICEADMIN2 lpSvcAdmin2, ULONG* ulcMapiUid, MAPIUID*
 	SizedSPropTagArray(cptaProps, sptaProps) = { cptaProps, PR_SERVICE_UID };
 
 	// Provides access to the message service table, a list of the message services in the profile.
-	hRes = lpSvcAdmin2->GetMsgServiceTable(0, // Flags        
-		&lpMsgSvcTable); // Pointer to table
-	if (FAILED(hRes)) goto Error;
-	wprintf(L"Retrieved message service table from profile.\n");
+	HCK(lpSvcAdmin2->GetMsgServiceTable(0, // Flags        
+		&lpMsgSvcTable)); // Pointer to table
 
 	// Set up restriction to query table.
 
@@ -2046,16 +2023,13 @@ HRESULT GetABServiceUid(LPSERVICEADMIN2 lpSvcAdmin2, ULONG* ulcMapiUid, MAPIUID*
 	lpspvSvcName->ulPropTag = PR_SERVICE_NAME_A;
 	lpspvSvcName->Value.lpszA = ConvertWideCharToMultiByte(L"EMABLT");
 
-	wprintf(L"Set up restriction for searching Ldap AB service.\n");
-
 	// Query the table to get the entry for the Exchange message service.
-	HCK(HrQueryAllRows(lpMsgSvcTable,
+	CHK_HR_MSG(HrQueryAllRows(lpMsgSvcTable,
 		(LPSPropTagArray)& sptaProps,
 		lpRes,
 		NULL,
 		0,
-		&lpSvcRows));
-	wprintf(L"Queried service table for Ldap AB service.\n");
+		&lpSvcRows), L"Querying service rows");
 
 	if (lpSvcRows->cRows > 0)
 	{
@@ -2098,7 +2072,6 @@ HRESULT GetABServiceUid(LPSERVICEADMIN2 lpSvcAdmin2, LPTSTR lppszDisplayName, LP
 	hRes = lpSvcAdmin2->GetMsgServiceTable(0, // Flags        
 		&lpMsgSvcTable); // Pointer to table
 	if (FAILED(hRes)) goto Error;
-	wprintf(L"Retrieved message service table from profile.\n");
 
 	// Set up restriction to query table.
 
@@ -2170,7 +2143,6 @@ HRESULT GetABServiceUid(LPSERVICEADMIN2 lpSvcAdmin2, LPTSTR lppszDisplayName, LP
 	lpResLevel1[1].res.resContent.lpProp = lpspvSrvName;
 	lpspvSrvName->ulPropTag = PROP_AB_PROVIDER_SERVER_NAME;
 	lpspvSrvName->Value.lpszA = ConvertWideCharToMultiByte(lppszServerName);
-	wprintf(L"Set up restriction for searching Ldap AB service.\n");
 
 	// Query the table to get the entry for the Exchange message service.
 	HCK(HrQueryAllRows(lpMsgSvcTable,
@@ -2179,7 +2151,6 @@ HRESULT GetABServiceUid(LPSERVICEADMIN2 lpSvcAdmin2, LPTSTR lppszDisplayName, LP
 		NULL,
 		0,
 		&lpSvcRows));
-	wprintf(L"Queried service table for Ldap AB service.\n");
 
 	if (lpSvcRows->cRows > 0)
 	{
@@ -2310,17 +2281,8 @@ HRESULT UpdateABService(LPSERVICEADMIN2 lpSvcAdmin2, ABProvider* pABProvider, LP
 	rgval[11].ulPropTag = PROP_AB_PROVIDER_SEARCH_BASE_DEFAULT;
 	rgval[11].Value.ul = pABProvider->ulDefaultSearchBase;
 
-	wprintf(L"Attempting to update AB service...");
-
 	// Reconfigures a message service with the new props.
-	hRes = lpSvcAdmin2->ConfigureMsgService(lpMapiUid, NULL, 0, 12, rgval);
-	if (SUCCEEDED(hRes))
-		wprintf(L"DONE\n");
-	else
-	{
-		wprintf(L"FAILED\n");
-		HCK(hRes);
-	}
+	CHK_HR_MSG(lpSvcAdmin2->ConfigureMsgService(lpMapiUid, NULL, 0, 12, rgval), L"Configuring service with the new properties");
 
 Error:
 	MAPIFreeBuffer(rgval);
@@ -2334,9 +2296,8 @@ Error:
 HRESULT RemoveABService(LPSERVICEADMIN2 lpSvcAdmin2, LPMAPIUID lpMapiUid)
 {
 	HRESULT hRes = S_OK;
-	wprintf(L"Attempting to delete AB service...");
 	// Deletes a message service from a profile.
-	hRes = lpSvcAdmin2->DeleteMsgService(lpMapiUid);
+	CHK_HR_MSG(lpSvcAdmin2->DeleteMsgService(lpMapiUid), L"Deleting address book service");
 	if SUCCEEDED(hRes)
 		wprintf(L"DONE\n");
 	else
@@ -2361,12 +2322,11 @@ HRESULT CheckABServiceExists(LPSERVICEADMIN2 lpSvcAdmin2, LPTSTR lppszDisplayNam
 	LPMAPIUID* pTempMAPIUid = NULL;
 	enum { iServiceUid, cptaProps };
 	SizedSPropTagArray(cptaProps, sptaProps) = { cptaProps, PR_SERVICE_UID };
-
+	
 	// Provides access to the message service table, a list of the message services in the profile.
 	hRes = lpSvcAdmin2->GetMsgServiceTable(0, // Flags        
 		&lpMsgSvcTable); // Pointer to table
 	if (FAILED(hRes)) goto Error;
-	wprintf(L"Retrieved message service table from profile.\n");
 
 	// Set up restriction to query table.
 
@@ -2438,8 +2398,6 @@ HRESULT CheckABServiceExists(LPSERVICEADMIN2 lpSvcAdmin2, LPTSTR lppszDisplayNam
 	lpResLevel1[1].res.resContent.lpProp = lpspvSrvName;
 	lpspvSrvName->ulPropTag = PROP_AB_PROVIDER_SERVER_NAME;
 	lpspvSrvName->Value.lpszA = ConvertWideCharToMultiByte(lppszServerName);
-	wprintf(L"Set up restriction for searching Ldap AB service.\n");
-	wprintf(L"Set up restriction for searching Ldap AB service.\n");
 
 	// Query the table to get the entry for the EMABLT service.
 	HCK(HrQueryAllRows(lpMsgSvcTable,
@@ -2448,7 +2406,6 @@ HRESULT CheckABServiceExists(LPSERVICEADMIN2 lpSvcAdmin2, LPTSTR lppszDisplayNam
 		NULL,
 		0,
 		&lpSvcRows));
-	wprintf(L"Queried service table for Ldap AB service.\n");
 
 	if (lpSvcRows->cRows > 0)
 	{
@@ -2482,7 +2439,6 @@ HRESULT CheckABServiceExists(LPSERVICEADMIN2 lpSvcAdmin2, LPTSTR lppszDisplayNam
 	// Provides access to the message service table, a list of the message services in the profile.
 	HCK(lpSvcAdmin2->GetMsgServiceTable(0, // Flags        
 		&lpMsgSvcTable)); // Pointer to table
-	wprintf(L"Retrieved message service table from profile.\n");
 
 	// Set up restriction to query table.
 	// Allocate and create our SRestriction
@@ -2530,7 +2486,6 @@ HRESULT CheckABServiceExists(LPSERVICEADMIN2 lpSvcAdmin2, LPTSTR lppszDisplayNam
 	lpResLevel1[1].res.resContent.lpProp = lpspvDispName;
 	lpspvDispName->ulPropTag = PR_DISPLAY_NAME;
 	lpspvDispName->Value.lpszA = ConvertWideCharToMultiByte(lppszDisplayName);
-	wprintf(L"Set up restriction for searching Ldap AB service.\n");
 
 	// Query the table to get the entry for the EMABLT service.
 	HCK(HrQueryAllRows(lpMsgSvcTable,
@@ -2539,7 +2494,6 @@ HRESULT CheckABServiceExists(LPSERVICEADMIN2 lpSvcAdmin2, LPTSTR lppszDisplayNam
 		NULL,
 		0,
 		&lpSvcRows));
-	wprintf(L"Queried service table for Ldap AB service.\n");
 
 	if (lpSvcRows->cRows > 0)
 	{

@@ -229,7 +229,7 @@ namespace MAPIToolkit
 			return FALSE;
 		}
 
-		Logger::Write(LOGLEVEL_SUCCESS, L"value  was set");
+		//Logger::Write(LOGLEVEL_SUCCESS, L"value  was set");
 		RegCloseKey(key);
 		return TRUE;
 	}
