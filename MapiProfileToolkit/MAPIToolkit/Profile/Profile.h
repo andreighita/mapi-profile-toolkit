@@ -21,10 +21,18 @@ namespace MAPIToolkit
 
 	// GetDefaultProfileName
 	// returns a std::wstring value with the name of the default Outlook profile
+	std::wstring GetDefaultProfileName(LPPROFADMIN lpProfAdmin);
+
+	// GetDefaultProfileName
+// returns a std::wstring value with the name of the default Outlook profile
 	std::wstring GetDefaultProfileName();
 
 	// GetProfileCount
 	// returns the number of mapi profiles for the current user
+	ULONG GetProfileCount(LPPROFADMIN lpProfAdmin);
+
+	// GetProfileCount
+// returns the number of mapi profiles for the current user
 	ULONG GetProfileCount();
 
 	HRESULT HrGetProfiles(ULONG ulProfileCount, ProfileInfo* profileInfo);
@@ -74,7 +82,7 @@ namespace MAPIToolkit
 	HRESULT ListABService(LPSERVICEADMIN2 lpSvcAdmin2, LPMAPIUID pMAPIUid);
 	HRESULT ListAllABServices(LPSERVICEADMIN2 lpSvcAdmin2);
 	HRESULT CreateABService(LPSERVICEADMIN2 lpSvcAdmin2);
-	HRESULT UpdateABService(LPSERVICEADMIN2 lpSvcAdmin2, ABProvider* pABProvider, LPMAPIUID lpMapiUid);
+	HRESULT UpdateABService(LPSERVICEADMIN2 lpSvcAdmin2, LPMAPIUID lpMapiUid);
 	HRESULT RemoveABService(LPSERVICEADMIN2 lpSvcAdmin2, LPMAPIUID lpMapiUid);
 	HRESULT GetABServiceUid(LPSERVICEADMIN2 lpSvcAdmin2, ULONG* ulcMapiUid, MAPIUID* pMapiUid);
 	HRESULT GetABServiceUid(LPSERVICEADMIN2 lpSvcAdmin2, LPTSTR lppszDisplayName, LPTSTR lppszServerName, ULONG * ulcMapiUid, MAPIUID* pMapiUid);

@@ -76,6 +76,12 @@ namespace MAPIToolkit
 		{ L"all",		SERVICEMODE_ALL }
 	};
 
+	std::map<std::wstring, ULONG> Toolkit::g_saveConfigMap =
+	{
+		{ L"true",	SAVECONFIG_TRUE},
+		{ L"false",	SAVECONFIG_FALSE }
+	};
+
 	std::map<std::wstring, ULONG> Toolkit::g_serviceTypeMap =
 	{
 		{ L"addressbook",		SERVICETYPE_ADDRESSBOOK},
@@ -99,14 +105,34 @@ namespace MAPIToolkit
 		{ L"defaultsearchbase",	L"true" },
 		{ L"customsearchbase",	L"" },
 		{ L"enablebrowsing",	L"false" },
-		{ L"configfilepath",	L"" }
+		{ L"configfilepath",	L"" },
+		{ L"newservername",		L"" },
+		{ L"newdisplayname",	L"" },
+		{ L"newserverport",		L"" }
+	};
+
+
+#define LOGGINGMODE_UNKNOWN			0x00000000
+#define LOGGINGMODE_NONE			0x00000001
+#define LOGGINGMODE_CONSOLE			0x00000002
+#define LOGGINGMODE_FILE			0x00000004
+#define LOGGINGMODE_ALL				0x00000008
+#define LOGGINGMODE_VERBOSE			0x00000010
+
+	std::map<std::wstring, ULONG> Toolkit::g_loggingModeMap =
+	{
+		{ L"none",		LOGGINGMODE_NONE },
+		{ L"console",	LOGGINGMODE_CONSOLE },
+		{ L"file",		LOGGINGMODE_FILE },
+		{ L"all",		LOGGINGMODE_ALL },
+		{ L"debug",		LOGGINGMODE_DEBUG }
 	};
 
 	std::map<std::wstring, std::wstring> Toolkit::g_toolkitMap =
 	{
 		{ L"action",			L""},
 		{ L"outlookversion",	L"" },
-		{ L"loggingMode",		L"" },
+		{ L"loggingmode",		L"console" },
 		{ L"profileCount",		L"" },
 		{ L"exportpath",		L"" },
 		{ L"exportmode",		L"" },
@@ -118,7 +144,8 @@ namespace MAPIToolkit
 		{ L"servicetype",		L"" },
 		{ L"providermode",		L"default" },
 		{ L"providertype",		L"" },
-		{ L"configfilepath",	L"" }
+		{ L"configfilepath",	L"" },
+		{ L"saveconfig",		L"true"}
 	};
 
 	std::map<std::wstring, std::wstring> Toolkit::g_regKeyMap =
@@ -385,11 +412,40 @@ namespace MAPIToolkit
 		HRESULT hRes = S_OK;
 		m_action = ACTION_UNSPECIFIED;
 		m_pProfAdmin = NULL;
-
 		MAPIINIT_0  MAPIINIT = { 0, MAPI_MULTITHREAD_NOTIFICATIONS };
-		CHK_HR_MSG(CoInitialize(NULL), L"Initialising the COM library on the current thread");
-		CHK_HR_MSG(MAPIInitialize(&MAPIINIT), L"Initialising MAPI");
-		CHK_HR_MSG(MAPIAdminProfiles(0, &m_pProfAdmin), L"Getting profile administration interface pointer.");
+		// parse the actions
+		std::wstring wszActionItem;
+		std::wstringstream wss;
+
+		if (!g_addressBookMap.at(L"configfilepath").empty())
+			CHK_HR_DBG(ParseAddressBookXml((LPTSTR)g_addressBookMap.at(L"configfilepath").c_str()), L"ParseAddressBookXml");
+
+		wss << g_toolkitMap.at(L"action");
+		while (std::getline(wss, wszActionItem, L'|'))
+		{
+			try
+			{
+				m_action |= g_actionsMap.at(wszActionItem);
+			}
+			catch (const std::exception& e)
+			{
+
+			}
+		}
+
+		CHK_HR_DBG(CoInitialize(NULL), L"CoInitialize");
+		CHK_HR_DBG(MAPIInitialize(&MAPIINIT), L"MAPIInitialize");
+
+		CHK_HR_DBG(MAPIAdminProfiles(0, &m_pProfAdmin), L"MAPIAdminProfiles");
+		if (VCHK(g_profileModeMap.at(g_toolkitMap.at(L"profilemode")), PROFILEMODE_DEFAULT))
+		{
+			g_toolkitMap.at(L"profilename") = GetDefaultProfileName(m_pProfAdmin);
+			g_toolkitMap.at(L"profilemode") = L"specific";
+		}
+		g_toolkitMap.at(L"profilecount") = ConvertIntToString(GetProfileCount(m_pProfAdmin));
+		if (SAVECONFIG_TRUE == g_saveConfigMap.at(g_toolkitMap.at(L"saveconfig")))
+			SaveConfig();
+
 	Error:
 		goto CleanUp;
 	CleanUp:
@@ -431,10 +487,10 @@ namespace MAPIToolkit
 
 	void Toolkit::Run(int argc, wchar_t* argv[])
 	{
-		Initialise();
-
 		if (ParseParams(argc, argv))
 		{
+			Logger::SetLoggingMode(g_loggingModeMap.at(g_toolkitMap.at(L"loggingmode")));
+			Initialise();
 			RunAction();
 		}
 		else
@@ -479,29 +535,29 @@ namespace MAPIToolkit
 			BOOL bServiceExists = false;
 			ULONG ulCServices;
 
-			CHK_HR_MSG(CheckABServiceExists(pServiceAdmin, (LPTSTR)g_addressBookMap.at(L"displayname").c_str(), (LPTSTR)g_addressBookMap.at(L"servername").c_str(), &bServiceExists), L"Cheking if service already exists");
+			CHK_HR_DBG(CheckABServiceExists(pServiceAdmin, (LPTSTR)g_addressBookMap.at(L"displayname").c_str(), (LPTSTR)g_addressBookMap.at(L"servername").c_str(), &bServiceExists), L"CheckABServiceExists");
 			if (!bServiceExists)
-				return (SUCCEEDED(CreateABService(pServiceAdmin)));
+				CHK_HR_DBG(CreateABService(pServiceAdmin), L"CreateABService");
+			else
+			{
+				Logger::WriteLine(LOGLEVEL_FAILED, L"An address book service with the selected configuration already exists");
+				return FALSE;
+			}
 		}
 	Error:
 		goto CleanUp;
 	CleanUp:
 		return (SUCCEEDED(hRes));
-
 	}
 
-	void Toolkit::UpdateAddressBookService()
+	void Toolkit::UpdateService(LPSERVICEADMIN2 pServiceAdmin, LPMAPIUID lpMAPIUid)
 	{
-	}
-
-	VOID Toolkit::ListService(LPSERVICEADMIN2 pServiceAdmin, LPMAPIUID lpMAPIUid)
-	{
+		HRESULT hRes = S_OK;
 		switch (g_serviceTypeMap.at(g_toolkitMap.at(L"servicetype")))
 		{
 		case SERVICETYPE_ADDRESSBOOK:
 		{
-			if SUCCEEDED(ListABService(pServiceAdmin, lpMAPIUid))
-				Logger::Write(LOGLEVEL_SUCCESS, L"Address book service succesfully listed.");
+			CHK_HR_DBG(UpdateABService(pServiceAdmin, lpMAPIUid), L"UpdateABService");
 			break;
 		}
 		case SERVICETYPE_EXCHANGEACCOUNT:
@@ -515,11 +571,73 @@ namespace MAPIToolkit
 			break;
 		}
 		}
+	Error:
+		goto CleanUp;
+	CleanUp:
+		return;
 	}
 
-	BOOL Toolkit::RemoveAddressBookService(LPSERVICEADMIN2 pServiceAdmin, LPMAPIUID lpMAPIUid)
+	VOID Toolkit::UpdateAddressBookService(LPSERVICEADMIN2 pServiceAdmin, LPMAPIUID lpMAPIUid)
 	{
-		return true;
+		HRESULT hRes = S_OK;
+		if (g_addressBookMap.at(L"servername").empty() && g_addressBookMap.at(L"displayname").empty())
+		{
+			Logger::WriteLine(LOGLEVEL_FAILED, L"You must specify a -displayname, a -servername or both");
+		}
+
+		// Get service UID(s) for the services we want to remove	
+		ULONG cServices = 0;
+		if SUCCEEDED(GetABServiceUid(pServiceAdmin, &cServices, NULL), L"Getting service count");
+		if (cServices > 0)
+		{
+
+			MAPIUID* pMAPIUid = new MAPIUID[cServices];
+			ZeroMemory(pMAPIUid, sizeof(MAPIUID) * cServices);
+
+			if SUCCEEDED(GetABServiceUid(pServiceAdmin, &cServices, pMAPIUid), L"Fetching existing service UIDs")
+				if ((cServices > 0) && pMAPIUid)
+				{
+					Logger::Write(LOGLEVEL_INFO, L"Number of services found: " + ConvertIntToString(cServices));
+					for (int i = 0; i < cServices; i++)
+					{
+						Logger::WriteLine(LOGLEVEL_INFO, L"Updating service #" + ConvertIntToString(i));
+						if SUCCEEDED(UpdateABService(pServiceAdmin, &pMAPIUid[i]))
+							Logger::WriteLine(LOGLEVEL_SUCCESS, L"Address book service succesfully updated");
+					}
+				}
+		}
+
+	Error:
+		goto CleanUp;
+	CleanUp:
+		return;
+	}
+
+	VOID Toolkit::ListService(LPSERVICEADMIN2 pServiceAdmin, LPMAPIUID lpMAPIUid)
+	{
+		HRESULT hRes = S_OK;
+		switch (g_serviceTypeMap.at(g_toolkitMap.at(L"servicetype")))
+		{
+		case SERVICETYPE_ADDRESSBOOK:
+		{
+			CHK_HR_DBG(ListABService(pServiceAdmin, lpMAPIUid), L"ListABService");
+			break;
+		}
+		case SERVICETYPE_EXCHANGEACCOUNT:
+		{
+			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
+			break;
+		}
+		case SERVICETYPE_DATAFILE:
+		{
+			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
+			break;
+		}
+		}
+	Error:
+		goto CleanUp;
+	CleanUp:
+		return;
 	}
 
 	VOID Toolkit::RemoveAllServices(LPSERVICEADMIN2 pServiceAdmin)
@@ -536,14 +654,14 @@ namespace MAPIToolkit
 
 				MAPIUID* pMAPIUid = new MAPIUID[cServices];
 				ZeroMemory(pMAPIUid, sizeof(MAPIUID) * cServices);
-				
+
 				if SUCCEEDED(GetABServiceUid(pServiceAdmin, &cServices, pMAPIUid), L"Fetching existing service UIDs")
 					if ((cServices > 0) && pMAPIUid)
-					{
+					{	
+						Logger::Write(LOGLEVEL_INFO, L"Number of services found: " + ConvertIntToString(cServices));
 						for (int i = 0; i < cServices; i++)
 						{
-							if SUCCEEDED(RemoveABService(pServiceAdmin, &pMAPIUid[i]))
-								Logger::Write(LOGLEVEL_SUCCESS, L"Success!.");
+							RemoveABService(pServiceAdmin, &pMAPIUid[i]);
 						}
 					}
 			}
@@ -560,10 +678,6 @@ namespace MAPIToolkit
 			break;
 		}
 		}
-	}
-
-	void Toolkit::RemoveAllAddressBookServices()
-	{
 	}
 
 	void Toolkit::RunAction()
@@ -634,7 +748,7 @@ namespace MAPIToolkit
 			switch (g_profileModeMap.at(g_toolkitMap.at(L"profilemode")))
 			{
 			case PROFILEMODE_ALL:
-				
+
 				CHK_BOOL_MSG(GetProfileNames(m_pProfAdmin, &vProfileNames), L"Retrieving profile names");
 				for (auto const& profileName : vProfileNames) {
 					if (RunActionOneProfile(profileName))
@@ -676,8 +790,8 @@ namespace MAPIToolkit
 		LPSERVICEADMIN2 pServiceAdmin2 = NULL;
 		// Retrieves pointers to the supported interfaces on an object.
 
-		CHK_HR_MSG(m_pProfAdmin->AdminServices((LPTSTR)wszProfileName.c_str(), NULL, NULL, MAPI_UNICODE, (LPSERVICEADMIN*)& pServiceAdmin), L"Getting admin services interface pointer for profile " + wszProfileName);
-		CHK_HR_MSG(pServiceAdmin->QueryInterface(IID_IMsgServiceAdmin2, (LPVOID*)& pServiceAdmin2), L"Getting LPSERVICEADMIN2 interface pointer for profile ");
+		CHK_HR_DBG(m_pProfAdmin->AdminServices((LPTSTR)wszProfileName.c_str(), NULL, NULL, MAPI_UNICODE, (LPSERVICEADMIN*)& pServiceAdmin), L"m_pProfAdmin->AdminServices " + wszProfileName);
+		CHK_HR_DBG(pServiceAdmin->QueryInterface(IID_IMsgServiceAdmin2, (LPVOID*)& pServiceAdmin2), L"pServiceAdmin->QueryInterface ");
 
 		switch (m_action)
 		{
@@ -687,17 +801,38 @@ namespace MAPIToolkit
 			AddService(pServiceAdmin2);
 			break;
 		}
+		case ACTION_SERVICE_LIST:
+		{
+			// Get service UID(s) for the services we want to list	
+			ULONG cServices = 0;
+			if SUCCEEDED(GetABServiceUid(pServiceAdmin2, g_addressBookMap.at(L"displayname").empty() ? NULL : (LPTSTR)g_addressBookMap.at(L"displayname").c_str(), g_addressBookMap.at(L"servername").empty() ? NULL : (LPTSTR)g_addressBookMap.at(L"servername").c_str(), &cServices, NULL))
+			{
+				if (cServices > 0)
+				{
+					MAPIUID* pMAPIUid = new MAPIUID[cServices];
+					hRes = GetABServiceUid(pServiceAdmin2, g_addressBookMap.at(L"displayname").empty() ? NULL : (LPTSTR)g_addressBookMap.at(L"displayname").c_str(), g_addressBookMap.at(L"servername").empty() ? NULL : (LPTSTR)g_addressBookMap.at(L"servername").c_str(), NULL, pMAPIUid), L"Fetching existing service UIDs";
+					if ((cServices > 0) && pMAPIUid)
+					{
+						for (int i = 0; i < cServices; i++)
+						{
+							if (RunActionOneService(pServiceAdmin2, &pMAPIUid[i]))
+								Logger::WriteLine(LOGLEVEL_SUCCESS, L"Address book service succesfully listed");
+						}
+					}
+				}
+			}
+			break;
+		}
 		case ACTION_SERVICE_LISTALL:
 		{
 			ListAllServices(pServiceAdmin2);
-			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
 			break;
 		}
 
 		case ACTION_SERVICE_REMOVEALL:
 		{
 			RemoveAllServices(pServiceAdmin2);
-		
+
 			break;
 		}
 		case ACTION_SERVICE_REMOVE:
@@ -708,18 +843,18 @@ namespace MAPIToolkit
 			{
 				// Get service UID(s) for the services we want to remove	
 				ULONG cServices = 0;
-				if SUCCEEDED(GetABServiceUid(pServiceAdmin2, (LPTSTR)g_addressBookMap.at(L"displayname").c_str(), (LPTSTR)g_addressBookMap.at(L"servername").c_str(), &cServices, NULL))
+				if SUCCEEDED(GetABServiceUid(pServiceAdmin2, g_addressBookMap.at(L"displayname").empty() ? NULL : (LPTSTR)g_addressBookMap.at(L"displayname").c_str(), g_addressBookMap.at(L"servername").empty() ? NULL : (LPTSTR)g_addressBookMap.at(L"servername").c_str(), &cServices, NULL))
 				{
 					if (cServices > 0)
 					{
 						MAPIUID* pMAPIUid = new MAPIUID[cServices];
-						hRes = GetABServiceUid(pServiceAdmin2, (LPTSTR)g_addressBookMap.at(L"displayname").c_str(), (LPTSTR)g_addressBookMap.at(L"servername").c_str(), &cServices, pMAPIUid), L"Fetching existing service UIDs";
+						hRes = GetABServiceUid(pServiceAdmin2, g_addressBookMap.at(L"displayname").empty() ? NULL : (LPTSTR)g_addressBookMap.at(L"displayname").c_str(), g_addressBookMap.at(L"servername").empty() ? NULL : (LPTSTR)g_addressBookMap.at(L"servername").c_str(), NULL, pMAPIUid), L"Fetching existing service UIDs";
 						if ((cServices > 0) && pMAPIUid)
 						{
 							for (int i = 0; i < cServices; i++)
 							{
 								if (RunActionOneService(pServiceAdmin2, &pMAPIUid[i]))
-									Logger::Write(LOGLEVEL_SUCCESS, L"Address book service succesfully removed");
+									Logger::WriteLine(LOGLEVEL_SUCCESS, L"Address book service succesfully removed");
 							}
 						}
 					}
@@ -738,7 +873,42 @@ namespace MAPIToolkit
 			}
 			}
 		}
-
+		case ACTION_SERVICE_UPDATE:
+			switch (g_serviceTypeMap.at(g_toolkitMap.at(L"servicetype")))
+			{
+			case SERVICETYPE_ADDRESSBOOK:
+			{
+				// Get service UID(s) for the services we want to remove	
+				ULONG cServices = 0;
+				if SUCCEEDED(GetABServiceUid(pServiceAdmin2, g_addressBookMap.at(L"displayname").empty() ? NULL : (LPTSTR)g_addressBookMap.at(L"displayname").c_str(), g_addressBookMap.at(L"servername").empty() ? NULL : (LPTSTR)g_addressBookMap.at(L"servername").c_str(), &cServices, NULL))
+				{
+					if (cServices > 0)
+					{
+						MAPIUID* pMAPIUid = new MAPIUID[cServices];
+						hRes = GetABServiceUid(pServiceAdmin2, g_addressBookMap.at(L"displayname").empty() ? NULL : (LPTSTR)g_addressBookMap.at(L"displayname").c_str(), g_addressBookMap.at(L"servername").empty() ? NULL : (LPTSTR)g_addressBookMap.at(L"servername").c_str(), NULL, pMAPIUid), L"Fetching existing service UIDs";
+						if ((cServices > 0) && pMAPIUid)
+						{
+							for (int i = 0; i < cServices; i++)
+							{
+								if (RunActionOneService(pServiceAdmin2, &pMAPIUid[i]))
+									Logger::WriteLine(LOGLEVEL_SUCCESS, L"Address book service succesfully updated");
+							}
+						}
+					}
+				}
+				break;
+			}
+			case SERVICETYPE_EXCHANGEACCOUNT:
+			{
+				Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
+				break;
+			}
+			case SERVICETYPE_DATAFILE:
+			{
+				Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
+				break;
+			}
+			}
 
 		}
 
@@ -752,7 +922,7 @@ namespace MAPIToolkit
 	{
 		HRESULT hRes = NULL;
 		LPPROVIDERADMIN pProviderAdmin = NULL;
-		CHK_HR_MSG(pServiceAdmin->AdminProviders(pMapiUid, NULL, &pProviderAdmin), L"Getting profider admin interface pointer for service with UID: " + MapiUidToString(pMapiUid));
+		CHK_HR_DBG(pServiceAdmin->AdminProviders(pMapiUid, NULL, &pProviderAdmin), L"Getting profider admin interface pointer for service with UID: " + MapiUidToString(pMapiUid));
 
 		switch (m_action)
 		{
@@ -789,7 +959,7 @@ namespace MAPIToolkit
 		}
 		case ACTION_SERVICE_UPDATE:
 		{
-			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
+			UpdateService(pServiceAdmin, pMapiUid);
 			break;
 		}
 		case ACTION_SERVICE_SETCACHEDMODE:
@@ -832,7 +1002,8 @@ namespace MAPIToolkit
 		{
 		case SERVICETYPE_ADDRESSBOOK:
 		{
-			ListAllAddressBookServices(pServiceAdmin);
+			if SUCCEEDED(ListAllABServices(pServiceAdmin))
+				Logger::WriteLine(LOGLEVEL_SUCCESS, L"Address book services succesfully listed");
 			break;
 		}
 		case SERVICETYPE_EXCHANGEACCOUNT:
@@ -846,22 +1017,16 @@ namespace MAPIToolkit
 			break;
 		}
 		}
-	}
-
-	VOID Toolkit::ListAllAddressBookServices(LPSERVICEADMIN2 pServiceAdmin)
-	{
-		if SUCCEEDED(ListAllABServices(pServiceAdmin))
-			Logger::Write(LOGLEVEL_SUCCESS, L"Address book services succesfully listed");
 	}
 
 	VOID Toolkit::RemoveService(LPSERVICEADMIN2 pServiceAdmin, LPMAPIUID pMapiUid)
 	{
+		HRESULT hRes = S_OK;
 		switch (g_serviceTypeMap.at(g_toolkitMap.at(L"servicetype")))
 		{
 		case SERVICETYPE_ADDRESSBOOK:
 		{
-			if SUCCEEDED(RemoveABService(pServiceAdmin, pMapiUid))
-				Logger::Write(LOGLEVEL_SUCCESS, L"Address book service succesfully added");
+			CHK_HR_DBG(RemoveABService(pServiceAdmin, pMapiUid), L"RemoveABService");
 			break;
 		}
 		case SERVICETYPE_EXCHANGEACCOUNT:
@@ -875,14 +1040,16 @@ namespace MAPIToolkit
 			break;
 		}
 		}
+	Error:
+		goto CleanUp;
+	CleanUp:
+		return;
 	}
 
 	BOOL Toolkit::ParseParams(int argc, wchar_t* argv[])
 	{
 		HRESULT hRes = S_OK;
-		// parse the actions
-		std::wstring wszActionItem;
-		std::wstringstream wss;
+
 
 		// check if we're supposed to list the help menu
 		for (int i = 1; i < argc; i++)
@@ -932,24 +1099,9 @@ namespace MAPIToolkit
 				break;
 			}
 		}
-		g_toolkitMap.at(L"profilecount") = ConvertIntToString(GetProfileCount());
 
-		for (int i = 1; i < argc; i++)
-		{
-			std::wstring wsArg = argv[i];
-			std::transform(wsArg.begin(), wsArg.end(), wsArg.begin(), ::tolower);
-
-			if ((wsArg == L"-profilename") || (wsArg == L"-pn"))
-			{
-				if (i + 1 < argc)
-				{
-
-					g_toolkitMap.at(L"profileName") = argv[i + 1];
-					g_toolkitMap.at(L"profilemode") = L"specific";
-					i++;
-				}
-			}
-		}
+		if (!g_toolkitMap.at(L"profilename").empty())
+			g_toolkitMap.at(L"profilemode") = L"specific";
 
 		// If a specific profile is needed then make sure a profile name was specified
 		if (VCHK(g_profileModeMap.at(g_toolkitMap.at(L"profilemode")), PROFILEMODE_SPECIFIC) && g_toolkitMap.at(L"profilename").c_str())
@@ -957,47 +1109,8 @@ namespace MAPIToolkit
 			Logger::Write(LOGLEVEL_FAILED, L"You must either specify a profile name or pass 'default' for the value of thethe 'profilemode' parameter.");
 			return false;
 		}
-		else if (VCHK(g_profileModeMap.at(g_toolkitMap.at(L"profilemode")), PROFILEMODE_DEFAULT))
-		{
-			g_toolkitMap.at(L"profilename") = GetDefaultProfileName();
-			g_toolkitMap.at(L"profilemode") = L"specific";
-		}
 
-		// create service worker
-		for (int i = 1; i < argc; i++)
-		{
-			std::wstring wsArg = argv[i];
-			std::transform(wsArg.begin(), wsArg.end(), wsArg.begin(), ::tolower);
-
-			if ((wsArg == L"-servicetype") || (wsArg == L"-st"))
-			{
-				if (i + 1 < argc)
-				{
-					std::wstring wszValue = argv[i + 1];
-					std::transform(wszValue.begin(), wszValue.end(), wszValue.begin(), ::tolower);
-					try
-					{
-						g_toolkitMap.at(L"servicetype") = wszValue;
-
-					}
-					catch (const std::exception& e)
-					{
-						Logger::Write(LOGLEVEL_FAILED, L"The specified service type is not valid. Valid options are 'addressbook', 'datafile', 'exchangeaccount', and 'all'.\n");
-						return false;
-					}
-				}
-				else
-				{
-					Logger::Write(LOGLEVEL_FAILED, L"You must specify a valid service type. Valid options are 'addressbook', 'datafile', 'exchangeaccount', and 'all'.\n");
-					return false;
-				}
-			}
-		}
-
-
-
-		// configure address book worker
-
+		// address book
 		for (int i = 1; i < argc; i++)
 		{
 			switch (argv[i][0])
@@ -1024,13 +1137,8 @@ namespace MAPIToolkit
 			}
 		}
 
-		CHK_HR_MSG(ParseAddressBookXml((LPTSTR)g_addressBookMap.at(L"configfilepath").c_str()), L"Parsing configuration XML file");
 
-		wss << g_toolkitMap.at(L"action");
-		while (std::getline(wss, wszActionItem, L'|'))
-			m_action |= g_actionsMap.at(wszActionItem);
 
-		SaveConfig();
 
 
 	Error:

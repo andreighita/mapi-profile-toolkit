@@ -15,8 +15,8 @@ namespace MAPIToolkit
 		if (bDefaultProfile)
 		{
 			ProfileInfo* profileInfo = new ProfileInfo();
-			CHK_HR_MSG(HrGetProfile((LPWSTR)GetDefaultProfileName().c_str(), profileInfo), L"Calling GetProfile");
-			CHK_HR_MSG(HrSetCachedModeOneProfile((LPWSTR)profileInfo->wszProfileName.c_str(), profileInfo, iServiceIndex, bDefaultService, bAllServices, bCachedModeOwner, bCachedModeShared, bCachedModePublicFolders, iCachedModeMonths, iOutlookVersion), L"Calling HrSetCachedModeOneProfile");
+			CHK_HR_DBG(HrGetProfile((LPWSTR)GetDefaultProfileName().c_str(), profileInfo), L"Calling GetProfile");
+			CHK_HR_DBG(HrSetCachedModeOneProfile((LPWSTR)profileInfo->wszProfileName.c_str(), profileInfo, iServiceIndex, bDefaultService, bAllServices, bCachedModeOwner, bCachedModeShared, bCachedModePublicFolders, iCachedModeMonths, iOutlookVersion), L"Calling HrSetCachedModeOneProfile");
 		}
 		else if (bAllProfiles)
 		{
@@ -25,7 +25,7 @@ namespace MAPIToolkit
 			hRes = HrGetProfiles(ulProfileCount, profileInfo);
 			for (ULONG i = 0; i <= ulProfileCount; i++)
 			{
-				CHK_HR_MSG(HrSetCachedModeOneProfile((LPWSTR)profileInfo->wszProfileName.c_str(), profileInfo, iServiceIndex, bDefaultService, bAllServices, bCachedModeOwner, bCachedModeShared, bCachedModePublicFolders, iCachedModeMonths, iOutlookVersion), L"Calling HrSetCachedModeOneProfile");
+				CHK_HR_DBG(HrSetCachedModeOneProfile((LPWSTR)profileInfo->wszProfileName.c_str(), profileInfo, iServiceIndex, bDefaultService, bAllServices, bCachedModeOwner, bCachedModeShared, bCachedModePublicFolders, iCachedModeMonths, iOutlookVersion), L"Calling HrSetCachedModeOneProfile");
 			}
 		}
 		else
@@ -34,7 +34,7 @@ namespace MAPIToolkit
 			{
 				ProfileInfo* profileInfo = new ProfileInfo();
 				hRes = HrGetProfile(lpwszProfileName, profileInfo);
-				CHK_HR_MSG(HrSetCachedModeOneProfile((LPWSTR)profileInfo->wszProfileName.c_str(), profileInfo, iServiceIndex, bDefaultService, bAllServices, bCachedModeOwner, bCachedModeShared, bCachedModePublicFolders, iCachedModeMonths, iOutlookVersion), L"Calling HrSetCachedModeOneProfile");
+				CHK_HR_DBG(HrSetCachedModeOneProfile((LPWSTR)profileInfo->wszProfileName.c_str(), profileInfo, iServiceIndex, bDefaultService, bAllServices, bCachedModeOwner, bCachedModeShared, bCachedModePublicFolders, iCachedModeMonths, iOutlookVersion), L"Calling HrSetCachedModeOneProfile");
 			}
 			else
 				wprintf(L"The specified profile name is invalid or no profile name was specified.\n");
@@ -57,7 +57,7 @@ namespace MAPIToolkit
 				{
 					if (pProfileInfo->profileServices[i].serviceType == SERVICETYPE_EXCHANGEACCOUNT)
 					{
-						CHK_HR_MSG(HrSetCachedModeOneService(ConvertWideCharToMultiByte(lpwszProfileName), &pProfileInfo->profileServices[i].muidServiceUid, bCachedModeOwner, bCachedModeShared, bCachedModePublicFolders, iCachedModeMonths, iOutlookVersion), L"Calling HrSetCachedModeOneService on service");
+						CHK_HR_DBG(HrSetCachedModeOneService(ConvertWideCharToMultiByte(lpwszProfileName), &pProfileInfo->profileServices[i].muidServiceUid, bCachedModeOwner, bCachedModeShared, bCachedModePublicFolders, iCachedModeMonths, iOutlookVersion), L"Calling HrSetCachedModeOneService on service");
 					}
 				}
 			}
@@ -65,7 +65,7 @@ namespace MAPIToolkit
 			{
 				if (pProfileInfo->profileServices[iServiceIndex].serviceType == SERVICETYPE_EXCHANGEACCOUNT)
 				{
-					CHK_HR_MSG(HrSetCachedModeOneService(ConvertWideCharToMultiByte(lpwszProfileName), &pProfileInfo->profileServices[iServiceIndex].muidServiceUid, bCachedModeOwner, bCachedModeShared, bCachedModePublicFolders, iCachedModeMonths, iOutlookVersion), L"Calling HrSetCachedModeOneService on service");
+					CHK_HR_DBG(HrSetCachedModeOneService(ConvertWideCharToMultiByte(lpwszProfileName), &pProfileInfo->profileServices[iServiceIndex].muidServiceUid, bCachedModeOwner, bCachedModeShared, bCachedModePublicFolders, iCachedModeMonths, iOutlookVersion), L"Calling HrSetCachedModeOneService on service");
 
 				}
 			}
@@ -73,7 +73,7 @@ namespace MAPIToolkit
 			{
 				if (pProfileInfo->profileServices[i].serviceType == SERVICETYPE_EXCHANGEACCOUNT)
 				{
-					CHK_HR_MSG(HrSetCachedModeOneService(ConvertWideCharToMultiByte(lpwszProfileName), &pProfileInfo->profileServices[i].muidServiceUid, bCachedModeOwner, bCachedModeShared, bCachedModePublicFolders, iCachedModeMonths, iOutlookVersion), L"Calling HrSetCachedModeOneService on service");
+					CHK_HR_DBG(HrSetCachedModeOneService(ConvertWideCharToMultiByte(lpwszProfileName), &pProfileInfo->profileServices[i].muidServiceUid, bCachedModeOwner, bCachedModeShared, bCachedModePublicFolders, iCachedModeMonths, iOutlookVersion), L"Calling HrSetCachedModeOneService on service");
 				}
 			}
 		}
@@ -89,13 +89,13 @@ namespace MAPIToolkit
 		HRESULT hRes = S_OK;
 		LPPROFADMIN lpProfAdmin = NULL;     // Profile Admin pointer
 		LPSERVICEADMIN lpServiceAdmin = NULL;
-		CHK_HR_MSG(MAPIAdminProfiles(0, // Flags
+		CHK_HR_DBG(MAPIAdminProfiles(0, // Flags
 			&lpProfAdmin), L"Calling MAPIAdminProfiles"); // Pointer to new IProfAdmin
 										 // Get an IProfAdmin interface.
 
 										 // Begin process services
 
-		CHK_HR_MSG(lpProfAdmin->AdminServices((LPTSTR)lpszProfileName,
+		CHK_HR_DBG(lpProfAdmin->AdminServices((LPTSTR)lpszProfileName,
 			LPTSTR(""),            // Password for that profile.
 			NULL,                // Handle to parent window.
 			0,                    // Flags.
@@ -109,7 +109,7 @@ namespace MAPIToolkit
 				0,
 				&lpProvAdmin)))
 			{
-				CHK_HR_MSG(HrGetSections(lpServiceAdmin, lpServiceUid, &lpEmsMdbProfSect, &lpStoreProviderProfSect), L"Calling HrGetSections");
+				CHK_HR_DBG(HrGetSections(lpServiceAdmin, lpServiceUid, &lpEmsMdbProfSect, &lpStoreProviderProfSect), L"Calling HrGetSections");
 				// Access the EMSMDB section
 				if (lpEmsMdbProfSect)
 				{
@@ -127,7 +127,7 @@ namespace MAPIToolkit
 									if (!(profileConfigFlags[0].Value.l & CONFIG_OST_CACHE_PRIVATE))
 									{
 										profileConfigFlags[0].Value.l = profileConfigFlags[0].Value.l ^ CONFIG_OST_CACHE_PRIVATE;
-										CHK_HR_MSG(lpEmsMdbProfSect->SetProps(1, profileConfigFlags, NULL), L"Calling SetProps");
+										CHK_HR_DBG(lpEmsMdbProfSect->SetProps(1, profileConfigFlags, NULL), L"Calling SetProps");
 										wprintf(L"Cached mode owner enabled.\n");
 									}
 									else
@@ -141,7 +141,7 @@ namespace MAPIToolkit
 									if (profileConfigFlags[0].Value.l & CONFIG_OST_CACHE_PRIVATE)
 									{
 										profileConfigFlags[0].Value.l = profileConfigFlags[0].Value.l ^ CONFIG_OST_CACHE_PRIVATE;
-										CHK_HR_MSG(lpEmsMdbProfSect->SetProps(1, profileConfigFlags, NULL), L"Calling SetProps");
+										CHK_HR_DBG(lpEmsMdbProfSect->SetProps(1, profileConfigFlags, NULL), L"Calling SetProps");
 										wprintf(L"Cached mode owner disabled.\n");
 									}
 									else
@@ -157,7 +157,7 @@ namespace MAPIToolkit
 									if (!(profileConfigFlags[0].Value.l & CONFIG_OST_CACHE_DELEGATE_PIM))
 									{
 										profileConfigFlags[0].Value.l = profileConfigFlags[0].Value.l ^ CONFIG_OST_CACHE_DELEGATE_PIM;
-										CHK_HR_MSG(lpEmsMdbProfSect->SetProps(1, profileConfigFlags, NULL), L"Calling SetProps");
+										CHK_HR_DBG(lpEmsMdbProfSect->SetProps(1, profileConfigFlags, NULL), L"Calling SetProps");
 										wprintf(L"Cached mode shared enabled.\n");
 									}
 									else
@@ -170,7 +170,7 @@ namespace MAPIToolkit
 									if (profileConfigFlags[0].Value.l & CONFIG_OST_CACHE_DELEGATE_PIM)
 									{
 										profileConfigFlags[0].Value.l = profileConfigFlags[0].Value.l ^ CONFIG_OST_CACHE_DELEGATE_PIM;
-										CHK_HR_MSG(lpEmsMdbProfSect->SetProps(1, profileConfigFlags, NULL), L"Calling SetProps");
+										CHK_HR_DBG(lpEmsMdbProfSect->SetProps(1, profileConfigFlags, NULL), L"Calling SetProps");
 										wprintf(L"Cached mode shared disabled.\n");
 									}
 									else
@@ -185,7 +185,7 @@ namespace MAPIToolkit
 									if (!(profileConfigFlags[0].Value.l & CONFIG_OST_CACHE_PUBLIC))
 									{
 										profileConfigFlags[0].Value.l = profileConfigFlags[0].Value.l ^ CONFIG_OST_CACHE_PUBLIC;
-										CHK_HR_MSG(lpEmsMdbProfSect->SetProps(1, profileConfigFlags, NULL), L"Calling SetProps");
+										CHK_HR_DBG(lpEmsMdbProfSect->SetProps(1, profileConfigFlags, NULL), L"Calling SetProps");
 										wprintf(L"Cached mode public folders enabled.\n");
 									}
 									else
@@ -198,7 +198,7 @@ namespace MAPIToolkit
 									if (profileConfigFlags[0].Value.l & CONFIG_OST_CACHE_PUBLIC)
 									{
 										profileConfigFlags[0].Value.l = profileConfigFlags[0].Value.l ^ CONFIG_OST_CACHE_PUBLIC;
-										CHK_HR_MSG(lpEmsMdbProfSect->SetProps(1, profileConfigFlags, NULL), L"Calling SetProps");
+										CHK_HR_DBG(lpEmsMdbProfSect->SetProps(1, profileConfigFlags, NULL), L"Calling SetProps");
 										wprintf(L"Cached mode public folders disabled.\n");
 									}
 									else
@@ -207,7 +207,7 @@ namespace MAPIToolkit
 									}
 								}
 
-								CHK_HR_MSG(lpEmsMdbProfSect->SaveChanges(0), L"Calling #");
+								CHK_HR_DBG(lpEmsMdbProfSect->SaveChanges(0), L"Calling #");
 								if (profileConfigFlags) MAPIFreeBuffer(profileConfigFlags);
 							}
 						}
@@ -226,10 +226,10 @@ namespace MAPIToolkit
 								{
 
 									profileRuleActionType[0].Value.i = iCachedModeMonths;
-									CHK_HR_MSG(lpEmsMdbProfSect->SetProps(1, profileRuleActionType, NULL), L"Calling SetProps");
+									CHK_HR_DBG(lpEmsMdbProfSect->SetProps(1, profileRuleActionType, NULL), L"Calling SetProps");
 									wprintf(L"Cached mode amount to sync set.\n");
 
-									CHK_HR_MSG(lpEmsMdbProfSect->SaveChanges(0), L"Calling SaveChanges");
+									CHK_HR_DBG(lpEmsMdbProfSect->SaveChanges(0), L"Calling SaveChanges");
 									if (profileRuleActionType) MAPIFreeBuffer(profileRuleActionType);
 								}
 							}

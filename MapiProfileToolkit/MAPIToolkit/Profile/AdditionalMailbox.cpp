@@ -27,24 +27,24 @@ namespace MAPIToolkit
 		LPSERVICEADMIN lpServiceAdmin = NULL;
 		LPMAPITABLE lpServiceTable = NULL;
 
-		CHK_HR_MSG(MAPIAdminProfiles(0, // Flags
-			&lpProfAdmin), L"Calling #"); // Pointer to new IProfAdmin
+		CHK_HR_DBG(MAPIAdminProfiles(0, // Flags
+			&lpProfAdmin), L"MAPIAdminProfiles"); // Pointer to new IProfAdmin
 
 		if (bDefaultProfile)
 		{
-			lpwszProfileName = (LPWSTR)GetDefaultProfileName().c_str();
+			lpwszProfileName = (LPWSTR)GetDefaultProfileName(lpProfAdmin).c_str();
 		}
 
-		CHK_HR_MSG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
+		CHK_HR_DBG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
 			LPTSTR(""),            // Password for that profile.
 			NULL,                // Handle to parent window.
 			0,                    // Flags.
-			&lpServiceAdmin), L"Calling AdminServices");        // Pointer to new IMsgServiceAdmin.
+			&lpServiceAdmin), L"lpProfAdmin->AdminServices");        // Pointer to new IMsgServiceAdmin.
 
 		if (lpServiceAdmin)
 		{
-			lpServiceAdmin->GetMsgServiceTable(0,
-				&lpServiceTable);
+			CHK_HR_DBG(lpServiceAdmin->GetMsgServiceTable(0,
+				&lpServiceTable), L"lpServiceAdmin->GetMsgServiceTable");
 			LPSRestriction lpSvcRes = NULL;
 			LPSRestriction lpsvcResLvl1 = NULL;
 			LPSPropValue lpSvcPropVal = NULL;
@@ -57,17 +57,17 @@ namespace MAPIToolkit
 			SizedSPropTagArray(cptaSvcProps, sptaSvcProps) = { cptaSvcProps, PR_SERVICE_UID, PR_RESOURCE_FLAGS };
 
 			// Allocate memory for the restriction
-			CHK_HR_MSG(MAPIAllocateBuffer(
+			CHK_HR_DBG(MAPIAllocateBuffer(
 				sizeof(SRestriction),
-				(LPVOID*)& lpSvcRes), L"Calling MAPIAllocateBuffer");
+				(LPVOID*)& lpSvcRes), L"MAPIAllocateBuffer");
 
-			CHK_HR_MSG(MAPIAllocateBuffer(
+			CHK_HR_DBG(MAPIAllocateBuffer(
 				sizeof(SRestriction) * 2,
-				(LPVOID*)& lpsvcResLvl1), L"Calling MAPIAllocateBuffer");
+				(LPVOID*)& lpsvcResLvl1), L"MAPIAllocateBuffer");
 
-			CHK_HR_MSG(MAPIAllocateBuffer(
+			CHK_HR_DBG(MAPIAllocateBuffer(
 				sizeof(SPropValue),
-				(LPVOID*)& lpSvcPropVal), L"Calling MAPIAllocateBuffer");
+				(LPVOID*)& lpSvcPropVal), L"MAPIAllocateBuffer");
 
 			// Set up restriction to query the profile table
 			lpSvcRes->rt = RES_AND;
@@ -87,12 +87,12 @@ namespace MAPIToolkit
 			lpSvcPropVal->Value.lpszA = LPSTR("MSEMS");
 
 			// Query the table to get the the default profile only
-			CHK_HR_MSG(HrQueryAllRows(lpServiceTable,
+			CHK_HR_DBG(HrQueryAllRows(lpServiceTable,
 				(LPSPropTagArray)& sptaSvcProps,
 				lpSvcRes,
 				NULL,
 				0,
-				&lpSvcRows), L"Calling HrQueryAllRows");
+				&lpSvcRows), L"HrQueryAllRows");
 
 			if (bDefaultService && lpSvcRows->cRows > 0)
 			{
@@ -101,37 +101,37 @@ namespace MAPIToolkit
 					if (lpSvcRows->aRow[i].lpProps[iServiceResFlags].Value.l & SERVICE_DEFAULT_STORE)
 					{
 						LPPROVIDERADMIN lpProvAdmin = NULL;
-						if (SUCCEEDED(lpServiceAdmin->AdminProviders((LPMAPIUID)lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb,
+						CHK_HR_DBG(lpServiceAdmin->AdminProviders((LPMAPIUID)lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb,
 							0,
-							&lpProvAdmin)))
-						{
-							std::wstring wszSmtpAddress = ConvertWideCharToStdWstring(lpszwSMTPAddress);
-							wszSmtpAddress = L"SMTP:" + wszSmtpAddress;
+							&lpProvAdmin), L"lpServiceAdmin->AdminProviders");
 
-							SPropValue		rgval[2]; // Property value structure to hold configuration info.
+						std::wstring wszSmtpAddress = ConvertWideCharToStdWstring(lpszwSMTPAddress);
+						wszSmtpAddress = L"SMTP:" + wszSmtpAddress;
 
-							ZeroMemory(&rgval[0], sizeof(SPropValue));
-							rgval[0].ulPropTag = PR_PROFILE_USER_SMTP_EMAIL_ADDRESS_W;
-							rgval[0].Value.lpszW = (LPWSTR)wszSmtpAddress.c_str();
+						SPropValue rgval[2]; // Property value structure to hold configuration info.
 
-							ZeroMemory(&rgval[1], sizeof(SPropValue));
-							rgval[1].ulPropTag = PR_DISPLAY_NAME_W;
-							rgval[1].Value.lpszW = lpszwDisplayName;
+						ZeroMemory(&rgval[0], sizeof(SPropValue));
+						rgval[0].ulPropTag = PR_PROFILE_USER_SMTP_EMAIL_ADDRESS_W;
+						rgval[0].Value.lpszW = (LPWSTR)wszSmtpAddress.c_str();
 
-							// Create the message service with the above properties.
-							CHK_HR_MSG(lpProvAdmin->CreateProvider(LPWSTR("EMSDelegate"),
-								2,
-								rgval,
-								0,
-								0,
-								lpProviderUid), L"Calling CreateProvider");
+						ZeroMemory(&rgval[1], sizeof(SPropValue));
+						rgval[1].ulPropTag = PR_DISPLAY_NAME_W;
+						rgval[1].Value.lpszW = lpszwDisplayName;
 
-							CHK_HR_MSG(HrUpdatePrStoreProviders(lpServiceAdmin, (LPMAPIUID)lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb, &muidProviderUid), L"Calling HrComputePrStoreProviders");
+						// Create the message service with the above properties.
+						CHK_HR_DBG(lpProvAdmin->CreateProvider(LPWSTR("EMSDelegate"),
+							2,
+							rgval,
+							0,
+							0,
+							lpProviderUid), L"lpProvAdmin->CreateProvider");
 
-							if (FAILED(hRes)) goto Error;
-							if (lpProvAdmin) lpProvAdmin->Release();
-							break;
-						}
+						CHK_HR_DBG(HrUpdatePrStoreProviders(lpServiceAdmin, (LPMAPIUID)lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb, &muidProviderUid), L"HrUpdatePrStoreProviders");
+
+						if (FAILED(hRes)) goto Error;
+						if (lpProvAdmin) lpProvAdmin->Release();
+						break;
+
 					}
 				}
 				if (lpSvcRows) FreeProws(lpSvcRows);
@@ -139,33 +139,33 @@ namespace MAPIToolkit
 			else if (lpSvcRows->cRows >= iServiceIndex)
 			{
 				LPPROVIDERADMIN lpProvAdmin = NULL;
-				if (SUCCEEDED(lpServiceAdmin->AdminProviders((LPMAPIUID)lpSvcRows->aRow[iServiceIndex].lpProps[iServiceUid].Value.bin.lpb,
+				CHK_HR_DBG(lpServiceAdmin->AdminProviders((LPMAPIUID)lpSvcRows->aRow[iServiceIndex].lpProps[iServiceUid].Value.bin.lpb,
 					0,
-					&lpProvAdmin)))
-				{
-					std::wstring wszSmtpAddress = ConvertWideCharToStdWstring(lpszwSMTPAddress);
-					wszSmtpAddress = L"SMTP:" + wszSmtpAddress;
+					&lpProvAdmin), L"lpServiceAdmin->AdminProviders");
 
-					SPropValue		rgval[2]; // Property value structure to hold configuration info.
+				std::wstring wszSmtpAddress = ConvertWideCharToStdWstring(lpszwSMTPAddress);
+				wszSmtpAddress = L"SMTP:" + wszSmtpAddress;
 
-					ZeroMemory(&rgval[0], sizeof(SPropValue));
-					rgval[0].ulPropTag = PR_PROFILE_USER_SMTP_EMAIL_ADDRESS_W;
-					rgval[0].Value.lpszW = (LPWSTR)wszSmtpAddress.c_str();
+				SPropValue		rgval[2]; // Property value structure to hold configuration info.
 
-					ZeroMemory(&rgval[1], sizeof(SPropValue));
-					rgval[1].ulPropTag = PR_DISPLAY_NAME_W;
-					rgval[1].Value.lpszW = lpszwDisplayName;
+				ZeroMemory(&rgval[0], sizeof(SPropValue));
+				rgval[0].ulPropTag = PR_PROFILE_USER_SMTP_EMAIL_ADDRESS_W;
+				rgval[0].Value.lpszW = (LPWSTR)wszSmtpAddress.c_str();
 
-					// Create the message service with the above properties.
-					CHK_HR_MSG(lpProvAdmin->CreateProvider(LPWSTR("EMSDelegate"),
-						2,
-						rgval,
-						0,
-						0,
-						(LPMAPIUID)lpSvcRows->aRow[iServiceIndex].lpProps[iServiceUid].Value.bin.lpb), L"Calling CreateProvider");
-					if (FAILED(hRes)) goto Error;
-					if (lpProvAdmin) lpProvAdmin->Release();
-				}
+				ZeroMemory(&rgval[1], sizeof(SPropValue));
+				rgval[1].ulPropTag = PR_DISPLAY_NAME_W;
+				rgval[1].Value.lpszW = lpszwDisplayName;
+
+				// Create the message service with the above properties.
+				CHK_HR_DBG(lpProvAdmin->CreateProvider(LPWSTR("EMSDelegate"),
+					2,
+					rgval,
+					0,
+					0,
+					(LPMAPIUID)lpSvcRows->aRow[iServiceIndex].lpProps[iServiceUid].Value.bin.lpb), L"lpProvAdmin->CreateProvider");
+				if (FAILED(hRes)) goto Error;
+				if (lpProvAdmin) lpProvAdmin->Release();
+
 			}
 			else
 			{
@@ -190,30 +190,30 @@ namespace MAPIToolkit
 
 
 
-	HRESULT HrAddDelegateMailbox(ULONG profileMode, LPWSTR lpwszProfileName, ULONG serviceMode, int iServiceIndex, int iOutlookVersion, ProviderWorker* pProviderWorker)
+	HRESULT HrAddDelegateMailbox(LPPROFADMIN pProfAdmin, ULONG profileMode, LPWSTR lpwszProfileName, ULONG serviceMode, int iServiceIndex, int iOutlookVersion, ProviderWorker* pProviderWorker)
 	{
 		HRESULT hRes = S_OK;
 
 		if VCHK(profileMode, PROFILEMODE_DEFAULT)
 		{
-			CHK_HR_MSG(HrAddDelegateMailboxOneProfile((LPWSTR)GetDefaultProfileName().c_str(), iOutlookVersion, serviceMode, iServiceIndex, pProviderWorker), L"Calling HrAddDelegateMailboxOneProfile");
+			CHK_HR_DBG(HrAddDelegateMailboxOneProfile((LPWSTR)GetDefaultProfileName(pProfAdmin).c_str(), iOutlookVersion, serviceMode, iServiceIndex, pProviderWorker), L"HrAddDelegateMailboxOneProfile");
 
 		}
 		else if VCHK(profileMode, PROFILEMODE_ALL)
 		{
-			ULONG ulProfileCount = GetProfileCount();
+			ULONG ulProfileCount = GetProfileCount(pProfAdmin);
 			ProfileInfo* profileInfo = new ProfileInfo[ulProfileCount];
 			hRes = HrGetProfiles(ulProfileCount, profileInfo);
 			for (ULONG i = 0; i <= ulProfileCount; i++)
 			{
-				CHK_HR_MSG(HrAddDelegateMailboxOneProfile((LPWSTR)profileInfo[i].wszProfileName.c_str(), iOutlookVersion, serviceMode, iServiceIndex, pProviderWorker), L"Calling HrAddDelegateMailboxOneProfile");
+				CHK_HR_DBG(HrAddDelegateMailboxOneProfile((LPWSTR)profileInfo[i].wszProfileName.c_str(), iOutlookVersion, serviceMode, iServiceIndex, pProviderWorker), L"HrAddDelegateMailboxOneProfile");
 			}
 		}
 		else
 		{
 			if VCHK(profileMode, PROFILEMODE_SPECIFIC)
 			{
-				CHK_HR_MSG(HrAddDelegateMailboxOneProfile(lpwszProfileName, iOutlookVersion, serviceMode, iServiceIndex, pProviderWorker), L"Calling HrAddDelegateMailboxOneProfile");
+				CHK_HR_DBG(HrAddDelegateMailboxOneProfile(lpwszProfileName, iOutlookVersion, serviceMode, iServiceIndex, pProviderWorker), L"HrAddDelegateMailboxOneProfile");
 			}
 			else
 				Logger::Write(LOGLEVEL_ERROR, L"The specified profile name is invalid or no profile name was specified.\n");
@@ -231,7 +231,7 @@ namespace MAPIToolkit
 		switch (iOutlookVersion)
 		{
 		case 2007:
-			CHK_HR_MSG(HrAddDelegateMailboxLegacy(FALSE,
+			CHK_HR_DBG(HrAddDelegateMailboxLegacy(FALSE,
 				lpwszProfileName,
 				VCHK(serviceMode, SERVICEMODE_DEFAULT),
 				iServiceIndex,
@@ -242,7 +242,7 @@ namespace MAPIToolkit
 			break;
 		case 2010:
 		case 2013:
-			CHK_HR_MSG(HrAddDelegateMailbox(FALSE,
+			CHK_HR_DBG(HrAddDelegateMailbox(FALSE,
 				lpwszProfileName,
 				VCHK(serviceMode, SERVICEMODE_DEFAULT),
 				iServiceIndex,
@@ -257,7 +257,7 @@ namespace MAPIToolkit
 				(LPWSTR)pProviderWorker->wszMailStoreInternalUrl.c_str()), L"Calling HrAddDelegateMailbox");
 			break;
 		case 2016:
-			CHK_HR_MSG(HrAddDelegateMailboxModern(FALSE,
+			CHK_HR_DBG(HrAddDelegateMailboxModern(FALSE,
 				lpwszProfileName,
 				VCHK(serviceMode, SERVICEMODE_DEFAULT),
 				iServiceIndex,
@@ -304,15 +304,15 @@ namespace MAPIToolkit
 		enum { iDispName, iSvcName, iSvcUID, iResourceFlags, iEmsMdbSectionUid, cptaSvc };
 		SizedSPropTagArray(cptaSvc, sptCols) = { cptaSvc, PR_DISPLAY_NAME, PR_SERVICE_NAME, PR_SERVICE_UID, PR_RESOURCE_FLAGS, PR_EMSMDB_SECTION_UID };
 
-		CHK_HR_MSG(MAPIAdminProfiles(0, // Flags
+		CHK_HR_DBG(MAPIAdminProfiles(0, // Flags
 			&lpProfAdmin), L"Calling MAPIAdminProfiles."); // Pointer to new IProfAdmin
 
 		if (bDefaultProfile)
 		{
-			lpwszProfileName = (LPWSTR)GetDefaultProfileName().c_str();
+			lpwszProfileName = (LPWSTR)GetDefaultProfileName(lpProfAdmin).c_str();
 		}
 
-		CHK_HR_MSG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
+		CHK_HR_DBG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
 			LPTSTR(""),            // Password for that profile.
 			NULL,                // Handle to parent window.
 			0,                    // Flags.
@@ -332,15 +332,15 @@ namespace MAPIToolkit
 			SizedSPropTagArray(cptaSvcProps, sptaSvcProps) = { cptaSvcProps, PR_SERVICE_UID, PR_RESOURCE_FLAGS };
 
 			// Allocate memory for the restriction
-			CHK_HR_MSG(MAPIAllocateBuffer(
+			CHK_HR_DBG(MAPIAllocateBuffer(
 				sizeof(SRestriction),
 				(LPVOID*)& lpSvcRes), L"Calling MAPIAllocateBuffer");
 
-			CHK_HR_MSG(MAPIAllocateBuffer(
+			CHK_HR_DBG(MAPIAllocateBuffer(
 				sizeof(SRestriction) * 2,
 				(LPVOID*)& lpsvcResLvl1), L"Calling MAPIAllocateBuffer");
 
-			CHK_HR_MSG(MAPIAllocateBuffer(
+			CHK_HR_DBG(MAPIAllocateBuffer(
 				sizeof(SPropValue),
 				(LPVOID*)& lpSvcPropVal), L"Calling MAPIAllocateBuffer");
 
@@ -362,7 +362,7 @@ namespace MAPIToolkit
 			lpSvcPropVal->Value.lpszA = LPSTR("MSEMS");
 
 			// Query the table to get the the default profile only
-			CHK_HR_MSG(HrQueryAllRows(lpServiceTable,
+			CHK_HR_DBG(HrQueryAllRows(lpServiceTable,
 				(LPSPropTagArray)& sptaSvcProps,
 				lpSvcRes,
 				NULL,
@@ -376,45 +376,44 @@ namespace MAPIToolkit
 					if (lpSvcRows->aRow[i].lpProps[iServiceResFlags].Value.l & SERVICE_DEFAULT_STORE)
 					{
 						LPPROVIDERADMIN lpProvAdmin = NULL;
-						if (SUCCEEDED(lpServiceAdmin->AdminProviders((LPMAPIUID)lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb,
+						CHK_HR_DBG(lpServiceAdmin->AdminProviders((LPMAPIUID)lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb,
 							0,
-							&lpProvAdmin)))
-						{
+							&lpProvAdmin), L"");
 
-							std::wstring wszSmtpAddress = ConvertWideCharToStdWstring(lpszwSMTPAddress);
-							wszSmtpAddress = L"SMTP:" + wszSmtpAddress;
 
-							// Set up a SPropValue array for the properties you need to configure.
-							ZeroMemory(&rgval[0], sizeof(SPropValue));
-							rgval[0].ulPropTag = PR_DISPLAY_NAME_W;
-							rgval[0].Value.lpszW = lpszwMailboxDisplay;
+						std::wstring wszSmtpAddress = ConvertWideCharToStdWstring(lpszwSMTPAddress);
+						wszSmtpAddress = L"SMTP:" + wszSmtpAddress;
 
-							ZeroMemory(&rgval[1], sizeof(SPropValue));
-							rgval[1].ulPropTag = PR_PROFILE_MAILBOX;
-							rgval[1].Value.lpszA = ConvertWideCharToMultiByte(lpszwMailboxDN);
+						// Set up a SPropValue array for the properties you need to configure.
+						ZeroMemory(&rgval[0], sizeof(SPropValue));
+						rgval[0].ulPropTag = PR_DISPLAY_NAME_W;
+						rgval[0].Value.lpszW = lpszwMailboxDisplay;
 
-							ZeroMemory(&rgval[2], sizeof(SPropValue));
-							rgval[2].ulPropTag = PR_PROFILE_SERVER;
-							rgval[2].Value.lpszA = ConvertWideCharToMultiByte(lpszwServer);
+						ZeroMemory(&rgval[1], sizeof(SPropValue));
+						rgval[1].ulPropTag = PR_PROFILE_MAILBOX;
+						rgval[1].Value.lpszA = ConvertWideCharToMultiByte(lpszwMailboxDN);
 
-							ZeroMemory(&rgval[3], sizeof(SPropValue));
-							rgval[3].ulPropTag = PR_PROFILE_SERVER_DN;
-							rgval[3].Value.lpszA = ConvertWideCharToMultiByte(lpszwServerDN);
+						ZeroMemory(&rgval[2], sizeof(SPropValue));
+						rgval[2].ulPropTag = PR_PROFILE_SERVER;
+						rgval[2].Value.lpszA = ConvertWideCharToMultiByte(lpszwServer);
 
-							ZeroMemory(&rgval[4], sizeof(SPropValue));
-							rgval[4].ulPropTag = PR_PROFILE_USER_SMTP_EMAIL_ADDRESS_W;
-							rgval[4].Value.lpszW = (LPWSTR)wszSmtpAddress.c_str();
+						ZeroMemory(&rgval[3], sizeof(SPropValue));
+						rgval[3].ulPropTag = PR_PROFILE_SERVER_DN;
+						rgval[3].Value.lpszA = ConvertWideCharToMultiByte(lpszwServerDN);
 
-							wprintf(L"Creating EMSDelegate provider.\n");
-							// Create the message service with the above properties.
-							hRes = lpProvAdmin->CreateProvider(LPWSTR("EMSDelegate"),
-								5,
-								rgval,
-								0,
-								0,
-								(LPMAPIUID)lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb);
-							if (FAILED(hRes)) goto Error;
-						}
+						ZeroMemory(&rgval[4], sizeof(SPropValue));
+						rgval[4].ulPropTag = PR_PROFILE_USER_SMTP_EMAIL_ADDRESS_W;
+						rgval[4].Value.lpszW = (LPWSTR)wszSmtpAddress.c_str();
+
+						wprintf(L"Creating EMSDelegate provider.\n");
+						// Create the message service with the above properties.
+						CHK_HR_DBG(lpProvAdmin->CreateProvider(LPWSTR("EMSDelegate"),
+							5,
+							rgval,
+							0,
+							0,
+							(LPMAPIUID)lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb), L"");
+
 					}
 				}
 				if (lpSvcRows) FreeProws(lpSvcRows);
@@ -422,46 +421,43 @@ namespace MAPIToolkit
 			else if (lpSvcRows->cRows >= ulServiceIndex)
 			{
 				LPPROVIDERADMIN lpProvAdmin = NULL;
-				if (SUCCEEDED(lpServiceAdmin->AdminProviders((LPMAPIUID)lpSvcRows->aRow[ulServiceIndex].lpProps[iServiceUid].Value.bin.lpb,
+				CHK_HR_DBG(lpServiceAdmin->AdminProviders((LPMAPIUID)lpSvcRows->aRow[ulServiceIndex].lpProps[iServiceUid].Value.bin.lpb,
 					0,
-					&lpProvAdmin)))
-				{
+					&lpProvAdmin), L"");
 
-					std::wstring wszSmtpAddress = ConvertWideCharToStdWstring(lpszwSMTPAddress);
-					wszSmtpAddress = L"SMTP:" + wszSmtpAddress;
 
-					// Set up a SPropValue array for the properties you need to configure.
-					ZeroMemory(&rgval[0], sizeof(SPropValue));
-					rgval[0].ulPropTag = PR_DISPLAY_NAME_W;
-					rgval[0].Value.lpszW = lpszwMailboxDisplay;
+				std::wstring wszSmtpAddress = ConvertWideCharToStdWstring(lpszwSMTPAddress);
+				wszSmtpAddress = L"SMTP:" + wszSmtpAddress;
 
-					ZeroMemory(&rgval[1], sizeof(SPropValue));
-					rgval[1].ulPropTag = PR_PROFILE_MAILBOX;
-					rgval[1].Value.lpszA = ConvertWideCharToMultiByte(lpszwMailboxDN);
+				// Set up a SPropValue array for the properties you need to configure.
+				ZeroMemory(&rgval[0], sizeof(SPropValue));
+				rgval[0].ulPropTag = PR_DISPLAY_NAME_W;
+				rgval[0].Value.lpszW = lpszwMailboxDisplay;
 
-					ZeroMemory(&rgval[2], sizeof(SPropValue));
-					rgval[2].ulPropTag = PR_PROFILE_SERVER;
-					rgval[2].Value.lpszA = ConvertWideCharToMultiByte(lpszwServer);
+				ZeroMemory(&rgval[1], sizeof(SPropValue));
+				rgval[1].ulPropTag = PR_PROFILE_MAILBOX;
+				rgval[1].Value.lpszA = ConvertWideCharToMultiByte(lpszwMailboxDN);
 
-					ZeroMemory(&rgval[3], sizeof(SPropValue));
-					rgval[3].ulPropTag = PR_PROFILE_SERVER_DN;
-					rgval[3].Value.lpszA = ConvertWideCharToMultiByte(lpszwServerDN);
+				ZeroMemory(&rgval[2], sizeof(SPropValue));
+				rgval[2].ulPropTag = PR_PROFILE_SERVER;
+				rgval[2].Value.lpszA = ConvertWideCharToMultiByte(lpszwServer);
 
-					ZeroMemory(&rgval[4], sizeof(SPropValue));
-					rgval[4].ulPropTag = PR_PROFILE_USER_SMTP_EMAIL_ADDRESS_W;
-					rgval[4].Value.lpszW = (LPWSTR)wszSmtpAddress.c_str();
+				ZeroMemory(&rgval[3], sizeof(SPropValue));
+				rgval[3].ulPropTag = PR_PROFILE_SERVER_DN;
+				rgval[3].Value.lpszA = ConvertWideCharToMultiByte(lpszwServerDN);
 
-					wprintf(L"Creating EMSDelegate provider.\n");
-					// Create the message service with the above properties.
-					hRes = lpProvAdmin->CreateProvider(LPWSTR("EMSDelegate"),
-						5,
-						rgval,
-						0,
-						0,
-						(LPMAPIUID)lpSvcRows->aRow[ulServiceIndex].lpProps[iServiceUid].Value.bin.lpb);
-					if (FAILED(hRes)) goto Error;
+				ZeroMemory(&rgval[4], sizeof(SPropValue));
+				rgval[4].ulPropTag = PR_PROFILE_USER_SMTP_EMAIL_ADDRESS_W;
+				rgval[4].Value.lpszW = (LPWSTR)wszSmtpAddress.c_str();
 
-				}
+				wprintf(L"Creating EMSDelegate provider.\n");
+				// Create the message service with the above properties.
+				CHK_HR_DBG(lpProvAdmin->CreateProvider(LPWSTR("EMSDelegate"),
+					5,
+					rgval,
+					0,
+					0,
+					(LPMAPIUID)lpSvcRows->aRow[ulServiceIndex].lpProps[iServiceUid].Value.bin.lpb), L"");
 			}
 			else
 			{
@@ -510,7 +506,7 @@ namespace MAPIToolkit
 		enum { iDispName, iSvcName, iSvcUID, iResourceFlags, iEmsMdbSectionUid, cptaSvc };
 		SizedSPropTagArray(cptaSvc, sptCols) = { cptaSvc, PR_DISPLAY_NAME, PR_SERVICE_NAME, PR_SERVICE_UID, PR_RESOURCE_FLAGS, PR_EMSMDB_SECTION_UID };
 
-		CHK_HR_MSG(MAPIAdminProfiles(0, // Flags
+		CHK_HR_DBG(MAPIAdminProfiles(0, // Flags
 			&lpProfAdmin), L"Calling MAPIAdminProfiles"); // Pointer to new IProfAdmin
 
 														  // Begin process services
@@ -518,10 +514,10 @@ namespace MAPIToolkit
 
 		if (bDefaultProfile)
 		{
-			lpwszProfileName = (LPWSTR)GetDefaultProfileName().c_str();
+			lpwszProfileName = (LPWSTR)GetDefaultProfileName(lpProfAdmin).c_str();
 		}
 
-		CHK_HR_MSG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
+		CHK_HR_DBG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
 			LPTSTR(""),            // Password for that profile.
 			NULL,                // Handle to parent window.
 			0,                    // Flags.
@@ -542,15 +538,15 @@ namespace MAPIToolkit
 			SizedSPropTagArray(cptaSvcProps, sptaSvcProps) = { cptaSvcProps, PR_SERVICE_UID, PR_RESOURCE_FLAGS };
 
 			// Allocate memory for the restriction
-			CHK_HR_MSG(MAPIAllocateBuffer(
+			CHK_HR_DBG(MAPIAllocateBuffer(
 				sizeof(SRestriction),
 				(LPVOID*)& lpSvcRes), L"Calling MAPIAllocateBuffer");
 
-			CHK_HR_MSG(MAPIAllocateBuffer(
+			CHK_HR_DBG(MAPIAllocateBuffer(
 				sizeof(SRestriction) * 2,
 				(LPVOID*)& lpsvcResLvl1), L"Calling MAPIAllocateBuffer");
 
-			CHK_HR_MSG(MAPIAllocateBuffer(
+			CHK_HR_DBG(MAPIAllocateBuffer(
 				sizeof(SPropValue),
 				(LPVOID*)& lpSvcPropVal), L"Calling MAPIAllocateBuffer");
 
@@ -572,7 +568,7 @@ namespace MAPIToolkit
 			lpSvcPropVal->Value.lpszA = LPSTR("MSEMS");
 
 			// Query the table to get the the default profile only
-			CHK_HR_MSG(HrQueryAllRows(lpServiceTable,
+			CHK_HR_DBG(HrQueryAllRows(lpServiceTable,
 				(LPSPropTagArray)& sptaSvcProps,
 				lpSvcRes,
 				NULL,
@@ -586,39 +582,38 @@ namespace MAPIToolkit
 					if (lpSvcRows->aRow[i].lpProps[iServiceResFlags].Value.l & SERVICE_DEFAULT_STORE)
 					{
 						LPPROVIDERADMIN lpProvAdmin = NULL;
-						if (SUCCEEDED(lpServiceAdmin->AdminProviders((LPMAPIUID)lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb,
+						CHK_HR_DBG(lpServiceAdmin->AdminProviders((LPMAPIUID)lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb,
 							0,
-							&lpProvAdmin)))
-						{
-							// Set up a SPropValue array for the properties you need to configure.
-							ZeroMemory(&rgval[0], sizeof(SPropValue));
-							rgval[0].ulPropTag = PR_DISPLAY_NAME_W;
-							rgval[0].Value.lpszW = lpszwMailboxDisplay;
+							&lpProvAdmin), L"");
 
-							ZeroMemory(&rgval[1], sizeof(SPropValue));
-							rgval[1].ulPropTag = PR_PROFILE_MAILBOX;
-							rgval[1].Value.lpszA = ConvertWideCharToMultiByte(lpszwMailboxDN);
+						// Set up a SPropValue array for the properties you need to configure.
+						ZeroMemory(&rgval[0], sizeof(SPropValue));
+						rgval[0].ulPropTag = PR_DISPLAY_NAME_W;
+						rgval[0].Value.lpszW = lpszwMailboxDisplay;
 
-							ZeroMemory(&rgval[2], sizeof(SPropValue));
-							rgval[2].ulPropTag = PR_PROFILE_SERVER;
-							rgval[2].Value.lpszA = ConvertWideCharToMultiByte(lpszwServer);
+						ZeroMemory(&rgval[1], sizeof(SPropValue));
+						rgval[1].ulPropTag = PR_PROFILE_MAILBOX;
+						rgval[1].Value.lpszA = ConvertWideCharToMultiByte(lpszwMailboxDN);
 
-							ZeroMemory(&rgval[3], sizeof(SPropValue));
-							rgval[3].ulPropTag = PR_PROFILE_SERVER_DN;
-							rgval[3].Value.lpszA = ConvertWideCharToMultiByte(lpszwServerDN);
+						ZeroMemory(&rgval[2], sizeof(SPropValue));
+						rgval[2].ulPropTag = PR_PROFILE_SERVER;
+						rgval[2].Value.lpszA = ConvertWideCharToMultiByte(lpszwServer);
 
-							wprintf(L"Creating EMSDelegate provider.\n");
-							// Create the message service with the above properties.
-							CHK_HR_MSG(lpProvAdmin->CreateProvider(LPWSTR("EMSDelegate"),
-								4,
-								rgval,
-								0,
-								0,
-								lpProviderUid), L"Calling CreateProvider");
-							if (FAILED(hRes)) goto Error;
+						ZeroMemory(&rgval[3], sizeof(SPropValue));
+						rgval[3].ulPropTag = PR_PROFILE_SERVER_DN;
+						rgval[3].Value.lpszA = ConvertWideCharToMultiByte(lpszwServerDN);
 
-							CHK_HR_MSG(HrUpdatePrStoreProviders(lpServiceAdmin, (LPMAPIUID)lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb, &muidProviderUid), L"Calling HrComputePrStoreProviders");
-						}
+						wprintf(L"Creating EMSDelegate provider.\n");
+						// Create the message service with the above properties.
+						CHK_HR_DBG(lpProvAdmin->CreateProvider(LPWSTR("EMSDelegate"),
+							4,
+							rgval,
+							0,
+							0,
+							lpProviderUid), L"Calling CreateProvider");
+
+						CHK_HR_DBG(HrUpdatePrStoreProviders(lpServiceAdmin, (LPMAPIUID)lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb, &muidProviderUid), L"Calling HrComputePrStoreProviders");
+
 					}
 				}
 				if (lpSvcRows) FreeProws(lpSvcRows);
@@ -626,38 +621,39 @@ namespace MAPIToolkit
 			else if (lpSvcRows->cRows >= ulServiceIndex)
 			{
 				LPPROVIDERADMIN lpProvAdmin = NULL;
-				if (SUCCEEDED(lpServiceAdmin->AdminProviders((LPMAPIUID)lpSvcRows->aRow[ulServiceIndex].lpProps[iServiceUid].Value.bin.lpb,
+				CHK_HR_DBG(lpServiceAdmin->AdminProviders((LPMAPIUID)lpSvcRows->aRow[ulServiceIndex].lpProps[iServiceUid].Value.bin.lpb,
 					0,
-					&lpProvAdmin)))
-				{
-					// Set up a SPropValue array for the properties you need to configure.
-					ZeroMemory(&rgval[0], sizeof(SPropValue));
-					rgval[0].ulPropTag = PR_DISPLAY_NAME_W;
-					rgval[0].Value.lpszW = lpszwMailboxDisplay;
+					&lpProvAdmin), L"");
 
-					ZeroMemory(&rgval[1], sizeof(SPropValue));
-					rgval[1].ulPropTag = PR_PROFILE_MAILBOX;
-					rgval[1].Value.lpszA = ConvertWideCharToMultiByte(lpszwMailboxDN);
+				// Set up a SPropValue array for the properties you need to configure.
+				ZeroMemory(&rgval[0], sizeof(SPropValue));
+				rgval[0].ulPropTag = PR_DISPLAY_NAME_W;
+				rgval[0].Value.lpszW = lpszwMailboxDisplay;
 
-					ZeroMemory(&rgval[2], sizeof(SPropValue));
-					rgval[2].ulPropTag = PR_PROFILE_SERVER;
-					rgval[2].Value.lpszA = ConvertWideCharToMultiByte(lpszwServer);
+				ZeroMemory(&rgval[1], sizeof(SPropValue));
+				rgval[1].ulPropTag = PR_PROFILE_MAILBOX;
+				rgval[1].Value.lpszA = ConvertWideCharToMultiByte(lpszwMailboxDN);
 
-					ZeroMemory(&rgval[3], sizeof(SPropValue));
-					rgval[3].ulPropTag = PR_PROFILE_SERVER_DN;
-					rgval[3].Value.lpszA = ConvertWideCharToMultiByte(lpszwServerDN);
+				ZeroMemory(&rgval[2], sizeof(SPropValue));
+				rgval[2].ulPropTag = PR_PROFILE_SERVER;
+				rgval[2].Value.lpszA = ConvertWideCharToMultiByte(lpszwServer);
 
-					wprintf(L"Creating EMSDelegate provider.\n");
-					// Create the message service with the above properties.
-					hRes = lpProvAdmin->CreateProvider(LPWSTR("EMSDelegate"),
-						4,
-						rgval,
-						0,
-						0,
-						(LPMAPIUID)lpSvcRows->aRow[ulServiceIndex].lpProps[iServiceUid].Value.bin.lpb);
-					if (FAILED(hRes)) goto Error;
-				}
+				ZeroMemory(&rgval[3], sizeof(SPropValue));
+				rgval[3].ulPropTag = PR_PROFILE_SERVER_DN;
+				rgval[3].Value.lpszA = ConvertWideCharToMultiByte(lpszwServerDN);
+
+				wprintf(L"Creating EMSDelegate provider.\n");
+				// Create the message service with the above properties.
+				hRes = lpProvAdmin->CreateProvider(LPWSTR("EMSDelegate"),
+					4,
+					rgval,
+					0,
+					0,
+					(LPMAPIUID)lpSvcRows->aRow[ulServiceIndex].lpProps[iServiceUid].Value.bin.lpb);
+				if (FAILED(hRes)) goto Error;
+
 			}
+
 			else
 			{
 				wprintf(L"No service found.\n");
@@ -687,8 +683,8 @@ namespace MAPIToolkit
 		if (bDefaultProfile)
 		{
 			ProfileInfo* profileInfo = new ProfileInfo();
-			CHK_HR_MSG(HrGetProfile((LPWSTR)GetDefaultProfileName().c_str(), profileInfo), L"Calling GetProfile");
-			CHK_HR_MSG(HrPromoteDelegatesOneProfile((LPWSTR)profileInfo->wszProfileName.c_str(), profileInfo, iServiceIndex, bDefaultService, bAllServices, iOutlookVersion, connectMode), L"Calling HrPromoteDelegatesOneProfile");
+			CHK_HR_DBG(HrGetProfile((LPWSTR)GetDefaultProfileName().c_str(), profileInfo), L"Calling GetProfile");
+			CHK_HR_DBG(HrPromoteDelegatesOneProfile((LPWSTR)profileInfo->wszProfileName.c_str(), profileInfo, iServiceIndex, bDefaultService, bAllServices, iOutlookVersion, connectMode), L"Calling HrPromoteDelegatesOneProfile");
 
 		}
 		else if (bAllProfiles)
@@ -698,7 +694,7 @@ namespace MAPIToolkit
 			hRes = HrGetProfiles(ulProfileCount, profileInfo);
 			for (ULONG i = 0; i <= ulProfileCount; i++)
 			{
-				CHK_HR_MSG(HrPromoteDelegatesOneProfile((LPWSTR)profileInfo[i].wszProfileName.c_str(), &profileInfo[i], iServiceIndex, bDefaultService, bAllServices, iOutlookVersion, connectMode), L"Calling HrPromoteDelegatesOneProfile");
+				CHK_HR_DBG(HrPromoteDelegatesOneProfile((LPWSTR)profileInfo[i].wszProfileName.c_str(), &profileInfo[i], iServiceIndex, bDefaultService, bAllServices, iOutlookVersion, connectMode), L"Calling HrPromoteDelegatesOneProfile");
 			}
 		}
 		else
@@ -707,7 +703,7 @@ namespace MAPIToolkit
 			{
 				ProfileInfo* profileInfo = new ProfileInfo();
 				hRes = HrGetProfile(lpwszProfileName, profileInfo);
-				CHK_HR_MSG(HrPromoteDelegatesOneProfile((LPWSTR)profileInfo->wszProfileName.c_str(), profileInfo, iServiceIndex, bDefaultService, bAllServices, iOutlookVersion, connectMode), L"Calling HrPromoteDelegatesOneProfile");
+				CHK_HR_DBG(HrPromoteDelegatesOneProfile((LPWSTR)profileInfo->wszProfileName.c_str(), profileInfo, iServiceIndex, bDefaultService, bAllServices, iOutlookVersion, connectMode), L"Calling HrPromoteDelegatesOneProfile");
 
 			}
 			else
@@ -736,7 +732,7 @@ namespace MAPIToolkit
 						{
 							if ((pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulProfileType == PROFILE_DELEGATE) && (pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].bIsOnlineArchive == false))
 							{
-								CHK_HR_MSG(HrPromoteOneDelegate(lpwszProfileName, iOutlookVersion, connectMode, pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j]), L"Calling HrPromoteDelegate");
+								CHK_HR_DBG(HrPromoteOneDelegate(lpwszProfileName, iOutlookVersion, connectMode, pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j]), L"Calling HrPromoteDelegate");
 							}
 						}
 					}
@@ -750,7 +746,7 @@ namespace MAPIToolkit
 					{
 						if ((pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->accountMailboxes[j].ulProfileType == PROFILE_DELEGATE) && (pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->accountMailboxes[j].bIsOnlineArchive == false))
 						{
-							CHK_HR_MSG(HrPromoteOneDelegate(lpwszProfileName, iOutlookVersion, connectMode, pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->accountMailboxes[j]), L"Calling HrPromoteDelegate");
+							CHK_HR_DBG(HrPromoteOneDelegate(lpwszProfileName, iOutlookVersion, connectMode, pProfileInfo->profileServices[iServiceIndex].exchangeAccountInfo->accountMailboxes[j]), L"Calling HrPromoteDelegate");
 						}
 					}
 				}
@@ -763,7 +759,7 @@ namespace MAPIToolkit
 					{
 						if ((pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].ulProfileType == PROFILE_DELEGATE) && (pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].bIsOnlineArchive == false))
 						{
-							CHK_HR_MSG(HrPromoteOneDelegate(lpwszProfileName, iOutlookVersion, connectMode, pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j]), L"Calling HrPromoteDelegate");
+							CHK_HR_DBG(HrPromoteOneDelegate(lpwszProfileName, iOutlookVersion, connectMode, pProfileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j]), L"Calling HrPromoteDelegate");
 						}
 					}
 				}
@@ -790,7 +786,7 @@ namespace MAPIToolkit
 			//	(LPWSTR)mailboxInfo.wszProfileServer.c_str(),
 			//	loggingMode)))
 			//{
-			//	CHK_HR_MSG(HrDeleteProvider(profileName, &pProfileInfo->profileServices[i].muidServiceUid, &mailboxInfo.muidProviderUid, loggingMode), L"Calling HrDeleteProvider");
+			//	CHK_HR_DBG(HrDeleteProvider(profileName, &pProfileInfo->profileServices[i].muidServiceUid, &mailboxInfo.muidProviderUid, loggingMode), L"Calling HrDeleteProvider");
 			//}
 			Logger::Write(LOGLEVEL_ERROR, L"This client version is not currently supported.");
 			break;
@@ -822,7 +818,7 @@ namespace MAPIToolkit
 						(LPWSTR)wszServerDN.c_str(),
 						(LPWSTR)NULL)))
 					{
-						CHK_HR_MSG(HrDeleteProvider(lpwszProfileName, &mailboxInfo.muidServiceUid, &mailboxInfo.muidProviderUid), L"Calling HrDeleteProvider");
+						CHK_HR_DBG(HrDeleteProvider(lpwszProfileName, &mailboxInfo.muidServiceUid, &mailboxInfo.muidProviderUid), L"Calling HrDeleteProvider");
 					}
 				}
 				else
@@ -864,7 +860,7 @@ namespace MAPIToolkit
 						(LPWSTR)mailboxInfo.wszAddressBookInternalUrl.c_str(),
 						(LPWSTR)mailboxInfo.wszAddressBookExternalUrl.c_str())))
 					{
-						CHK_HR_MSG(HrDeleteProvider(lpwszProfileName, &mailboxInfo.muidServiceUid, &mailboxInfo.muidProviderUid), L"Calling HrDeleteProvider");
+						CHK_HR_DBG(HrDeleteProvider(lpwszProfileName, &mailboxInfo.muidServiceUid, &mailboxInfo.muidProviderUid), L"Calling HrDeleteProvider");
 					}
 				}
 			}
@@ -877,7 +873,7 @@ namespace MAPIToolkit
 				(LPWSTR)SubstringToEnd(L"smtp:", mailboxInfo.wszSmtpAddress).c_str(),
 				(LPWSTR)SubstringToEnd(L"smtp:", mailboxInfo.wszSmtpAddress).c_str())))
 			{
-				CHK_HR_MSG(HrDeleteProvider(lpwszProfileName, &mailboxInfo.muidServiceUid, &mailboxInfo.muidProviderUid), L"Calling HrDeleteProvider");
+				CHK_HR_DBG(HrDeleteProvider(lpwszProfileName, &mailboxInfo.muidServiceUid, &mailboxInfo.muidProviderUid), L"Calling HrDeleteProvider");
 			}
 
 			break;

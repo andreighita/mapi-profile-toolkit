@@ -306,7 +306,7 @@ namespace MAPIToolkit
 		HKEY hKey;
 		DWORD dwType = REG_SZ;
 		LPDWORD lpdwType = &dwType;
-		CHK_HR_MSG(RegOpenKey(hRegistryHive, lpszKeyName, &hKey), L"Opening registry key");
+		CHK_HR_DBG(RegOpenKey(hRegistryHive, lpszKeyName, &hKey), L"RegOpenKey");
 
 		DWORD    cValues;              // number of values for key 
 		DWORD    cbMaxValueData;       // longest value data 
@@ -314,7 +314,7 @@ namespace MAPIToolkit
 		DWORD i, retCode;
 
 		// Get the class name and the value count. 
-		CHK_HR_MSG(RegQueryInfoKey(
+		CHK_HR_DBG(RegQueryInfoKey(
 			hKey,                    // key handle 
 			NULL,                // buffer for class name 
 			NULL,           // size of class string 
@@ -339,7 +339,7 @@ namespace MAPIToolkit
 				LPWSTR lpRegValue = NULL;
 				MAPIAllocateBuffer(MAX_VALUE_NAME, (LPVOID*)& lpRegValue);
 
-				CHK_HR_MSG(RegEnumValue(hKey, i,
+				CHK_HR_DBG(RegEnumValue(hKey, i,
 					lpRegValue,
 					lpdcValName,
 					NULL,
@@ -352,7 +352,7 @@ namespace MAPIToolkit
 					LPWSTR lpRegValueData = NULL;
 					MAPIAllocateBuffer(MAX_PATH, (LPVOID*)& lpRegValueData);
 
-					CHK_HR_MSG(RegQueryValueEx(hKey, lpRegValue, 0, NULL, (LPBYTE)lpRegValueData, lpdwcValData), L"Getting reg value data");
+					CHK_HR_DBG(RegQueryValueEx(hKey, lpRegValue, 0, NULL, (LPBYTE)lpRegValueData, lpdwcValData), L"RegQueryValueEx");
 					std::wstring wszValue = ConvertWideCharToStdWstring(lpRegValue);
 					std::wstring wszValueData = ConvertWideCharToStdWstring(lpRegValueData);
 					try

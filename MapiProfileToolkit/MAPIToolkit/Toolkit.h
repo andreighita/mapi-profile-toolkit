@@ -29,6 +29,8 @@ namespace MAPIToolkit
 		static std::map<std::wstring, ULONG> g_profileModeMap;
 		static std::map<std::wstring, ULONG> g_serviceModeMap;
 		static std::map<std::wstring, ULONG> g_serviceTypeMap;
+		static std::map<std::wstring, ULONG> g_loggingModeMap;
+
 		static ULONG m_action;
 		//static int m_OutlookVersion;
 		//static ULONG m_loggingMode;
@@ -48,6 +50,7 @@ namespace MAPIToolkit
 		static std::map<std::wstring, std::wstring> g_toolkitMap;
 		static std::map<std::wstring, std::wstring> g_regKeyMap;
 		static std::map <int, std::wstring > g_hexMap;
+		static std::map<std::wstring, ULONG> g_saveConfigMap;
 	public:
 		 static VOID Run(int argc, wchar_t* argv[]);
 
@@ -60,22 +63,19 @@ namespace MAPIToolkit
 		static BOOL AddAddressBookService(LPSERVICEADMIN2 pServiceAdmin);
 
 		// ACTION_SERVICE_UPDATE	
-		static VOID UpdateAddressBookService();
+		static VOID UpdateService(LPSERVICEADMIN2 pServiceAdmin, LPMAPIUID lpMAPIUid);
+		static VOID UpdateAddressBookService(LPSERVICEADMIN2 pServiceAdmin, LPMAPIUID lpMAPIUid);
 
 		// ACTION_SERVICE_LIST
 		static VOID ListService(LPSERVICEADMIN2 pServiceAdmin, LPMAPIUID lpMAPIUid);
-		//static VOID ListAddressBookService(LPSERVICEADMIN2 pServiceAdmin, LPMAPIUID lpMAPIUid);
 
 		// ACTION_SERVICE_LISTALL
 		static VOID ListAllServices(LPSERVICEADMIN2 pServiceAdmin);
-		static VOID ListAllAddressBookServices(LPSERVICEADMIN2 pServiceAdmin);
 
 		// ACTION_SERVICE_REMOVE
 		static VOID RemoveService(LPSERVICEADMIN2 pServiceAdmin, LPMAPIUID pMapiUid);
-		static BOOL RemoveAddressBookService(LPSERVICEADMIN2 pServiceAdmin, LPMAPIUID lpMAPIUid);
 
 		// ACTION_SERVICE_REMOVEALL
 		static VOID RemoveAllServices(LPSERVICEADMIN2 pServiceAdmin);
-		static VOID RemoveAllAddressBookServices();
 	};
 }

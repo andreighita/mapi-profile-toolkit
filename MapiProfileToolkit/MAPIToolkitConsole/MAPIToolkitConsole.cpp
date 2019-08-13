@@ -11,9 +11,7 @@ using namespace MAPIToolkit;
 
 int wmain(int argc, wchar_t* argv[])
 {
-    std::cout << "Hello World!\n";
 	Toolkit::Run(argc, argv);
-
 }
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu

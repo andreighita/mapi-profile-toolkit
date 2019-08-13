@@ -15,7 +15,7 @@ HRESULT HrCreateMsemsService(ULONG profileMode, LPWSTR lpwszProfileName, int iOu
 
 	if VCHK(profileMode, PROFILEMODE_DEFAULT)
 	{
-		CHK_HR_MSG(HrCreateMsemsServiceOneProfile((LPWSTR)GetDefaultProfileName().c_str(), iOutlookVersion, pExchangeAccountWorker), L"Calling HrCreateMsemsServiceOneProfile");
+		CHK_HR_DBG(HrCreateMsemsServiceOneProfile((LPWSTR)GetDefaultProfileName().c_str(), iOutlookVersion, pExchangeAccountWorker), L"Calling HrCreateMsemsServiceOneProfile");
 
 	}
 	if VCHK(profileMode, PROFILEMODE_ALL)
@@ -25,14 +25,14 @@ HRESULT HrCreateMsemsService(ULONG profileMode, LPWSTR lpwszProfileName, int iOu
 		hRes = HrGetProfiles(ulProfileCount, profileInfo);
 		for (ULONG i = 0; i <= ulProfileCount; i++)
 		{
-			CHK_HR_MSG(HrCreateMsemsServiceOneProfile((LPWSTR)profileInfo[i].wszProfileName.c_str(), iOutlookVersion, pExchangeAccountWorker), L"Calling HrCreateMsemsServiceOneProfile");
+			CHK_HR_DBG(HrCreateMsemsServiceOneProfile((LPWSTR)profileInfo[i].wszProfileName.c_str(), iOutlookVersion, pExchangeAccountWorker), L"Calling HrCreateMsemsServiceOneProfile");
 		}
 	}
 	else
 	{
 		if VCHK(profileMode, PROFILEMODE_SPECIFIC)
 		{
-			CHK_HR_MSG(HrCreateMsemsServiceOneProfile(lpwszProfileName, iOutlookVersion, pExchangeAccountWorker), L"Calling HrCreateMsemsServiceOneProfile");
+			CHK_HR_DBG(HrCreateMsemsServiceOneProfile(lpwszProfileName, iOutlookVersion, pExchangeAccountWorker), L"Calling HrCreateMsemsServiceOneProfile");
 		}
 		else
 			Logger::Write(LOGLEVEL_ERROR, L"The specified profile name is invalid or no profile name was specified.\n");
@@ -61,7 +61,7 @@ HRESULT HrCreateMsemsServiceOneProfile(LPWSTR lpwszProfileName, int iOutlookVers
 			Logger::Write(LOGLEVEL_ERROR, L"Validating delegate information.");
 
 			Logger::Write(LOGLEVEL_INFO, L"Creating and configuring new ROH service.");
-			CHK_HR_MSG(HrCreateMsemsServiceROH(FALSE,
+			CHK_HR_DBG(HrCreateMsemsServiceROH(FALSE,
 				lpwszProfileName,
 				(LPWSTR)pExchangeAccountWorker->wszSmtpAddress.c_str(),
 				(LPWSTR)pExchangeAccountWorker->wszMailboxLegacyDN.c_str(),
@@ -94,7 +94,7 @@ HRESULT HrCreateMsemsServiceOneProfile(LPWSTR lpwszProfileName, int iOutlookVers
 				}
 				std::wstring wszServerDN = SubstringFromStart(L"cn=Recipients", pExchangeAccountWorker->wszMailboxLegacyDN) + L"/cn=Configuration/cn=Servers/cn=" + wszPersonalisedServerName;
 
-				CHK_HR_MSG(HrCreateMsemsServiceMOH(FALSE,
+				CHK_HR_DBG(HrCreateMsemsServiceMOH(FALSE,
 					lpwszProfileName,
 					(LPWSTR)pExchangeAccountWorker->wszSmtpAddress.c_str(),
 					(LPWSTR)pExchangeAccountWorker->wszMailboxLegacyDN.c_str(),
@@ -116,7 +116,7 @@ HRESULT HrCreateMsemsServiceOneProfile(LPWSTR lpwszProfileName, int iOutlookVers
 			Logger::Write(LOGLEVEL_ERROR, L"Validating delegate information.");
 
 			Logger::Write(LOGLEVEL_INFO, L"Creating and configuring new ROH service.");
-			CHK_HR_MSG(HrCreateMsemsServiceROH(FALSE,
+			CHK_HR_DBG(HrCreateMsemsServiceROH(FALSE,
 				lpwszProfileName,
 				(LPWSTR)pExchangeAccountWorker->wszSmtpAddress.c_str(),
 				(LPWSTR)pExchangeAccountWorker->wszMailboxLegacyDN.c_str(),
@@ -150,7 +150,7 @@ HRESULT HrCreateMsemsServiceOneProfile(LPWSTR lpwszProfileName, int iOutlookVers
 				std::wstring wszServerDN = SubstringFromStart(L"cn=Recipients", pExchangeAccountWorker->wszMailboxLegacyDN) + L"/cn=Configuration/cn=Servers/cn=" + wszPersonalisedServerName;
 
 
-				CHK_HR_MSG(HrCreateMsemsServiceMOH(FALSE,
+				CHK_HR_DBG(HrCreateMsemsServiceMOH(FALSE,
 					lpwszProfileName,
 					(LPWSTR)pExchangeAccountWorker->wszSmtpAddress.c_str(),
 					(LPWSTR)pExchangeAccountWorker->wszMailboxLegacyDN.c_str(),
@@ -166,7 +166,7 @@ HRESULT HrCreateMsemsServiceOneProfile(LPWSTR lpwszProfileName, int iOutlookVers
 		break;
 	case 2016:
 		Logger::Write(LOGLEVEL_INFO, L"Creating and configuring new service.");
-		CHK_HR_MSG(HrCreateMsemsServiceModern(FALSE,
+		CHK_HR_DBG(HrCreateMsemsServiceModern(FALSE,
 			lpwszProfileName,
 			(LPWSTR)pExchangeAccountWorker->wszSmtpAddress.c_str(),
 			(LPWSTR)pExchangeAccountWorker->wszSmtpAddress.c_str()), L"Calling HrCreateMsemsServiceModern");
@@ -215,7 +215,7 @@ HRESULT HrCreateMsemsServiceModernExt(BOOL bDefaultProfile,
 	LPSERVICEADMIN2 lpServiceAdmin2 = NULL;
 	LPMAPITABLE lpServiceTable = NULL;
 
-	CHK_HR_MSG(MAPIAdminProfiles(0, // Flags
+	CHK_HR_DBG(MAPIAdminProfiles(0, // Flags
 		&lpProfAdmin), L"Calling #"); // Pointer to new IProfAdmin
 
 									 // Begin process services
@@ -224,7 +224,7 @@ HRESULT HrCreateMsemsServiceModernExt(BOOL bDefaultProfile,
 		lpwszProfileName = (LPWSTR)GetDefaultProfileName().c_str();
 	}
 
-	CHK_HR_MSG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
+	CHK_HR_DBG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
 		LPTSTR(""),            // Password for that profile.
 		NULL,                // Handle to parent window.
 		0,                    // Flags.
@@ -232,19 +232,19 @@ HRESULT HrCreateMsemsServiceModernExt(BOOL bDefaultProfile,
 
 	if (lpServiceAdmin)
 	{
-		CHK_HR_MSG(lpServiceAdmin->QueryInterface(IID_IMsgServiceAdmin2, (LPVOID*)& lpServiceAdmin2), L"Calling QueryInterface.");
+		CHK_HR_DBG(lpServiceAdmin->QueryInterface(IID_IMsgServiceAdmin2, (LPVOID*)& lpServiceAdmin2), L"Calling QueryInterface.");
 
 		// Adds a message service to the current profile and returns that newly added service UID.
-		CHK_HR_MSG(lpServiceAdmin2->CreateMsgServiceEx((LPTSTR)"MSEMS", (LPTSTR)"Microsoft Exchange", NULL, 0, &uidService), L"Calling CreateMsgServiceEx.");
+		CHK_HR_DBG(lpServiceAdmin2->CreateMsgServiceEx((LPTSTR)"MSEMS", (LPTSTR)"Microsoft Exchange", NULL, 0, &uidService), L"Calling CreateMsgServiceEx.");
 
-		CHK_HR_MSG(lpServiceAdmin2->OpenProfileSection(&uidService,
+		CHK_HR_DBG(lpServiceAdmin2->OpenProfileSection(&uidService,
 			0,
 			MAPI_FORCE_ACCESS | MAPI_MODIFY,
 			&lpProfSect), L"Calling OpenProfileSection.");
 
 
 		LPMAPIPROP lpMapiProp = NULL;
-		CHK_HR_MSG(lpProfSect->QueryInterface(IID_IMAPIProp, (LPVOID*)& lpMapiProp), L"Calling QueryInterface.");
+		CHK_HR_DBG(lpProfSect->QueryInterface(IID_IMAPIProp, (LPVOID*)& lpMapiProp), L"Calling QueryInterface.");
 
 		if (lpMapiProp)
 		{
@@ -253,9 +253,9 @@ HRESULT HrCreateMsemsServiceModernExt(BOOL bDefaultProfile,
 
 			prResourceFlags->ulPropTag = PR_RESOURCE_FLAGS;
 			prResourceFlags->Value.l = ulResourceFlags;
-			CHK_HR_MSG(lpMapiProp->SetProps(1, prResourceFlags, NULL), L"Calling SetProps.");
+			CHK_HR_DBG(lpMapiProp->SetProps(1, prResourceFlags, NULL), L"Calling SetProps.");
 
-			CHK_HR_MSG(lpMapiProp->SaveChanges(FORCE_SAVE), L"Calling SaveChanges.");
+			CHK_HR_DBG(lpMapiProp->SaveChanges(FORCE_SAVE), L"Calling SaveChanges.");
 			MAPIFreeBuffer(prResourceFlags);
 			lpMapiProp->Release();
 		}
@@ -265,7 +265,7 @@ HRESULT HrCreateMsemsServiceModernExt(BOOL bDefaultProfile,
 		ZeroMemory(lpEmsMdbProfSect, sizeof(LPPROFSECT));
 		ZeroMemory(lpStoreProviderSect, sizeof(LPPROFSECT));
 
-		CHK_HR_MSG(HrGetSections(lpServiceAdmin2, lpServiceUid, &lpEmsMdbProfSect, &lpStoreProviderSect), L"Calling HrGetSections.");
+		CHK_HR_DBG(HrGetSections(lpServiceAdmin2, lpServiceUid, &lpEmsMdbProfSect, &lpStoreProviderSect), L"Calling HrGetSections.");
 
 		// Set up a SPropValue array for the properties you need to configure.
 		/*
@@ -311,12 +311,12 @@ HRESULT HrCreateMsemsServiceModernExt(BOOL bDefaultProfile,
 		rgvalEmsMdbSect[6].ulPropTag = PR_RULE_ACTION_TYPE;
 		rgvalEmsMdbSect[6].Value.l = ulULONGMonths;
 
-		CHK_HR_MSG(lpEmsMdbProfSect->SetProps(
+		CHK_HR_DBG(lpEmsMdbProfSect->SetProps(
 			7,
 			rgvalEmsMdbSect,
 			nullptr), L"Calling SetProps.");
 
-		CHK_HR_MSG(lpEmsMdbProfSect->SaveChanges(KEEP_OPEN_READWRITE), L"Calling SaveChanges.");
+		CHK_HR_DBG(lpEmsMdbProfSect->SaveChanges(KEEP_OPEN_READWRITE), L"Calling SaveChanges.");
 
 		//Updating store provider 
 		/*
@@ -331,12 +331,12 @@ HRESULT HrCreateMsemsServiceModernExt(BOOL bDefaultProfile,
 		rgvalStoreProvider[1].ulPropTag = PR_DISPLAY_NAME_W;
 		rgvalStoreProvider[1].Value.lpszW = lpszDisplayName;
 
-		CHK_HR_MSG(lpStoreProviderSect->SetProps(
+		CHK_HR_DBG(lpStoreProviderSect->SetProps(
 			2,
 			rgvalStoreProvider,
 			nullptr), L"Calling SetProps.");
 
-		CHK_HR_MSG(lpStoreProviderSect->SaveChanges(KEEP_OPEN_READWRITE), L"Calling SaveChanges.");
+		CHK_HR_DBG(lpStoreProviderSect->SaveChanges(KEEP_OPEN_READWRITE), L"Calling SaveChanges.");
 	}
 
 Error:
@@ -385,7 +385,7 @@ HRESULT HrCreateMsemsServiceModern(BOOL bDefaultProfile,
 	LPSERVICEADMIN2 lpServiceAdmin2 = NULL;
 	LPMAPITABLE lpServiceTable = NULL;
 
-	CHK_HR_MSG(MAPIAdminProfiles(0, // Flags
+	CHK_HR_DBG(MAPIAdminProfiles(0, // Flags
 		&lpProfAdmin), L"Calling #"); // Pointer to new IProfAdmin
 
 									 // Begin process services
@@ -395,7 +395,7 @@ HRESULT HrCreateMsemsServiceModern(BOOL bDefaultProfile,
 		lpwszProfileName = (LPWSTR)GetDefaultProfileName().c_str();
 	}
 
-	CHK_HR_MSG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
+	CHK_HR_DBG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
 		LPTSTR(""),            // Password for that profile.
 		NULL,                // Handle to parent window.
 		0,                    // Flags.
@@ -404,11 +404,11 @@ HRESULT HrCreateMsemsServiceModern(BOOL bDefaultProfile,
 	if (lpServiceAdmin)
 	{
 
-		CHK_HR_MSG(lpServiceAdmin->QueryInterface(IID_IMsgServiceAdmin2, (LPVOID*)& lpServiceAdmin2), L"Calling QueryInterface.");
+		CHK_HR_DBG(lpServiceAdmin->QueryInterface(IID_IMsgServiceAdmin2, (LPVOID*)& lpServiceAdmin2), L"Calling QueryInterface.");
 		// Adds a message service to the current profile and returns that newly added service UID.
-		CHK_HR_MSG(lpServiceAdmin2->CreateMsgServiceEx((LPTSTR)"MSEMS", (LPTSTR)"Microsoft Exchange", NULL, 0, &uidService), L"Calling CreateMsgServiceEx.");
+		CHK_HR_DBG(lpServiceAdmin2->CreateMsgServiceEx((LPTSTR)"MSEMS", (LPTSTR)"Microsoft Exchange", NULL, 0, &uidService), L"Calling CreateMsgServiceEx.");
 
-		CHK_HR_MSG(lpServiceAdmin2->OpenProfileSection(&uidService,
+		CHK_HR_DBG(lpServiceAdmin2->OpenProfileSection(&uidService,
 			0,
 			MAPI_FORCE_ACCESS | MAPI_MODIFY,
 			&lpProfSect), L"Calling OpenProfileSection.");
@@ -418,7 +418,7 @@ HRESULT HrCreateMsemsServiceModern(BOOL bDefaultProfile,
 		ZeroMemory(lpEmsMdbProfSect, sizeof(LPPROFSECT));
 		ZeroMemory(lpStoreProviderSect, sizeof(LPPROFSECT));
 
-		CHK_HR_MSG(HrGetSections(lpServiceAdmin2, &uidService, &lpEmsMdbProfSect, &lpStoreProviderSect), L"Calling HrGetSections.");
+		CHK_HR_DBG(HrGetSections(lpServiceAdmin2, &uidService, &lpEmsMdbProfSect, &lpStoreProviderSect), L"Calling HrGetSections.");
 
 		// Set up a SPropValue array for the properties you need to configure.
 		/*
@@ -455,12 +455,12 @@ HRESULT HrCreateMsemsServiceModern(BOOL bDefaultProfile,
 		//rgvalEmsMdbSect[4].ulPropTag = PR_PROFILE_USER_EMAIL_W;
 		//rgvalEmsMdbSect[4].Value.lpszW = lpszDisplayName;
 
-		CHK_HR_MSG(lpEmsMdbProfSect->SetProps(
+		CHK_HR_DBG(lpEmsMdbProfSect->SetProps(
 			1,
 			rgvalEmsMdbSect,
 			nullptr), L"Calling SetProps.");
 
-		CHK_HR_MSG(lpEmsMdbProfSect->SaveChanges(KEEP_OPEN_READWRITE), L"Calling SaveChanges.");
+		CHK_HR_DBG(lpEmsMdbProfSect->SaveChanges(KEEP_OPEN_READWRITE), L"Calling SaveChanges.");
 
 		//Updating store provider 
 		/*
@@ -475,12 +475,12 @@ HRESULT HrCreateMsemsServiceModern(BOOL bDefaultProfile,
 		rgvalStoreProvider[1].ulPropTag = PR_DISPLAY_NAME_W;
 		rgvalStoreProvider[1].Value.lpszW = lpszDisplayName;
 
-		CHK_HR_MSG(lpStoreProviderSect->SetProps(
+		CHK_HR_DBG(lpStoreProviderSect->SetProps(
 			2,
 			rgvalStoreProvider,
 			nullptr), L"Calling SetProps.");
 
-		CHK_HR_MSG(lpStoreProviderSect->SaveChanges(KEEP_OPEN_READWRITE), L"Calling SaveChanges.");
+		CHK_HR_DBG(lpStoreProviderSect->SaveChanges(KEEP_OPEN_READWRITE), L"Calling SaveChanges.");
 	}
 
 	Error:
@@ -525,7 +525,7 @@ HRESULT HrCreateMsemsServiceLegacyUnresolved(BOOL bDefaultProfile,
 
 
 
-	CHK_HR_MSG(MAPIAdminProfiles(0, // Flags
+	CHK_HR_DBG(MAPIAdminProfiles(0, // Flags
 		&lpProfAdmin), L"Calling #"); // Pointer to new IProfAdmin
 
 									 // Begin process services
@@ -536,7 +536,7 @@ HRESULT HrCreateMsemsServiceLegacyUnresolved(BOOL bDefaultProfile,
 		lpwszProfileName = (LPWSTR)GetDefaultProfileName().c_str();
 	}
 
-	CHK_HR_MSG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
+	CHK_HR_DBG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
 		LPTSTR(""),            // Password for that profile.
 		NULL,                // Handle to parent window.
 		0,                    // Flags.
@@ -545,7 +545,7 @@ HRESULT HrCreateMsemsServiceLegacyUnresolved(BOOL bDefaultProfile,
 	if (lpServiceAdmin)
 	{
 
-		CHK_HR_MSG(lpServiceAdmin->QueryInterface(IID_IMsgServiceAdmin2, (LPVOID*)& lpServiceAdmin2), L"Calling QueryInterface.");
+		CHK_HR_DBG(lpServiceAdmin->QueryInterface(IID_IMsgServiceAdmin2, (LPVOID*)& lpServiceAdmin2), L"Calling QueryInterface.");
 
 		wprintf(L"Creating MsgService.\n");
 		// Adds a message service to the current profile and returns that newly added service UID.
@@ -660,7 +660,7 @@ HRESULT HrCreateMsemsServiceROH(BOOL bDefaultProfile,
 	LPMAPITABLE lpServiceTable = NULL;
 	int paramC = 0;
 
-	CHK_HR_MSG(MAPIAdminProfiles(0, // Flags
+	CHK_HR_DBG(MAPIAdminProfiles(0, // Flags
 		&lpProfAdmin), L"Calling MAPIAdminProfiles"); // Pointer to new IProfAdmin
 
 									 // Begin process services
@@ -670,7 +670,7 @@ HRESULT HrCreateMsemsServiceROH(BOOL bDefaultProfile,
 		lpwszProfileName = (LPWSTR)GetDefaultProfileName().c_str();
 	}
 
-	CHK_HR_MSG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
+	CHK_HR_DBG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
 		LPTSTR(""),            // Password for that profile.
 		NULL,                // Handle to parent window.
 		0,                    // Flags.
@@ -678,7 +678,7 @@ HRESULT HrCreateMsemsServiceROH(BOOL bDefaultProfile,
 
 	if (lpServiceAdmin)
 	{
-		CHK_HR_MSG(lpServiceAdmin->QueryInterface(IID_IMsgServiceAdmin2, (LPVOID*)& lpServiceAdmin2), L"Calling QueryInterface.");
+		CHK_HR_DBG(lpServiceAdmin->QueryInterface(IID_IMsgServiceAdmin2, (LPVOID*)& lpServiceAdmin2), L"Calling QueryInterface.");
 
 		wprintf(L"Creating MsgService.\n");
 		// Adds a message service to the current profile and returns that newly added service UID.
@@ -692,7 +692,7 @@ HRESULT HrCreateMsemsServiceROH(BOOL bDefaultProfile,
 		ZeroMemory(lpEmsMdbProfSect, sizeof(LPPROFSECT));
 		ZeroMemory(lpStoreProviderSect, sizeof(LPPROFSECT));
 
-		CHK_HR_MSG(HrGetSections(lpServiceAdmin2, &uidService, &lpEmsMdbProfSect, &lpStoreProviderSect), L"Calling HrGetSections.");
+		CHK_HR_DBG(HrGetSections(lpServiceAdmin2, &uidService, &lpEmsMdbProfSect, &lpStoreProviderSect), L"Calling HrGetSections.");
 
 		// Set up a SPropValue array for the properties you need to configure.
 
@@ -963,7 +963,7 @@ HRESULT HrCreateMsemsServiceMOH(BOOL bDefaultProfile,
 	LPSERVICEADMIN2 lpServiceAdmin2 = NULL;
 	LPMAPITABLE lpServiceTable = NULL;
 
-	CHK_HR_MSG(MAPIAdminProfiles(0, // Flags
+	CHK_HR_DBG(MAPIAdminProfiles(0, // Flags
 		&lpProfAdmin), L"Calling #"); // Pointer to new IProfAdmin
 
 									 // Begin process services
@@ -974,7 +974,7 @@ HRESULT HrCreateMsemsServiceMOH(BOOL bDefaultProfile,
 		lpwszProfileName = (LPWSTR)GetDefaultProfileName().c_str();
 	}
 
-	CHK_HR_MSG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
+	CHK_HR_DBG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
 		LPTSTR(""),            // Password for that profile.
 		NULL,                // Handle to parent window.
 		0,                    // Flags.
@@ -983,7 +983,7 @@ HRESULT HrCreateMsemsServiceMOH(BOOL bDefaultProfile,
 	if (lpServiceAdmin)
 	{
 
-		CHK_HR_MSG(lpServiceAdmin->QueryInterface(IID_IMsgServiceAdmin2, (LPVOID*)& lpServiceAdmin2), L"Calling QueryInterface.");
+		CHK_HR_DBG(lpServiceAdmin->QueryInterface(IID_IMsgServiceAdmin2, (LPVOID*)& lpServiceAdmin2), L"Calling QueryInterface.");
 
 		wprintf(L"Creating MsgService.\n");
 
@@ -991,7 +991,7 @@ HRESULT HrCreateMsemsServiceMOH(BOOL bDefaultProfile,
 		hRes = lpServiceAdmin2->CreateMsgServiceEx((LPTSTR)"MSEMS", (LPTSTR)"Microsoft Exchange", NULL, 0, &uidService);
 		if (FAILED(hRes)) goto Error;
 
-		CHK_HR_MSG(HrGetSections(lpServiceAdmin2, &uidService, &lpEmsMdbProfSect, &lpStoreProviderSect), L"Calling HrGetSections");
+		CHK_HR_DBG(HrGetSections(lpServiceAdmin2, &uidService, &lpEmsMdbProfSect, &lpStoreProviderSect), L"Calling HrGetSections");
 
 		int paramC = 0;
 		std::vector<SPropValue> rgvalVector;
@@ -1166,13 +1166,13 @@ HRESULT HrGetDefaultMsemsServiceAdminProviderPtr(LPWSTR lpwszProfileName, LPPROV
 	LPPROFADMIN lpProfAdmin = NULL;     // Profile Admin pointer
 	LPSERVICEADMIN lpServiceAdmin = NULL;
 	LPMAPITABLE lpServiceTable = NULL;
-	CHK_HR_MSG(MAPIAdminProfiles(0, // Flags
+	CHK_HR_DBG(MAPIAdminProfiles(0, // Flags
 		&lpProfAdmin), L"Calling #"); // Pointer to new IProfAdmin
 									 // Get an IProfAdmin interface.
 
 									 // Begin process services
 
-	CHK_HR_MSG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
+	CHK_HR_DBG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
 		LPTSTR(""),            // Password for that profile.
 		NULL,                // Handle to parent window.
 		0,                    // Flags.
@@ -1192,15 +1192,15 @@ HRESULT HrGetDefaultMsemsServiceAdminProviderPtr(LPWSTR lpwszProfileName, LPPROV
 		SizedSPropTagArray(cptaSvcProps, sptaSvcProps) = { cptaSvcProps, PR_SERVICE_UID, PR_RESOURCE_FLAGS };
 
 		// Allocate memory for the restriction
-		CHK_HR_MSG(MAPIAllocateBuffer(
+		CHK_HR_DBG(MAPIAllocateBuffer(
 			sizeof(SRestriction),
 			(LPVOID*)& lpSvcRes), L"Calling #");
 
-		CHK_HR_MSG(MAPIAllocateBuffer(
+		CHK_HR_DBG(MAPIAllocateBuffer(
 			sizeof(SRestriction) * 2,
 			(LPVOID*)& lpsvcResLvl1), L"Calling #");
 
-		CHK_HR_MSG(MAPIAllocateBuffer(
+		CHK_HR_DBG(MAPIAllocateBuffer(
 			sizeof(SPropValue),
 			(LPVOID*)& lpSvcPropVal), L"Calling #");
 
@@ -1222,7 +1222,7 @@ HRESULT HrGetDefaultMsemsServiceAdminProviderPtr(LPWSTR lpwszProfileName, LPPROV
 		lpSvcPropVal->Value.lpszA = ConvertWideCharToMultiByte(L"MSEMS");
 
 		// Query the table to get the the default profile only
-		CHK_HR_MSG(HrQueryAllRows(lpServiceTable,
+		CHK_HR_DBG(HrQueryAllRows(lpServiceTable,
 			(LPSPropTagArray)& sptaSvcProps,
 			lpSvcRes,
 			NULL,
@@ -1281,14 +1281,14 @@ HRESULT HrUpdatePrStoreProviders(LPSERVICEADMIN lpServiceAdmin, LPMAPIUID lpServ
 	ULONG cbNewBuffer = 0;
 	SPropValue NewVals;
 
-	CHK_HR_MSG(HrGetSections(lpServiceAdmin, lpServiceUid, &lpEmsMdbSection, &lpStoreProvSection), L"Calling HrGetSections");
+	CHK_HR_DBG(HrGetSections(lpServiceAdmin, lpServiceUid, &lpEmsMdbSection, &lpStoreProvSection), L"Calling HrGetSections");
 
 	if (lpEmsMdbSection)
 	{
 		LPSPropValue lpPrStoreProviders = NULL;
 
 		// Get the list of store providers in PR_STORE_PROVIDERS.
-		CHK_HR_MSG(lpEmsMdbSection->GetProps((LPSPropTagArray)& sptGlobal,
+		CHK_HR_DBG(lpEmsMdbSection->GetProps((LPSPropTagArray)& sptGlobal,
 			0,
 			&ulProps,
 			&lpGlobalVals), L"Calling GetProps");

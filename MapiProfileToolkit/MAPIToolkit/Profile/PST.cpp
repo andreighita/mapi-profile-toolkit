@@ -23,23 +23,23 @@ namespace MAPIToolkit
 		enum { iDisplayName, cptaProps };
 		SizedSPropTagArray(cptaProps, sptaProps) = { cptaProps, PR_DISPLAY_NAME };
 
-		CHK_HR_MSG(MAPIAdminProfiles(0, // Flags
+		CHK_HR_DBG(MAPIAdminProfiles(0, // Flags
 			&lpProfAdmin), L"Calling MAPIAdminProfiles"); // Pointer to new IProfAdmin
 										 // Get an IProfAdmin interface.
 
-		CHK_HR_MSG(lpProfAdmin->GetProfileTable(0,
+		CHK_HR_DBG(lpProfAdmin->GetProfileTable(0,
 			&lpProfTable), L"Calling GetProfileTable");
 
 		// Allocate memory for the restriction
-		CHK_HR_MSG(MAPIAllocateBuffer(
+		CHK_HR_DBG(MAPIAllocateBuffer(
 			sizeof(SRestriction),
 			(LPVOID*)& lpProfRes), L"Calling MAPIAllocateBuffer");
 
-		CHK_HR_MSG(MAPIAllocateBuffer(
+		CHK_HR_DBG(MAPIAllocateBuffer(
 			sizeof(SRestriction) * 2,
 			(LPVOID*)& lpProfResLvl1), L"Calling MAPIAllocateBuffer");
 
-		CHK_HR_MSG(MAPIAllocateBuffer(
+		CHK_HR_DBG(MAPIAllocateBuffer(
 			sizeof(SPropValue),
 			(LPVOID*)& lpProfPropVal), L"Calling MAPIAllocateBuffer");
 
@@ -61,7 +61,7 @@ namespace MAPIToolkit
 		lpProfPropVal->Value.lpszA = ConvertWideCharToMultiByte(lpszProfileName);
 
 		// Query the table to get the the default profile only
-		CHK_HR_MSG(HrQueryAllRows(lpProfTable,
+		CHK_HR_DBG(HrQueryAllRows(lpProfTable,
 			(LPSPropTagArray)& sptaProps,
 			lpProfRes,
 			NULL,
@@ -79,7 +79,7 @@ namespace MAPIToolkit
 
 		// Begin process services
 
-		CHK_HR_MSG(lpProfAdmin->AdminServices((LPTSTR)lpszProfileName,
+		CHK_HR_DBG(lpProfAdmin->AdminServices((LPTSTR)lpszProfileName,
 			LPTSTR(""),            // Password for that profile.
 			NULL,                // Handle to parent window.
 			MAPI_UNICODE,                    // Flags.
@@ -101,23 +101,23 @@ namespace MAPIToolkit
 			SizedSPropTagArray(cptaSvcProps, sptaSvcProps) = { cptaSvcProps, PR_SERVICE_UID,PR_SERVICE_NAME_A, PR_EMSMDB_SECTION_UID, PR_RESOURCE_FLAGS };
 
 			// Allocate memory for the restriction
-			CHK_HR_MSG(MAPIAllocateBuffer(
+			CHK_HR_DBG(MAPIAllocateBuffer(
 				sizeof(SRestriction),
 				(LPVOID*)& lpSvcRes), L"Calling MAPIAllocateBuffer");
 
-			CHK_HR_MSG(MAPIAllocateBuffer(
+			CHK_HR_DBG(MAPIAllocateBuffer(
 				sizeof(SRestriction) * 2,
 				(LPVOID*)& lpsvcResLvl1), L"Calling MAPIAllocateBuffer");
 
-			CHK_HR_MSG(MAPIAllocateBuffer(
+			CHK_HR_DBG(MAPIAllocateBuffer(
 				sizeof(SRestriction) * 2,
 				(LPVOID*)& lpsvcResLvl2), L"Calling MAPIAllocateBuffer");
 
-			CHK_HR_MSG(MAPIAllocateBuffer(
+			CHK_HR_DBG(MAPIAllocateBuffer(
 				sizeof(SPropValue),
 				(LPVOID*)& lpSvcPropVal1), L"Calling MAPIAllocateBuffer");
 
-			CHK_HR_MSG(MAPIAllocateBuffer(
+			CHK_HR_DBG(MAPIAllocateBuffer(
 				sizeof(SPropValue),
 				(LPVOID*)& lpSvcPropVal2), L"Calling MAPIAllocateBuffer");
 
@@ -152,7 +152,7 @@ namespace MAPIToolkit
 			lpSvcPropVal2->Value.lpszA = ConvertWideCharToMultiByte(L"MSUPST MS");
 
 			// Query the table to get the the default profile only
-			CHK_HR_MSG(HrQueryAllRows(lpServiceTable,
+			CHK_HR_DBG(HrQueryAllRows(lpServiceTable,
 				(LPSPropTagArray)& sptaSvcProps,
 				lpSvcRes,
 				NULL,
@@ -184,15 +184,15 @@ namespace MAPIToolkit
 						SizedSPropTagArray(cptaProvProps, sptaProvProps) = { cptaProvProps, PR_INSTANCE_KEY };
 
 						// Allocate memory for the restriction
-						CHK_HR_MSG(MAPIAllocateBuffer(
+						CHK_HR_DBG(MAPIAllocateBuffer(
 							sizeof(SRestriction),
 							(LPVOID*)& lpProvRes), L"Calling MAPIAllocateBuffer");
 
-						CHK_HR_MSG(MAPIAllocateBuffer(
+						CHK_HR_DBG(MAPIAllocateBuffer(
 							sizeof(SRestriction) * 2,
 							(LPVOID*)& lpProvResLvl1), L"Calling MAPIAllocateBuffer");
 
-						CHK_HR_MSG(MAPIAllocateBuffer(
+						CHK_HR_DBG(MAPIAllocateBuffer(
 							sizeof(SPropValue),
 							(LPVOID*)& lpProvPropVal), L"Calling MAPIAllocateBuffer");
 
@@ -217,7 +217,7 @@ namespace MAPIToolkit
 							&lpProvTable);
 
 						// Query the table to get the the default profile only
-						CHK_HR_MSG(HrQueryAllRows(lpProvTable,
+						CHK_HR_DBG(HrQueryAllRows(lpProvTable,
 							(LPSPropTagArray)& sptaProvProps,
 							lpProvRes,
 							NULL,
@@ -254,7 +254,7 @@ namespace MAPIToolkit
 														{
 															wprintf(L"Updating path for data file named %s\n", pstPathW->Value.lpszW);
 															pstPathW[0].Value.lpszW = (LPWSTR)szCurrentPath.c_str();
-															CHK_HR_MSG(lpProfSection->SetProps(1, pstPathW, NULL), L"Calling SetProps");
+															CHK_HR_DBG(lpProfSection->SetProps(1, pstPathW, NULL), L"Calling SetProps");
 														}
 														else
 														{
@@ -265,7 +265,7 @@ namespace MAPIToolkit
 													{
 														wprintf(L"Updating path for data file named %s\n", pstPathW->Value.lpszW);
 														pstPathW[0].Value.lpszW = (LPWSTR)szCurrentPath.c_str();
-														CHK_HR_MSG(lpProfSection->SetProps(1, pstPathW, NULL), L"Calling SetProps");
+														CHK_HR_DBG(lpProfSection->SetProps(1, pstPathW, NULL), L"Calling SetProps");
 													}
 												}
 												if (pstPathW) MAPIFreeBuffer(pstPathW);
@@ -330,23 +330,23 @@ namespace MAPIToolkit
 		enum { iDisplayName, cptaProps };
 		SizedSPropTagArray(cptaProps, sptaProps) = { cptaProps, PR_DISPLAY_NAME };
 
-		CHK_HR_MSG(MAPIAdminProfiles(0, // Flags
+		CHK_HR_DBG(MAPIAdminProfiles(0, // Flags
 			&lpProfAdmin), L"Calling MAPIAdminProfiles"); // Pointer to new IProfAdmin
 										 // Get an IProfAdmin interface.
 
-		CHK_HR_MSG(lpProfAdmin->GetProfileTable(0,
+		CHK_HR_DBG(lpProfAdmin->GetProfileTable(0,
 			&lpProfTable), L"Calling GetProfileTable");
 
 		// Allocate memory for the restriction
-		CHK_HR_MSG(MAPIAllocateBuffer(
+		CHK_HR_DBG(MAPIAllocateBuffer(
 			sizeof(SRestriction),
 			(LPVOID*)& lpProfRes), L"Calling MAPIAllocateBuffer");
 
-		CHK_HR_MSG(MAPIAllocateBuffer(
+		CHK_HR_DBG(MAPIAllocateBuffer(
 			sizeof(SRestriction) * 2,
 			(LPVOID*)& lpProfResLvl1), L"Calling MAPIAllocateBuffer");
 
-		CHK_HR_MSG(MAPIAllocateBuffer(
+		CHK_HR_DBG(MAPIAllocateBuffer(
 			sizeof(SPropValue),
 			(LPVOID*)& lpProfPropVal), L"Calling MAPIAllocateBuffer");
 
@@ -368,7 +368,7 @@ namespace MAPIToolkit
 		lpProfPropVal->Value.lpszA = ConvertWideCharToMultiByte(lpszProfileName);
 
 		// Query the table to get the the default profile only
-		CHK_HR_MSG(HrQueryAllRows(lpProfTable,
+		CHK_HR_DBG(HrQueryAllRows(lpProfTable,
 			(LPSPropTagArray)& sptaProps,
 			lpProfRes,
 			NULL,
@@ -386,7 +386,7 @@ namespace MAPIToolkit
 
 		// Begin process services
 
-		CHK_HR_MSG(lpProfAdmin->AdminServices((LPTSTR)lpszProfileName,
+		CHK_HR_DBG(lpProfAdmin->AdminServices((LPTSTR)lpszProfileName,
 			LPTSTR(""),            // Password for that profile.
 			NULL,                // Handle to parent window.
 			MAPI_UNICODE,                    // Flags.
@@ -408,23 +408,23 @@ namespace MAPIToolkit
 			SizedSPropTagArray(cptaSvcProps, sptaSvcProps) = { cptaSvcProps, PR_SERVICE_UID,PR_SERVICE_NAME_A, PR_EMSMDB_SECTION_UID, PR_RESOURCE_FLAGS };
 
 			// Allocate memory for the restriction
-			CHK_HR_MSG(MAPIAllocateBuffer(
+			CHK_HR_DBG(MAPIAllocateBuffer(
 				sizeof(SRestriction),
 				(LPVOID*)& lpSvcRes), L"Calling MAPIAllocateBuffer");
 
-			CHK_HR_MSG(MAPIAllocateBuffer(
+			CHK_HR_DBG(MAPIAllocateBuffer(
 				sizeof(SRestriction) * 2,
 				(LPVOID*)& lpsvcResLvl1), L"Calling MAPIAllocateBuffer");
 
-			CHK_HR_MSG(MAPIAllocateBuffer(
+			CHK_HR_DBG(MAPIAllocateBuffer(
 				sizeof(SRestriction) * 2,
 				(LPVOID*)& lpsvcResLvl2), L"Calling MAPIAllocateBuffer");
 
-			CHK_HR_MSG(MAPIAllocateBuffer(
+			CHK_HR_DBG(MAPIAllocateBuffer(
 				sizeof(SPropValue),
 				(LPVOID*)& lpSvcPropVal1), L"Calling MAPIAllocateBuffer");
 
-			CHK_HR_MSG(MAPIAllocateBuffer(
+			CHK_HR_DBG(MAPIAllocateBuffer(
 				sizeof(SPropValue),
 				(LPVOID*)& lpSvcPropVal2), L"Calling MAPIAllocateBuffer");
 
@@ -459,7 +459,7 @@ namespace MAPIToolkit
 			lpSvcPropVal2->Value.lpszA = ConvertWideCharToMultiByte(L"MSUPST MS");
 
 			// Query the table to get the the default profile only
-			CHK_HR_MSG(HrQueryAllRows(lpServiceTable,
+			CHK_HR_DBG(HrQueryAllRows(lpServiceTable,
 				(LPSPropTagArray)& sptaSvcProps,
 				lpSvcRes,
 				NULL,
@@ -491,15 +491,15 @@ namespace MAPIToolkit
 						SizedSPropTagArray(cptaProvProps, sptaProvProps) = { cptaProvProps, PR_INSTANCE_KEY };
 
 						// Allocate memory for the restriction
-						CHK_HR_MSG(MAPIAllocateBuffer(
+						CHK_HR_DBG(MAPIAllocateBuffer(
 							sizeof(SRestriction),
 							(LPVOID*)& lpProvRes), L"Calling MAPIAllocateBuffer");
 
-						CHK_HR_MSG(MAPIAllocateBuffer(
+						CHK_HR_DBG(MAPIAllocateBuffer(
 							sizeof(SRestriction) * 2,
 							(LPVOID*)& lpProvResLvl1), L"Calling MAPIAllocateBuffer");
 
-						CHK_HR_MSG(MAPIAllocateBuffer(
+						CHK_HR_DBG(MAPIAllocateBuffer(
 							sizeof(SPropValue),
 							(LPVOID*)& lpProvPropVal), L"Calling MAPIAllocateBuffer");
 
@@ -524,7 +524,7 @@ namespace MAPIToolkit
 							&lpProvTable);
 
 						// Query the table to get the the default profile only
-						CHK_HR_MSG(HrQueryAllRows(lpProvTable,
+						CHK_HR_DBG(HrQueryAllRows(lpProvTable,
 							(LPSPropTagArray)& sptaProvProps,
 							lpProvRes,
 							NULL,
@@ -565,7 +565,7 @@ namespace MAPIToolkit
 															{
 																wprintf(L"Updating path for data file named %s\n", pstPathW->Value.lpszW);
 																pstPathW[0].Value.lpszW = (LPWSTR)szCurrentPath.c_str();
-																CHK_HR_MSG(lpProfSection->SetProps(1, pstPathW, NULL), L"Calling SetProps");
+																CHK_HR_DBG(lpProfSection->SetProps(1, pstPathW, NULL), L"Calling SetProps");
 															}
 															else
 															{
@@ -576,7 +576,7 @@ namespace MAPIToolkit
 														{
 															wprintf(L"Updating path for data file named %s\n", pstPathW->Value.lpszW);
 															pstPathW[0].Value.lpszW = (LPWSTR)szCurrentPath.c_str();
-															CHK_HR_MSG(lpProfSection->SetProps(1, pstPathW, NULL), L"Calling SetProps");
+															CHK_HR_DBG(lpProfSection->SetProps(1, pstPathW, NULL), L"Calling SetProps");
 														}
 													}
 												}
@@ -636,20 +636,20 @@ namespace MAPIToolkit
 		LPPROFSECT		lpStoreProviderSect = nullptr;
 		LPMAPIPROP lpMapiProp = NULL;
 		// Adds a message service to the current profile and returns that newly added service UID.
-		CHK_HR_MSG(lpServiceAdmin2->CreateMsgServiceEx((LPTSTR)ConvertWideCharToMultiByte(lpszServiceName),
+		CHK_HR_DBG(lpServiceAdmin2->CreateMsgServiceEx((LPTSTR)ConvertWideCharToMultiByte(lpszServiceName),
 			(LPTSTR)ConvertWideCharToMultiByte(lpszDisplayName),
 			NULL,
 			0,
 			&uidService), L"Calling CreateMsgServiceEx.");
 
-		CHK_HR_MSG(lpServiceAdmin2->OpenProfileSection(&uidService,
+		CHK_HR_DBG(lpServiceAdmin2->OpenProfileSection(&uidService,
 			0,
 			MAPI_FORCE_ACCESS | MAPI_MODIFY,
 			&lpProfSect), L"Calling OpenProfileSection.");
 
 
 
-		CHK_HR_MSG(lpProfSect->QueryInterface(IID_IMAPIProp, (LPVOID*)& lpMapiProp), L"Calling QueryInterface.");
+		CHK_HR_DBG(lpProfSect->QueryInterface(IID_IMAPIProp, (LPVOID*)& lpMapiProp), L"Calling QueryInterface.");
 
 		if (lpMapiProp)
 		{
@@ -658,9 +658,9 @@ namespace MAPIToolkit
 
 			prResourceFlags->ulPropTag = PR_RESOURCE_FLAGS;
 			prResourceFlags->Value.l = ulResourceFlags;
-			CHK_HR_MSG(lpMapiProp->SetProps(1, prResourceFlags, NULL), L"Calling SetProps.");
+			CHK_HR_DBG(lpMapiProp->SetProps(1, prResourceFlags, NULL), L"Calling SetProps.");
 
-			CHK_HR_MSG(lpMapiProp->SaveChanges(FORCE_SAVE), L"Calling SaveChanges.");
+			CHK_HR_DBG(lpMapiProp->SaveChanges(FORCE_SAVE), L"Calling SaveChanges.");
 			MAPIFreeBuffer(prResourceFlags);
 			lpMapiProp->Release();
 		}
@@ -668,7 +668,7 @@ namespace MAPIToolkit
 		MAPIAllocateBuffer(sizeof(LPPROFSECT), (LPVOID*)& lpStoreProviderSect);
 		ZeroMemory(lpStoreProviderSect, sizeof(LPPROFSECT));
 
-		CHK_HR_MSG(HrGetSections(lpServiceAdmin2, lpServiceUid, NULL, &lpStoreProviderSect), L"Calling HrGetSections.");
+		CHK_HR_DBG(HrGetSections(lpServiceAdmin2, lpServiceUid, NULL, &lpStoreProviderSect), L"Calling HrGetSections.");
 
 		// Set up a SPropValue array for the properties you need to configure.
 		/*
@@ -689,12 +689,12 @@ namespace MAPIToolkit
 		rgvalStoreProvider[2].ulPropTag = PR_DISPLAY_NAME_W;
 		rgvalStoreProvider[2].Value.lpszW = lpszDisplayName;
 
-		CHK_HR_MSG(lpStoreProviderSect->SetProps(
+		CHK_HR_DBG(lpStoreProviderSect->SetProps(
 			2,
 			rgvalStoreProvider,
 			nullptr), L"Calling SetProps.");
 
-		CHK_HR_MSG(lpStoreProviderSect->SaveChanges(KEEP_OPEN_READWRITE), L"Calling SaveChanges.");
+		CHK_HR_DBG(lpStoreProviderSect->SaveChanges(KEEP_OPEN_READWRITE), L"Calling SaveChanges.");
 	Error:
 		goto CleanUp;
 	CleanUp:

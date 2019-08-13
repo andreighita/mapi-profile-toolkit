@@ -13,7 +13,7 @@
 #include "PST.h"
 #include "..//InlineAndMacros.h"
 #include "..//Toolkit.h"
-
+#include <wchar.h> 
 namespace MAPIToolkit
 {
 LPWSTR GetDefaultProfileNameLP()
@@ -30,7 +30,7 @@ HRESULT HrListProfiles(ULONG profileMode, std::wstring profileName, std::wstring
 		ProfileInfo* profileInfo = new ProfileInfo[ulProfileCount];
 		ZeroMemory(profileInfo, sizeof(ProfileInfo) * ulProfileCount);
 		Logger::Write(LOGLEVEL_INFO, L"Retrieving MAPI Profile information for all profiles");
-		CHK_HR_MSG(HrGetProfiles(ulProfileCount, profileInfo), L"Calling HrGetProfiles");
+		CHK_HR_DBG(HrGetProfiles(ulProfileCount, profileInfo), L"Calling HrGetProfiles");
 		if (wszExportPath != L"")
 		{
 			Logger::Write(LOGLEVEL_INFO, L"Exporting MAPI Profile information for all profiles");
@@ -47,7 +47,7 @@ HRESULT HrListProfiles(ULONG profileMode, std::wstring profileName, std::wstring
 	{
 		ProfileInfo* pProfileInfo = new ProfileInfo();
 		Logger::Write(LOGLEVEL_INFO, L"Retrieving MAPI Profile information for profile: " + profileName);
-		CHK_HR_MSG(HrGetProfile((LPWSTR)profileName.c_str(), pProfileInfo), L"Calling HrGetProfile");
+		CHK_HR_DBG(HrGetProfile((LPWSTR)profileName.c_str(), pProfileInfo), L"Calling HrGetProfile");
 		if (wszExportPath != L"")
 		{
 			Logger::Write(LOGLEVEL_INFO, L"Exporting MAPI Profile information for profile");
@@ -70,7 +70,7 @@ HRESULT HrListProfiles(ULONG profileMode, std::wstring profileName, std::wstring
 
 		ProfileInfo* pProfileInfo = new ProfileInfo();
 		Logger::Write(LOGLEVEL_INFO, L"Retrieving MAPI Profile information for default profile: " + profileName);
-		CHK_HR_MSG(HrGetProfile((LPWSTR)profileName.c_str(), pProfileInfo), L"Calling HrGetProfile");
+		CHK_HR_DBG(HrGetProfile((LPWSTR)profileName.c_str(), pProfileInfo), L"Calling HrGetProfile");
 		if (wszExportPath != L"")
 		{
 			Logger::Write(LOGLEVEL_INFO, L"Exporting MAPI Profile information for default profile");
@@ -98,11 +98,11 @@ BOOL GetProfileNames(LPPROFADMIN pProfAdmin, std::vector<std::wstring>* vProfile
 	enum { iDisplayName, cptaProps };
 	SizedSPropTagArray(cptaProps, sptaProps) = { cptaProps, PR_DISPLAY_NAME_A };
 
-	CHK_HR_MSG(pProfAdmin->GetProfileTable(0, &pMapiTable), L"Getting the profile table");
+	CHK_HR_DBG(pProfAdmin->GetProfileTable(0, &pMapiTable), L"Getting the profile table");
 	
 
 	// Query the table to get the the default profile only
-	CHK_HR_MSG(HrQueryAllRows(pMapiTable,
+	CHK_HR_DBG(HrQueryAllRows(pMapiTable,
 		(LPSPropTagArray)& sptaProps,
 		NULL,
 		NULL,
@@ -132,10 +132,9 @@ CleanUp:
 
 // GetDefaultProfileName
 // returns a std::wstring value with the name of the default Outlook profile
-std::wstring GetDefaultProfileName()
+std::wstring GetDefaultProfileName(LPPROFADMIN lpProfAdmin)
 {
 	std::wstring szDefaultProfileName;
-	LPPROFADMIN lpProfAdmin = NULL;     // Profile Admin pointer
 	LPSRestriction lpProfRes = NULL;
 	LPSRestriction lpProfResLvl1 = NULL;
 	LPSPropValue lpProfPropVal = NULL;
@@ -143,22 +142,19 @@ std::wstring GetDefaultProfileName()
 	LPSRowSet lpProfRows = NULL;
 
 	HRESULT hRes = S_OK;
-	Logger::Write(LOGLEVEL_INFO, L"Attempting to retrieve the default MAPI profile name");
 
 	// Setting up an enum and a prop tag array with the props we'll use
 	enum { iDisplayName, cptaProps };
 	SizedSPropTagArray(cptaProps, sptaProps) = { cptaProps, PR_DISPLAY_NAME_A };
 
-	CHK_HR_MSG(MAPIAdminProfiles(0, &lpProfAdmin), L"Calling MAPIAdminProfiles" );
-
-	CHK_HR_MSG(lpProfAdmin->GetProfileTable(0, &lpProfTable), L"Calling GetProfileTable");
+	CHK_HR_DBG(lpProfAdmin->GetProfileTable(0, &lpProfTable), L"Calling GetProfileTable");
 
 	// Allocate memory for the restriction
-	CHK_HR_MSG(MAPIAllocateBuffer(sizeof(SRestriction), (LPVOID*)&lpProfRes), L"Calling MAPIAllocateBuffer");
+	CHK_HR_DBG(MAPIAllocateBuffer(sizeof(SRestriction), (LPVOID*)&lpProfRes), L"Calling MAPIAllocateBuffer");
 
-	CHK_HR_MSG(MAPIAllocateBuffer(sizeof(SRestriction) * 2, (LPVOID*)&lpProfResLvl1), L"Calling MAPIAllocateBuffer");
+	CHK_HR_DBG(MAPIAllocateBuffer(sizeof(SRestriction) * 2, (LPVOID*)&lpProfResLvl1), L"Calling MAPIAllocateBuffer");
 
-	CHK_HR_MSG(MAPIAllocateBuffer(sizeof(SPropValue), (LPVOID*)&lpProfPropVal), L"Calling MAPIAllocateBuffer");
+	CHK_HR_DBG(MAPIAllocateBuffer(sizeof(SPropValue), (LPVOID*)&lpProfPropVal), L"Calling MAPIAllocateBuffer");
 
 	// Set up restriction to query the profile table
 	lpProfRes->rt = RES_AND;
@@ -178,8 +174,87 @@ std::wstring GetDefaultProfileName()
 	lpProfPropVal->Value.b = true;
 
 	// Query the table to get the the default profile only
-	CHK_HR_MSG(HrQueryAllRows(lpProfTable,
+	CHK_HR_DBG(HrQueryAllRows(lpProfTable,
 		(LPSPropTagArray)&sptaProps,
+		lpProfRes,
+		NULL,
+		0,
+		&lpProfRows), L"Calling HrQueryAllRows");
+
+	if (lpProfRows->cRows == 0)
+	{
+		Logger::Write(LOGLEVEL_FAILED, L"No default profile set.");
+	}
+	else if (lpProfRows->cRows == 1)
+	{
+
+		szDefaultProfileName = ConvertMultiByteToWideChar(lpProfRows->aRow->lpProps[iDisplayName].Value.lpszA);
+	}
+	else
+	{
+		Logger::Write(LOGLEVEL_ERROR, L"Query resulted in incosinstent results");
+	}
+
+Error:
+	goto CleanUp;
+CleanUp:
+	// Free up memory
+	if (lpProfRows) FreeProws(lpProfRows);
+	if (lpProfTable) lpProfTable->Release();
+	if (lpProfRes) MAPIFreeBuffer(lpProfRes);
+	if (lpProfResLvl1) MAPIFreeBuffer(lpProfResLvl1);
+	return szDefaultProfileName;
+}
+
+// GetDefaultProfileName
+// returns a std::wstring value with the name of the default Outlook profile
+std::wstring GetDefaultProfileName()
+{
+	std::wstring szDefaultProfileName;
+	LPPROFADMIN lpProfAdmin = NULL;
+	LPSRestriction lpProfRes = NULL;
+	LPSRestriction lpProfResLvl1 = NULL;
+	LPSPropValue lpProfPropVal = NULL;
+	LPMAPITABLE lpProfTable = NULL;
+	LPSRowSet lpProfRows = NULL;
+
+	HRESULT hRes = S_OK;
+
+
+	// Setting up an enum and a prop tag array with the props we'll use
+	enum { iDisplayName, cptaProps };
+	SizedSPropTagArray(cptaProps, sptaProps) = { cptaProps, PR_DISPLAY_NAME_A };
+	CHK_HR_DBG(MAPIAdminProfiles(0, &lpProfAdmin), L"MAPIAdminProfiles");
+
+	CHK_HR_DBG(lpProfAdmin->GetProfileTable(0, &lpProfTable), L"Calling GetProfileTable");
+
+	// Allocate memory for the restriction
+	CHK_HR_DBG(MAPIAllocateBuffer(sizeof(SRestriction), (LPVOID*)& lpProfRes), L"Calling MAPIAllocateBuffer");
+
+	CHK_HR_DBG(MAPIAllocateBuffer(sizeof(SRestriction) * 2, (LPVOID*)& lpProfResLvl1), L"Calling MAPIAllocateBuffer");
+
+	CHK_HR_DBG(MAPIAllocateBuffer(sizeof(SPropValue), (LPVOID*)& lpProfPropVal), L"Calling MAPIAllocateBuffer");
+
+	// Set up restriction to query the profile table
+	lpProfRes->rt = RES_AND;
+	lpProfRes->res.resAnd.cRes = 0x00000002;
+	lpProfRes->res.resAnd.lpRes = lpProfResLvl1;
+
+	lpProfResLvl1[0].rt = RES_EXIST;
+	lpProfResLvl1[0].res.resExist.ulPropTag = PR_DEFAULT_PROFILE;
+	lpProfResLvl1[0].res.resExist.ulReserved1 = 0x00000000;
+	lpProfResLvl1[0].res.resExist.ulReserved2 = 0x00000000;
+	lpProfResLvl1[1].rt = RES_PROPERTY;
+	lpProfResLvl1[1].res.resProperty.relop = RELOP_EQ;
+	lpProfResLvl1[1].res.resProperty.ulPropTag = PR_DEFAULT_PROFILE;
+	lpProfResLvl1[1].res.resProperty.lpProp = lpProfPropVal;
+
+	lpProfPropVal->ulPropTag = PR_DEFAULT_PROFILE;
+	lpProfPropVal->Value.b = true;
+
+	// Query the table to get the the default profile only
+	CHK_HR_DBG(HrQueryAllRows(lpProfTable,
+		(LPSPropTagArray)& sptaProps,
 		lpProfRes,
 		NULL,
 		0,
@@ -211,23 +286,19 @@ CleanUp:
 	return szDefaultProfileName;
 }
 
+
 // GetProfileCount
 // returns the number of mapi profiles for the current user
 ULONG GetProfileCount()
 {
 	std::string szDefaultProfileName;
-	LPPROFADMIN lpProfAdmin = NULL;     // Profile Admin pointer
 	LPMAPITABLE lpProfTable = NULL;
 	ULONG ulRowCount = 0;
 	HRESULT hRes = S_OK;
-
-	CHK_HR_MSG(MAPIAdminProfiles(0, // Flags
-		&lpProfAdmin), L"Calling MAPIAdminProfiles"); // Pointer to new IProfAdmin
-									 // Get an IProfAdmin interface.
-
-	CHK_HR_MSG(lpProfAdmin->GetProfileTable(0, &lpProfTable), L"Calling GetProfileTable");
-
-	CHK_HR_MSG(lpProfTable->GetRowCount(0, &ulRowCount), L"Calling GetRowCount");
+	LPPROFADMIN lpProfAdmin = NULL;
+	CHK_HR_DBG(MAPIAdminProfiles(0, &lpProfAdmin), L"MAPIAdminProfiles");
+	CHK_HR_DBG(lpProfAdmin->GetProfileTable(0, &lpProfTable), L"lpProfAdmin->GetProfileTable");
+	CHK_HR_DBG(lpProfTable->GetRowCount(0, &ulRowCount), L"lpProfTable->GetRowCount");
 
 Error:
 	goto CleanUp;
@@ -235,6 +306,23 @@ CleanUp:
 // Free up memory
 	if (lpProfTable) lpProfTable->Release();
 	if (lpProfAdmin) lpProfAdmin->Release();
+	return ulRowCount;
+}
+
+ULONG GetProfileCount(LPPROFADMIN lpProfAdmin)
+{
+	std::string szDefaultProfileName;
+	LPMAPITABLE lpProfTable = NULL;
+	ULONG ulRowCount = 0;
+	HRESULT hRes = S_OK;
+	CHK_HR_DBG(lpProfAdmin->GetProfileTable(0, &lpProfTable), L"lpProfAdmin->GetProfileTable");
+	CHK_HR_DBG(lpProfTable->GetRowCount(0, &ulRowCount), L"lpProfTable->GetRowCount");
+
+Error:
+	goto CleanUp;
+CleanUp:
+	// Free up memory
+	if (lpProfTable) lpProfTable->Release();
 	return ulRowCount;
 }
 
@@ -250,15 +338,15 @@ HRESULT HrGetProfiles(ULONG ulProfileCount, ProfileInfo * profileInfo)
 	enum { iDisplayName, cptaProps };
 	SizedSPropTagArray(cptaProps, sptaProps) = { cptaProps, PR_DISPLAY_NAME_A };
 
-	CHK_HR_MSG(MAPIAdminProfiles(0, // Flags
+	CHK_HR_DBG(MAPIAdminProfiles(0, // Flags
 		&lpProfAdmin), L"Calling MAPIAdminProfiles"); // Pointer to new IProfAdmin
 									 // Get an IProfAdmin interface.
 
-	CHK_HR_MSG(lpProfAdmin->GetProfileTable(0,
+	CHK_HR_DBG(lpProfAdmin->GetProfileTable(0,
 		&lpProfTable), L"Calling GetProfileTable");
 
 	// Query the table to get the the default profile only
-	CHK_HR_MSG(HrQueryAllRows(lpProfTable,
+	CHK_HR_DBG(HrQueryAllRows(lpProfTable,
 		(LPSPropTagArray)&sptaProps,
 		NULL,
 		NULL,
@@ -269,7 +357,7 @@ HRESULT HrGetProfiles(ULONG ulProfileCount, ProfileInfo * profileInfo)
 	{
 		for (unsigned int i = 0; i < lpProfRows->cRows; i++)
 		{
-			CHK_HR_MSG(HrGetProfile(ConvertMultiByteToWideChar(lpProfRows->aRow[i].lpProps[iDisplayName].Value.lpszA), &profileInfo[i]), L"Calling HrGetProfile");
+			CHK_HR_DBG(HrGetProfile(ConvertMultiByteToWideChar(lpProfRows->aRow[i].lpProps[iDisplayName].Value.lpszA), &profileInfo[i]), L"Calling HrGetProfile");
 		}
 	}
 
@@ -296,11 +384,11 @@ HRESULT HrDeleteProfile(LPWSTR lpszProfileName)
 
 	// Get an IProfAdmin interface.
 
-	CHK_HR_MSG(MAPIAdminProfiles(0,              // Flags.
+	CHK_HR_DBG(MAPIAdminProfiles(0,              // Flags.
 		&lpProfAdmin), L"Calling MAPIAdminProfiles."); // Pointer to new IProfAdmin.
 
 													   // Create a new profile.
-		CHK_HR_MSG(lpProfAdmin->DeleteProfile((LPTSTR)ConvertWideCharToMultiByte(lpszProfileName), NULL), L"Calling DeleteProfile");
+		CHK_HR_DBG(lpProfAdmin->DeleteProfile((LPTSTR)ConvertWideCharToMultiByte(lpszProfileName), NULL), L"Calling DeleteProfile");
 		// Create a new profile.
 
 	// Clean up
@@ -326,7 +414,7 @@ HRESULT HrCreateProfile(LPWSTR lpszProfileName)
 
 	// Get an IProfAdmin interface.
 
-	CHK_HR_MSG(MAPIAdminProfiles(0,              // Flags.
+	CHK_HR_DBG(MAPIAdminProfiles(0,              // Flags.
 		&lpProfAdmin), L"Calling MAPIAdminProfiles."); // Pointer to new IProfAdmin.
 
 													   // Create a new profile.
@@ -337,10 +425,10 @@ HRESULT HrCreateProfile(LPWSTR lpszProfileName)
 
 	if (hRes == E_ACCESSDENIED)
 	{
-		CHK_HR_MSG(lpProfAdmin->DeleteProfile((LPTSTR)ConvertWideCharToMultiByte(lpszProfileName), NULL), L"Calling DeleteProfile");
+		CHK_HR_DBG(lpProfAdmin->DeleteProfile((LPTSTR)ConvertWideCharToMultiByte(lpszProfileName), NULL), L"Calling DeleteProfile");
 		// Create a new profile.
 
-		CHK_HR_MSG(lpProfAdmin->CreateProfile((LPTSTR)ConvertWideCharToMultiByte(lpszProfileName),     // Name of new profile.
+		CHK_HR_DBG(lpProfAdmin->CreateProfile((LPTSTR)ConvertWideCharToMultiByte(lpszProfileName),     // Name of new profile.
 			nullptr,          // Password for profile.
 			0,          // Handle to parent window.
 			0), L"Calling CreateProfile.");        // Flags.
@@ -369,7 +457,7 @@ HRESULT HrCreateProfile(LPWSTR lpszProfileName, LPSERVICEADMIN2 *lppSvcAdmin2)
 
 	// Get an IProfAdmin interface.
 
-	CHK_HR_MSG(MAPIAdminProfiles(0,              // Flags.
+	CHK_HR_DBG(MAPIAdminProfiles(0,              // Flags.
 		&lpProfAdmin), L"Calling MAPIAdminProfiles."); // Pointer to new IProfAdmin.
 
 													   // Create a new profile.
@@ -380,23 +468,23 @@ HRESULT HrCreateProfile(LPWSTR lpszProfileName, LPSERVICEADMIN2 *lppSvcAdmin2)
 
 	if (hRes == E_ACCESSDENIED)
 	{
-		CHK_HR_MSG(lpProfAdmin->DeleteProfile((LPTSTR)ConvertWideCharToMultiByte(lpszProfileName), NULL), L"Calling DeleteProfile.");
+		CHK_HR_DBG(lpProfAdmin->DeleteProfile((LPTSTR)ConvertWideCharToMultiByte(lpszProfileName), NULL), L"Calling DeleteProfile.");
 
-		CHK_HR_MSG(lpProfAdmin->CreateProfile((LPTSTR)ConvertWideCharToMultiByte(lpszProfileName),     // Name of new profile.
+		CHK_HR_DBG(lpProfAdmin->CreateProfile((LPTSTR)ConvertWideCharToMultiByte(lpszProfileName),     // Name of new profile.
 			nullptr,          // Password for profile.
 			0,          // Handle to parent window.
 			0), L"Calling CreateProfile.");        // Flags.
 	}
 
 	// Get an IMsgServiceAdmin interface off of the IProfAdmin interface.
-	CHK_HR_MSG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpszProfileName),     // Profile that we want to modify.
+	CHK_HR_DBG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpszProfileName),     // Profile that we want to modify.
 		nullptr,          // Password for that profile.
 		0,          // Handle to parent window.
 		0,             // Flags.
 		&lpSvcAdmin), L"Calling AdminServices."); // Pointer to new IMsgServiceAdmin.
 
 												  // Create the new message service for Exchange.
-	if (lpSvcAdmin) CHK_HR_MSG(lpSvcAdmin->QueryInterface(IID_IMsgServiceAdmin2, (LPVOID*)&lpSvcAdmin2), L"Calling QueryInterface");
+	if (lpSvcAdmin) CHK_HR_DBG(lpSvcAdmin->QueryInterface(IID_IMsgServiceAdmin2, (LPVOID*)&lpSvcAdmin2), L"Calling QueryInterface");
 
 	*lppSvcAdmin2 = lpSvcAdmin2;
 
@@ -423,11 +511,11 @@ HRESULT HrSetDefaultProfile(LPWSTR lpszProfileName)
 
 	// Get an IProfAdmin interface.
 
-	CHK_HR_MSG(MAPIAdminProfiles(0,              // Flags.
+	CHK_HR_DBG(MAPIAdminProfiles(0,              // Flags.
 		&lpProfAdmin), L"Calling MAPIAdminProfiles."); // Pointer to new IProfAdmin.
 
 													   // Create a new profile.
-	CHK_HR_MSG(lpProfAdmin->SetDefaultProfile((LPTSTR)ConvertWideCharToMultiByte(lpszProfileName),     // Name of new profile.
+	CHK_HR_DBG(lpProfAdmin->SetDefaultProfile((LPTSTR)ConvertWideCharToMultiByte(lpszProfileName),     // Name of new profile.
 		0), L"Calling SetDefaultProfile.");        // Flags.
 
 	// Clean up
@@ -447,7 +535,7 @@ HRESULT HrCloneProfile(ProfileInfo * profileInfo)
 	unsigned int uiServiceIndex = 0;
 	profileInfo->wszProfileName = profileInfo->wszProfileName + L"_Clone";
 	Logger::Write(LOGLEVEL_INFO, L"Creating new profile named: " + profileInfo->wszProfileName);
-	CHK_HR_MSG(HrCreateProfile((LPWSTR)profileInfo->wszProfileName.c_str(), &lpServiceAdmin), L"Calling HrCreateProfile.");
+	CHK_HR_DBG(HrCreateProfile((LPWSTR)profileInfo->wszProfileName.c_str(), &lpServiceAdmin), L"Calling HrCreateProfile.");
 	if (lpServiceAdmin)
 	{
 		for (unsigned int i = 0; i < profileInfo->ulServiceCount; i++)
@@ -457,7 +545,7 @@ HRESULT HrCloneProfile(ProfileInfo * profileInfo)
 			if (profileInfo->profileServices[i].serviceType == SERVICETYPE_EXCHANGEACCOUNT)
 			{
 				Logger::Write(LOGLEVEL_INFO, L"Adding exchange mailbox: " + profileInfo->profileServices[i].exchangeAccountInfo->wszEmailAddress);
-				CHK_HR_MSG(HrCreateMsemsServiceModernExt(false, // sort this out later
+				CHK_HR_DBG(HrCreateMsemsServiceModernExt(false, // sort this out later
 					(LPWSTR)profileInfo->wszProfileName.c_str(),
 					profileInfo->profileServices[i].ulResourceFlags,
 					profileInfo->profileServices[i].exchangeAccountInfo->ulProfileConfigFlags,
@@ -474,7 +562,7 @@ HRESULT HrCloneProfile(ProfileInfo * profileInfo)
 						Logger::Write(LOGLEVEL_INFO, L"Adding additional mailbox: " + profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].wszSmtpAddress);
 						// this should not add online archives
 						if (TRUE != profileInfo->profileServices[i].exchangeAccountInfo->accountMailboxes[j].bIsOnlineArchive)
-							CHK_HR_MSG(HrAddDelegateMailboxModern(false,
+							CHK_HR_DBG(HrAddDelegateMailboxModern(false,
 							(LPWSTR)profileInfo->wszProfileName.c_str(),
 								FALSE,
 								uiServiceIndex,
@@ -487,7 +575,7 @@ HRESULT HrCloneProfile(ProfileInfo * profileInfo)
 			else if (profileInfo->profileServices[i].serviceType == SERVICETYPE_DATAFILE)
 			{
 				Logger::Write(LOGLEVEL_INFO, L"Adding PST file: " + profileInfo->profileServices[i].pstInfo->wszPstPath);
-				CHK_HR_MSG(HrCreatePstService(lpServiceAdmin,
+				CHK_HR_DBG(HrCreatePstService(lpServiceAdmin,
 					&lpServiceUid,
 					(LPWSTR)profileInfo->profileServices[i].wszServiceName.c_str(),
 					profileInfo->profileServices[i].ulResourceFlags,
@@ -500,7 +588,7 @@ HRESULT HrCloneProfile(ProfileInfo * profileInfo)
 		}
 
 		Logger::Write(LOGLEVEL_INFO, L"Setting profile as default.");
-		CHK_HR_MSG(HrSetDefaultProfile((LPWSTR)profileInfo->wszProfileName.c_str()), L"Calling HrSetDefaultProfile.");
+		CHK_HR_DBG(HrSetDefaultProfile((LPWSTR)profileInfo->wszProfileName.c_str()), L"Calling HrSetDefaultProfile.");
 	}
 
 Error:
@@ -517,7 +605,7 @@ HRESULT HrSimpleCloneProfile(ProfileInfo * profileInfo, bool bSetDefaultProfile)
 	unsigned int uiServiceIndex = 0;
 	profileInfo->wszProfileName = profileInfo->wszProfileName + L"_Clone";
 	Logger::Write(LOGLEVEL_INFO, L"Creating new profile named: " + profileInfo->wszProfileName);
-	CHK_HR_MSG(HrCreateProfile((LPWSTR)profileInfo->wszProfileName.c_str(), &lpServiceAdmin), L"Calling HrCreateProfile.");
+	CHK_HR_DBG(HrCreateProfile((LPWSTR)profileInfo->wszProfileName.c_str(), &lpServiceAdmin), L"Calling HrCreateProfile.");
 	if (lpServiceAdmin)
 	{
 		for (unsigned int i = 0; i < profileInfo->ulServiceCount; i++)
@@ -528,7 +616,7 @@ HRESULT HrSimpleCloneProfile(ProfileInfo * profileInfo, bool bSetDefaultProfile)
 			{
 				Logger::Write(LOGLEVEL_INFO, L"Adding exchange mailbox: " + profileInfo->profileServices[i].exchangeAccountInfo->wszEmailAddress);
 				
-				CHK_HR_MSG(HrCreateMsemsServiceMOH(false,
+				CHK_HR_DBG(HrCreateMsemsServiceMOH(false,
 					(LPWSTR)profileInfo->wszProfileName.c_str(),
 					(LPWSTR)profileInfo->profileServices[i].exchangeAccountInfo->wszEmailAddress.c_str(),
 					(LPWSTR)profileInfo->profileServices[i].exchangeAccountInfo->wszMailboxDN.c_str(),
@@ -545,7 +633,7 @@ HRESULT HrSimpleCloneProfile(ProfileInfo * profileInfo, bool bSetDefaultProfile)
 		if (bSetDefaultProfile)
 		{
 			Logger::Write(LOGLEVEL_INFO, L"Setting profile as default.");
-			CHK_HR_MSG(HrSetDefaultProfile((LPWSTR)profileInfo->wszProfileName.c_str()), L"Calling HrSetDefaultProfile.");
+			CHK_HR_DBG(HrSetDefaultProfile((LPWSTR)profileInfo->wszProfileName.c_str()), L"Calling HrSetDefaultProfile.");
 		}
 	}
 Error:
@@ -624,23 +712,23 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo)
 	enum { iDisplayName, iDefaultProfile, cptaProps };
 	SizedSPropTagArray(cptaProps, sptaProps) = { cptaProps, PR_DISPLAY_NAME, PR_DEFAULT_PROFILE };
 
-	CHK_HR_MSG(MAPIAdminProfiles(0, // Flags
+	CHK_HR_DBG(MAPIAdminProfiles(0, // Flags
 		&lpProfAdmin), L"Calling MAPIAdminProfiles."); // Pointer to new IProfAdmin
 													   // Get an IProfAdmin interface.
 
-	CHK_HR_MSG(lpProfAdmin->GetProfileTable(0,
+	CHK_HR_DBG(lpProfAdmin->GetProfileTable(0,
 		&lpProfTable), L"Calling GetProfileTable.");
 
 	// Allocate memory for the restriction
-	CHK_HR_MSG(MAPIAllocateBuffer(
+	CHK_HR_DBG(MAPIAllocateBuffer(
 		sizeof(SRestriction),
 		(LPVOID*)&lpProfRes), L"Calling MAPIAllocateBuffer.");
 
-	CHK_HR_MSG(MAPIAllocateBuffer(
+	CHK_HR_DBG(MAPIAllocateBuffer(
 		sizeof(SRestriction) * 2,
 		(LPVOID*)&lpProfResLvl1), L"Calling MAPIAllocateBuffer");
 
-	CHK_HR_MSG(MAPIAllocateBuffer(
+	CHK_HR_DBG(MAPIAllocateBuffer(
 		sizeof(SPropValue),
 		(LPVOID*)&lpProfPropVal), L"Calling MAPIAllocateBuffer");
 
@@ -662,7 +750,7 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo)
 	lpProfPropVal->Value.lpszA = ConvertWideCharToMultiByte(lpszProfileName);
 
 	// Query the table to get the the default profile only
-	CHK_HR_MSG(HrQueryAllRows(lpProfTable,
+	CHK_HR_DBG(HrQueryAllRows(lpProfTable,
 		(LPSPropTagArray)&sptaProps,
 		lpProfRes,
 		NULL,
@@ -684,7 +772,7 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo)
 
 	// Begin process services
 
-	CHK_HR_MSG(lpProfAdmin->AdminServices((LPTSTR)lpszProfileName,
+	CHK_HR_DBG(lpProfAdmin->AdminServices((LPTSTR)lpszProfileName,
 		LPTSTR(""),            // Password for that profile.
 		NULL,                // Handle to parent window.
 		MAPI_UNICODE,                    // Flags.
@@ -704,7 +792,7 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo)
 		SizedSPropTagArray(cptaSvcProps, sptaSvcProps) = { cptaSvcProps, PR_SERVICE_UID ,PR_SERVICE_NAME_A, PR_DISPLAY_NAME_W, PR_EMSMDB_SECTION_UID, PR_RESOURCE_FLAGS };
 
 		// Query the table to get the the default profile only
-		CHK_HR_MSG(HrQueryAllRows(lpServiceTable,
+		CHK_HR_DBG(HrQueryAllRows(lpServiceTable,
 			(LPSPropTagArray)&sptaSvcProps,
 			NULL,
 			NULL,
@@ -932,15 +1020,15 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo)
 						SizedSPropTagArray(cptaProvProps, sptaProvProps) = { cptaProvProps, PR_INSTANCE_KEY };
 
 						// Allocate memory for the restriction
-						CHK_HR_MSG(MAPIAllocateBuffer(
+						CHK_HR_DBG(MAPIAllocateBuffer(
 							sizeof(SRestriction),
 							(LPVOID*)&lpProvRes), L"Calling MAPIAllocateBuffer.");
 
-						CHK_HR_MSG(MAPIAllocateBuffer(
+						CHK_HR_DBG(MAPIAllocateBuffer(
 							sizeof(SRestriction) * 2,
 							(LPVOID*)&lpProvResLvl1), L"Calling MAPIAllocateBuffer.");
 
-						CHK_HR_MSG(MAPIAllocateBuffer(
+						CHK_HR_DBG(MAPIAllocateBuffer(
 							sizeof(SPropValue),
 							(LPVOID*)&lpProvPropVal), L"Calling MAPIAllocateBuffer.");
 
@@ -964,7 +1052,7 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo)
 						lpProvAdmin->GetProviderTable(0,
 							&lpProvTable);
 						// Query the table to get the the default profile only
-						CHK_HR_MSG(HrQueryAllRows(lpProvTable,
+						CHK_HR_DBG(HrQueryAllRows(lpProvTable,
 							(LPSPropTagArray)&sptaProvProps,
 							lpProvRes,
 							NULL,
@@ -1282,15 +1370,15 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo)
 						SizedSPropTagArray(cptaProvProps, sptaProvProps) = { cptaProvProps, PR_INSTANCE_KEY };
 
 						// Allocate memory for the restriction
-						CHK_HR_MSG(MAPIAllocateBuffer(
+						CHK_HR_DBG(MAPIAllocateBuffer(
 							sizeof(SRestriction),
 							(LPVOID*)&lpProvRes), L"Calling MAPIAllocateBuffer");
 
-						CHK_HR_MSG(MAPIAllocateBuffer(
+						CHK_HR_DBG(MAPIAllocateBuffer(
 							sizeof(SRestriction) * 2,
 							(LPVOID*)&lpProvResLvl1), L"Calling MAPIAllocateBuffer");
 
-						CHK_HR_MSG(MAPIAllocateBuffer(
+						CHK_HR_DBG(MAPIAllocateBuffer(
 							sizeof(SPropValue),
 							(LPVOID*)&lpProvPropVal), L"Calling MAPIAllocateBuffer");
 
@@ -1314,7 +1402,7 @@ HRESULT HrGetProfile(LPWSTR lpszProfileName, ProfileInfo * profileInfo)
 						lpProvAdmin->GetProviderTable(0,
 							&lpProvTable);
 						// Query the table to get the the default profile only
-						CHK_HR_MSG(HrQueryAllRows(lpProvTable,
+						CHK_HR_DBG(HrQueryAllRows(lpProvTable,
 							(LPSPropTagArray)&sptaProvProps,
 							lpProvRes,
 							NULL,
@@ -1415,10 +1503,10 @@ HRESULT HrDeleteProvider(LPWSTR lpwszProfileName, LPMAPIUID lpServiceUid, LPMAPI
 	LPSERVICEADMIN lpServiceAdmin = NULL;
 	LPPROVIDERADMIN lpProviderAdmin = NULL;
 
-	CHK_HR_MSG(MAPIAdminProfiles(0, // Flags
+	CHK_HR_DBG(MAPIAdminProfiles(0, // Flags
 		&lpProfAdmin), L"Calling MAPIAdminProfiles"); // Pointer to new IProfAdmin
 
-	CHK_HR_MSG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
+	CHK_HR_DBG(lpProfAdmin->AdminServices((LPTSTR)ConvertWideCharToMultiByte(lpwszProfileName),
 		LPTSTR(""),            // Password for that profile.
 		NULL,                // Handle to parent window.
 		0,                    // Flags.
@@ -1426,10 +1514,10 @@ HRESULT HrDeleteProvider(LPWSTR lpwszProfileName, LPMAPIUID lpServiceUid, LPMAPI
 
 	if (lpServiceAdmin)
 	{
-		CHK_HR_MSG(lpServiceAdmin->AdminProviders(lpServiceUid, NULL, &lpProviderAdmin), L"Calling AdminProviders");
+		CHK_HR_DBG(lpServiceAdmin->AdminProviders(lpServiceUid, NULL, &lpProviderAdmin), L"Calling AdminProviders");
 		if (lpProviderAdmin)
 		{
-			CHK_HR_MSG(lpProviderAdmin->DeleteProvider(lpProviderUid), L"Calling DeleteProvider");
+			CHK_HR_DBG(lpProviderAdmin->DeleteProvider(lpProviderUid), L"Calling DeleteProvider");
 		}
 	}
 
@@ -1463,9 +1551,9 @@ HRESULT HrGetSections(LPSERVICEADMIN2 lpSvcAdmin, LPMAPIUID lpServiceUid, LPPROF
 		*lppEmsMdbSection = nullptr;
 	}
 
-	CHK_HR_MSG(lpSvcAdmin->OpenProfileSection(lpServiceUid, NULL, MAPI_FORCE_ACCESS | MAPI_MODIFY, &lpSvcProfSect), L"Calling OpenProfileSection.");
+	CHK_HR_DBG(lpSvcAdmin->OpenProfileSection(lpServiceUid, NULL, MAPI_FORCE_ACCESS | MAPI_MODIFY, &lpSvcProfSect), L"Calling OpenProfileSection.");
 
-	CHK_HR_MSG(lpSvcProfSect->GetProps(
+	CHK_HR_DBG(lpSvcProfSect->GetProps(
 		(LPSPropTagArray)& sptaUids,
 		0,
 		&cValues,
@@ -1476,16 +1564,16 @@ HRESULT HrGetSections(LPSERVICEADMIN2 lpSvcAdmin, LPMAPIUID lpServiceUid, LPPROF
 
 
 	if (lpProps[0].ulPropTag != sptaUids.aulPropTag[0])
-		CHK_HR_MSG(lpProps[0].Value.err, L"Cheking Value.err");
+		CHK_HR_DBG(lpProps[0].Value.err, L"Cheking Value.err");
 	if (NULL != lppEmsMdbSection)
 	{
 		if (lpProps[1].ulPropTag != sptaUids.aulPropTag[1])
-			CHK_HR_MSG(lpProps[1].Value.err, L"Cheking Value.err");
+			CHK_HR_DBG(lpProps[1].Value.err, L"Cheking Value.err");
 	}
 
 	if (NULL != lppStoreProviderSection)
 	{
-		CHK_HR_MSG(lpSvcAdmin->OpenProfileSection(
+		CHK_HR_DBG(lpSvcAdmin->OpenProfileSection(
 			(LPMAPIUID)lpProps[0].Value.bin.lpb,
 			0,
 			MAPI_FORCE_ACCESS | MAPI_MODIFY,
@@ -1494,7 +1582,7 @@ HRESULT HrGetSections(LPSERVICEADMIN2 lpSvcAdmin, LPMAPIUID lpServiceUid, LPPROF
 
 	if (NULL != lppEmsMdbSection)
 	{
-		CHK_HR_MSG(lpSvcAdmin->OpenProfileSection(
+		CHK_HR_DBG(lpSvcAdmin->OpenProfileSection(
 			(LPMAPIUID)lpProps[1].Value.bin.lpb,
 			0,
 			MAPI_FORCE_ACCESS | MAPI_MODIFY,
@@ -1544,9 +1632,9 @@ HRESULT HrGetSections(LPSERVICEADMIN lpSvcAdmin, LPMAPIUID lpServiceUid, LPPROFS
 		*lppEmsMdbSection = nullptr;
 	}
 
-	CHK_HR_MSG(lpSvcAdmin->OpenProfileSection(lpServiceUid, NULL, MAPI_FORCE_ACCESS | MAPI_MODIFY, &lpSvcProfSect), L"Calling OpenProfileSection.");
+	CHK_HR_DBG(lpSvcAdmin->OpenProfileSection(lpServiceUid, NULL, MAPI_FORCE_ACCESS | MAPI_MODIFY, &lpSvcProfSect), L"Calling OpenProfileSection.");
 
-	CHK_HR_MSG(lpSvcProfSect->GetProps(
+	CHK_HR_DBG(lpSvcProfSect->GetProps(
 		(LPSPropTagArray)& sptaUids,
 		0,
 		&cValues,
@@ -1557,16 +1645,16 @@ HRESULT HrGetSections(LPSERVICEADMIN lpSvcAdmin, LPMAPIUID lpServiceUid, LPPROFS
 
 
 	if (lpProps[0].ulPropTag != sptaUids.aulPropTag[0])
-		CHK_HR_MSG(lpProps[0].Value.err, L"Cheking Value.err");
+		CHK_HR_DBG(lpProps[0].Value.err, L"Cheking Value.err");
 	if (NULL != lppEmsMdbSection)
 	{
 		if (lpProps[1].ulPropTag != sptaUids.aulPropTag[1])
-			CHK_HR_MSG(lpProps[1].Value.err, L"Cheking Value.err");
+			CHK_HR_DBG(lpProps[1].Value.err, L"Cheking Value.err");
 	}
 
 	if (NULL != lpStoreProvProfSect)
 	{
-		CHK_HR_MSG(lpSvcAdmin->OpenProfileSection(
+		CHK_HR_DBG(lpSvcAdmin->OpenProfileSection(
 			(LPMAPIUID)lpProps[0].Value.bin.lpb,
 			0,
 			MAPI_FORCE_ACCESS | MAPI_MODIFY,
@@ -1575,7 +1663,7 @@ HRESULT HrGetSections(LPSERVICEADMIN lpSvcAdmin, LPMAPIUID lpServiceUid, LPPROFS
 
 	if (NULL != lppEmsMdbSection)
 	{
-		CHK_HR_MSG(lpSvcAdmin->OpenProfileSection(
+		CHK_HR_DBG(lpSvcAdmin->OpenProfileSection(
 			(LPMAPIUID)lpProps[1].Value.bin.lpb,
 			0,
 			MAPI_FORCE_ACCESS | MAPI_MODIFY,
@@ -1623,33 +1711,32 @@ HRESULT ListABService(LPSERVICEADMIN2 lpSvcAdmin2, LPMAPIUID pMAPIUid)
 	HCK(lpProfSect->GetProps((LPSPropTagArray)& sptaProps, NULL, &ulPropVal, &lpsPropValues));
 	if (lpsPropValues)
 	{
-		wprintf(L"Listing entry \n");
-		wprintf(L"  Display Name        : %s\n", ConvertMultiByteToWideChar(lpsPropValues[iDisplayName].Value.lpszA));
-		wprintf(L"  Ldap Server Name    : %s\n", ConvertMultiByteToWideChar(lpsPropValues[iAbServerName].Value.lpszA));
-		wprintf(L"  Ldap Server Port    : %s\n", ConvertMultiByteToWideChar(lpsPropValues[iAbServerPort].Value.lpszA));
-		wprintf(L"  Username            : %s\n", ConvertMultiByteToWideChar(lpsPropValues[iAbUsername].Value.lpszA));
-		wprintf(L"  Search Base         : %s\n", ConvertMultiByteToWideChar(lpsPropValues[iAbSearchBase].Value.lpszA));
-		wprintf(L"  Search Timeout      : %s\n", ConvertMultiByteToWideChar(lpsPropValues[iAbSearchTimeout].Value.lpszA));
-		wprintf(L"  Maximum entries     : %s\n", ConvertMultiByteToWideChar(lpsPropValues[iAbMaxEntries].Value.lpszA));
+		Logger::WriteLine(LOGLEVEL_INFO, L"  Display Name        : " + ConvertWideCharToStdWstring(lpsPropValues[iDisplayName].Value.lpszW));
+		Logger::WriteLine(LOGLEVEL_INFO, L"  Ldap Server Name    : " + ConvertMultiByteToStdWString(lpsPropValues[iAbServerName].Value.lpszA));
+		Logger::WriteLine(LOGLEVEL_INFO, L"  Ldap Server Port    : " + ConvertMultiByteToStdWString(lpsPropValues[iAbServerPort].Value.lpszA));
+		Logger::WriteLine(LOGLEVEL_INFO, L"  Username            : " + ConvertMultiByteToStdWString(lpsPropValues[iAbUsername].Value.lpszA));
+		Logger::WriteLine(LOGLEVEL_INFO, L"  Search Base         : " + ConvertMultiByteToStdWString(lpsPropValues[iAbSearchBase].Value.lpszA));
+		Logger::WriteLine(LOGLEVEL_INFO, L"  Search Timeout      : " + ConvertMultiByteToStdWString(lpsPropValues[iAbSearchTimeout].Value.lpszA));
+		Logger::WriteLine(LOGLEVEL_INFO, L"  Maximum entries     : " + ConvertMultiByteToStdWString(lpsPropValues[iAbMaxEntries].Value.lpszA));
 		if (lpsPropValues[iAbUseSSL].Value.b)
-			wprintf(L"  Use SSL             : true\n");
+			Logger::WriteLine(LOGLEVEL_INFO, L"  Use SSL             : true");
 		else
-			wprintf(L"  Use SSL             : false\n");
+			Logger::WriteLine(LOGLEVEL_INFO, L"  Use SSL             : false");
 		if (lpsPropValues[iAbRequireSpa].Value.b)
-			wprintf(L"  Use SSL             : true\n");
+			Logger::WriteLine(LOGLEVEL_INFO, L"  Require SPA         : true");
 		else
-			wprintf(L"  Use SSL             : false\n");
+			Logger::WriteLine(LOGLEVEL_INFO, L"  Require SPA         : false");
 		if (lpsPropValues[AbEnableBrowsing].Value.b)
-			wprintf(L"  Use SSL             : true\n");
+			Logger::WriteLine(LOGLEVEL_INFO, L"  Enable browsing     : true");
 		else
-			wprintf(L"  Use SSL             : false\n");
+			Logger::WriteLine(LOGLEVEL_INFO, L"  Enable browsing     : false");
 		if (lpsPropValues[iAbDefaultSearchBase].Value.i == 1)
-			wprintf(L"  Use SSL             : true\n");
+			Logger::WriteLine(LOGLEVEL_INFO, L"  Default search base : true");
 		else
-			wprintf(L"  Use SSL             : false\n");
+			Logger::WriteLine(LOGLEVEL_INFO, L"  Default search base : false");
 	}
 	else
-		wprintf(L"Unable to retrieve Ldap AB properties.\n");
+		Logger::WriteLine(LOGLEVEL_FAILED, L"Unable to retrieve Ldap AB properties.");
 
 Error:
 	return hRes;
@@ -1669,21 +1756,20 @@ HRESULT ListAllABServices(LPSERVICEADMIN2 lpSvcAdmin2)
 		PROP_AB_PROVIDER_SERVER_SPA, PROP_AB_PROVIDER_ENABLE_BROWSING, PROP_AB_PROVIDER_SEARCH_BASE_DEFAULT };
 
 	// Get access to the message service table, a list of the message services in the profile.
-	HCK(lpSvcAdmin2->GetMsgServiceTable(0, // Flags        
-		&lpMsgSvcTable)); // Pointer to table
-	wprintf(L"Retrieved message service table from profile.\n");
+	CHK_HR_DBG(lpSvcAdmin2->GetMsgServiceTable(0, // Flags        
+		&lpMsgSvcTable), L"lpSvcAdmin2->GetMsgServiceTable"); // Pointer to table
 
 	// Set up restriction to query table.
 	// Allocate and create the SRestriction
 	// Allocate base memory:
-	HCK(MAPIAllocateBuffer(
+	CHK_HR_DBG(MAPIAllocateBuffer(
 		sizeof(SRestriction),
-		(LPVOID*)& lpRes));
+		(LPVOID*)& lpRes), L"MAPIAllocateBuffer");
 
-	HCK(MAPIAllocateMore(
+	CHK_HR_DBG(MAPIAllocateMore(
 		sizeof(SPropValue),
 		lpRes,
-		(LPVOID*)& lpspvSvcName));
+		(LPVOID*)& lpspvSvcName), L"MAPIAllocateMore");
 
 	ZeroMemory(lpRes, sizeof(SRestriction));
 	ZeroMemory(lpspvSvcName, sizeof(SPropValue));
@@ -1695,22 +1781,22 @@ HRESULT ListAllABServices(LPSERVICEADMIN2 lpSvcAdmin2)
 	lpspvSvcName->ulPropTag = PR_SERVICE_NAME_A;
 	lpspvSvcName->Value.lpszA = ConvertWideCharToMultiByte(L"EMABLT");
 
-	wprintf(L"Set up restriction for searching Ldap AB services.\n");
+
 
 	// Query the table to get the entry for EMABLT type services.
-	HCK(HrQueryAllRows(lpMsgSvcTable,
+	CHK_HR_DBG(HrQueryAllRows(lpMsgSvcTable,
 		(LPSPropTagArray)& sptaProps,
 		lpRes,
 		NULL,
 		0,
-		&lpSvcRows));
-	wprintf(L"Queried service table for Ldap AB services.\n");
+		&lpSvcRows), L"HrQueryAllRows");
+
 
 	if (lpSvcRows->cRows > 0)
 	{
 		for (unsigned int i = 0; i < lpSvcRows->cRows; i++)
 		{
-			LPPROFSECT lpProfSect = NULL;			
+			LPPROFSECT lpProfSect = NULL;
 			LPMAPIPROP lpMapiProp = NULL;
 			HCK(lpSvcAdmin2->OpenProfileSection(LPMAPIUID(lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb), NULL, MAPI_MODIFY | MAPI_FORCE_ACCESS, &lpProfSect));
 			ULONG ulPropVal = 0;
@@ -1718,33 +1804,33 @@ HRESULT ListAllABServices(LPSERVICEADMIN2 lpSvcAdmin2)
 			HCK(lpProfSect->GetProps((LPSPropTagArray)& sptaProps, NULL, &ulPropVal, &lpsPropValues));
 			if (lpsPropValues)
 			{
-				wprintf(L"Listing entry #%i:\n", i);
-				wprintf(L"  Display Name        : %s\n", lpsPropValues[iDisplayName].Value.lpszW);
-				wprintf(L"  Ldap Server Name    : %s\n", ConvertMultiByteToWideChar(lpsPropValues[iAbServerName].Value.lpszA));
-				wprintf(L"  Ldap Server Port    : %s\n", ConvertMultiByteToWideChar(lpsPropValues[iAbServerPort].Value.lpszA));
-				wprintf(L"  Username            : %s\n", ConvertMultiByteToWideChar(lpsPropValues[iAbUsername].Value.lpszA));
-				wprintf(L"  Search Base         : %s\n", ConvertMultiByteToWideChar(lpsPropValues[iAbSearchBase].Value.lpszA));
-				wprintf(L"  Search Timeout      : %s\n", ConvertMultiByteToWideChar(lpsPropValues[iAbSearchTimeout].Value.lpszA));
-				wprintf(L"  Maximum entries     : %s\n", ConvertMultiByteToWideChar(lpsPropValues[iAbMaxEntries].Value.lpszA));
+				Logger::WriteLine(LOGLEVEL_INFO, L"  Listing entry #" + ConvertIntToString(i));
+				Logger::WriteLine(LOGLEVEL_INFO, L"  Display Name        : " + ConvertWideCharToStdWstring(lpsPropValues[iDisplayName].Value.lpszW));
+				Logger::WriteLine(LOGLEVEL_INFO, L"  Ldap Server Name    : " + ConvertMultiByteToStdWString(lpsPropValues[iAbServerName].Value.lpszA));
+				Logger::WriteLine(LOGLEVEL_INFO, L"  Ldap Server Port    : " + ConvertMultiByteToStdWString(lpsPropValues[iAbServerPort].Value.lpszA));
+				Logger::WriteLine(LOGLEVEL_INFO, L"  Username            : " + ConvertMultiByteToStdWString(lpsPropValues[iAbUsername].Value.lpszA));
+				Logger::WriteLine(LOGLEVEL_INFO, L"  Search Base         : " + ConvertMultiByteToStdWString(lpsPropValues[iAbSearchBase].Value.lpszA));
+				Logger::WriteLine(LOGLEVEL_INFO, L"  Search Timeout      : " + ConvertMultiByteToStdWString(lpsPropValues[iAbSearchTimeout].Value.lpszA));
+				Logger::WriteLine(LOGLEVEL_INFO, L"  Maximum entries     : " + ConvertMultiByteToStdWString(lpsPropValues[iAbMaxEntries].Value.lpszA));
 				if (lpsPropValues[iAbUseSSL].Value.b)
-					wprintf(L"  Use SSL             : true\n");
+					Logger::WriteLine(LOGLEVEL_INFO, L"  Use SSL             : true");
 				else
-					wprintf(L"  Use SSL             : false\n");
+					Logger::WriteLine(LOGLEVEL_INFO, L"  Use SSL             : false");
 				if (lpsPropValues[iAbRequireSpa].Value.b)
-					wprintf(L"  Use SSL             : true\n");
+					Logger::WriteLine(LOGLEVEL_INFO, L"  Require SPA         : true");
 				else
-					wprintf(L"  Use SSL             : false\n");
+					Logger::WriteLine(LOGLEVEL_INFO, L"  Require SPA         : false");
 				if (lpsPropValues[AbEnableBrowsing].Value.b)
-					wprintf(L"  Use SSL             : true\n");
+					Logger::WriteLine(LOGLEVEL_INFO, L"  Enable browsing     : true");
 				else
-					wprintf(L"  Use SSL             : false\n");
+					Logger::WriteLine(LOGLEVEL_INFO, L"  Enable browsing     : false");
 				if (lpsPropValues[iAbDefaultSearchBase].Value.i == 1)
-					wprintf(L"  Use SSL             : true\n");
+					Logger::WriteLine(LOGLEVEL_INFO, L"  Default search base : true");
 				else
-					wprintf(L"  Use SSL             : false\n");
+					Logger::WriteLine(LOGLEVEL_INFO, L"  Default search base : false");
 			}
 			else
-				wprintf(L"Unable to retrieve Ldap AB properties.\n");
+				Logger::WriteLine(LOGLEVEL_FAILED, L"Unable to retrieve Ldap AB properties.");
 		}
 	}
 	else
@@ -1781,15 +1867,8 @@ HRESULT CreateABService(LPSERVICEADMIN2 lpSvcAdmin2)
 	std::vector<SPropValue> rgvalVector;
 	SPropValue sPropValue;
 
-	if (SUCCEEDED(hRes))
-		wprintf(L"DONE\n");
-	else
-	{
-		wprintf(L"FAILED\n");
-		HCK(hRes);
-	}
 	// Adds a message service to the current profile and returns that newly added service UID.
-	CHK_HR_MSG(lpSvcAdmin2->CreateMsgServiceEx((LPTSTR)ConvertWideCharToMultiByte((LPWSTR)Toolkit::g_addressBookMap.at(L"servicename").c_str()), (LPTSTR)ConvertWideCharToMultiByte((LPWSTR)Toolkit::g_addressBookMap.at(L"displayname").c_str()), NULL, 0, &uidService), L"Creating address book message service");
+	CHK_HR_DBG(lpSvcAdmin2->CreateMsgServiceEx((LPTSTR)ConvertWideCharToMultiByte((LPWSTR)Toolkit::g_addressBookMap.at(L"servicename").c_str()), (LPTSTR)ConvertWideCharToMultiByte((LPWSTR)Toolkit::g_addressBookMap.at(L"displayname").c_str()), NULL, 0, &uidService), L"Creating address book service" + Toolkit::g_addressBookMap.at(L"displayname"));
 
 	rgvalVector.resize(0);
 
@@ -1883,7 +1962,7 @@ HRESULT CreateABService(LPSERVICEADMIN2 lpSvcAdmin2)
 	rgvalVector.push_back(sPropValue);
 
 	// Reconfigures a message service with the new props.
-	CHK_HR_MSG(lpSvcAdmin2->ConfigureMsgService(lpuidService, NULL, 0, (ULONG)rgvalVector.size(), rgvalVector.data()), L"Configuring the address book service with the new properties");
+	CHK_HR_DBG(lpSvcAdmin2->ConfigureMsgService(lpuidService, NULL, 0, (ULONG)rgvalVector.size(), rgvalVector.data()), L"Configuring the address book service with the new properties");
 
 Error:
 	return hRes;
@@ -1956,7 +2035,7 @@ HRESULT GetABServiceUid(LPSERVICEADMIN2 lpSvcAdmin2, LPTSTR lppszDisplayName, UL
 	lpspvDispName->Value.lpszA = ConvertWideCharToMultiByte(lppszDisplayName);
 
 	// Query the table to get the entry for the EMABLT service.
-	CHK_HR_MSG(HrQueryAllRows(lpMsgSvcTable,
+	CHK_HR_DBG(HrQueryAllRows(lpMsgSvcTable,
 		(LPSPropTagArray)& sptaProps,
 		lpRes,
 		NULL,
@@ -2024,7 +2103,7 @@ HRESULT GetABServiceUid(LPSERVICEADMIN2 lpSvcAdmin2, ULONG* ulcMapiUid, MAPIUID*
 	lpspvSvcName->Value.lpszA = ConvertWideCharToMultiByte(L"EMABLT");
 
 	// Query the table to get the entry for the Exchange message service.
-	CHK_HR_MSG(HrQueryAllRows(lpMsgSvcTable,
+	CHK_HR_DBG(HrQueryAllRows(lpMsgSvcTable,
 		(LPSPropTagArray)& sptaProps,
 		lpRes,
 		NULL,
@@ -2053,7 +2132,7 @@ Error:
 
 // GetABServiceUid
 // Searches for an AB service with a given Display name and Server name and returns a service UID
-HRESULT GetABServiceUid(LPSERVICEADMIN2 lpSvcAdmin2, LPTSTR lppszDisplayName, LPTSTR lppszServerName, ULONG * ulcMapiUid, MAPIUID* pMapiUid)
+HRESULT GetABServiceUid(LPSERVICEADMIN2 lpSvcAdmin2, LPTSTR lppszDisplayName, LPTSTR lppszServerName, ULONG* ulcMapiUid, MAPIUID* pMapiUid)
 {
 	HRESULT hRes = S_OK;
 	LPMAPITABLE		lpMsgSvcTable = NULL; // MAPI table pointer.
@@ -2065,8 +2144,8 @@ HRESULT GetABServiceUid(LPSERVICEADMIN2 lpSvcAdmin2, LPTSTR lppszDisplayName, LP
 	LPSPropValue	lpspvDispName = NULL;
 	LPSPropValue	lpspvSrvName = NULL;
 	LPMAPIUID* pTempMAPIUid = NULL;
-	enum { iServiceUid, cptaProps };
-	SizedSPropTagArray(cptaProps, sptaProps) = { cptaProps, PR_SERVICE_UID };
+	enum { iServiceUid, iDisplayName, iServerName, cptaProps };
+	SizedSPropTagArray(cptaProps, sptaProps) = { cptaProps, PR_SERVICE_UID, PROP_AB_PROVIDER_DISPLAY_NAME, PROP_AB_PROVIDER_SERVER_NAME };
 
 	// Provides access to the message service table, a list of the message services in the profile.
 	hRes = lpSvcAdmin2->GetMsgServiceTable(0, // Flags        
@@ -2125,24 +2204,35 @@ HRESULT GetABServiceUid(LPSERVICEADMIN2 lpSvcAdmin2, LPTSTR lppszDisplayName, LP
 	lpspvSvcName->ulPropTag = PR_SERVICE_NAME_A;
 	lpspvSvcName->Value.lpszA = ConvertWideCharToMultiByte(L"EMABLT");
 	//Get the services matching the supplied Display Name
+	if (lppszDisplayName && lppszServerName)
+	{
+		lpResLevel0[1].rt = RES_OR;
+		lpResLevel0[1].res.resOr.cRes = 2;
+		lpResLevel0[1].res.resOr.lpRes = lpResLevel1;
 
-	lpResLevel0[1].rt = RES_OR;
-	lpResLevel0[1].res.resOr.cRes = 2;
-	lpResLevel0[1].res.resOr.lpRes = lpResLevel1;
-
-	lpResLevel1[0].rt = RES_CONTENT;
-	lpResLevel1[0].res.resContent.ulFuzzyLevel = FL_FULLSTRING | FL_IGNORECASE;
-	lpResLevel1[0].res.resContent.ulPropTag = PR_DISPLAY_NAME_A;
-	lpResLevel1[0].res.resContent.lpProp = lpspvDispName;
-	lpspvDispName->ulPropTag = PR_DISPLAY_NAME_A;
-	lpspvDispName->Value.lpszA = ConvertWideCharToMultiByte(lppszDisplayName);
-	//Get the services matching the supplied ldap server name
-	lpResLevel1[1].rt = RES_CONTENT;
-	lpResLevel1[1].res.resContent.ulFuzzyLevel = FL_FULLSTRING | FL_IGNORECASE;
-	lpResLevel1[1].res.resContent.ulPropTag = PROP_AB_PROVIDER_SERVER_NAME;
-	lpResLevel1[1].res.resContent.lpProp = lpspvSrvName;
-	lpspvSrvName->ulPropTag = PROP_AB_PROVIDER_SERVER_NAME;
-	lpspvSrvName->Value.lpszA = ConvertWideCharToMultiByte(lppszServerName);
+		lpResLevel1[0].rt = RES_CONTENT;
+		lpResLevel1[0].res.resContent.ulFuzzyLevel = FL_FULLSTRING | FL_IGNORECASE;
+		lpResLevel1[0].res.resContent.ulPropTag = PR_DISPLAY_NAME_A;
+		lpResLevel1[0].res.resContent.lpProp = lpspvDispName;
+		lpspvDispName->ulPropTag = PR_DISPLAY_NAME_A;
+		lpspvDispName->Value.lpszA = ConvertWideCharToMultiByte(lppszDisplayName);
+		//Get the services matching the supplied ldap server name
+		lpResLevel1[1].rt = RES_CONTENT;
+		lpResLevel1[1].res.resContent.ulFuzzyLevel = FL_FULLSTRING | FL_IGNORECASE;
+		lpResLevel1[1].res.resContent.ulPropTag = PROP_AB_PROVIDER_SERVER_NAME;
+		lpResLevel1[1].res.resContent.lpProp = lpspvSrvName;
+		lpspvSrvName->ulPropTag = PROP_AB_PROVIDER_SERVER_NAME;
+		lpspvSrvName->Value.lpszA = ConvertWideCharToMultiByte(lppszServerName);
+	}
+	else if (lppszDisplayName)
+	{
+		lpResLevel0[1].rt = RES_CONTENT;
+		lpResLevel0[1].res.resContent.ulFuzzyLevel = FL_FULLSTRING | FL_IGNORECASE;
+		lpResLevel0[1].res.resContent.ulPropTag = PR_DISPLAY_NAME_A;
+		lpResLevel0[1].res.resContent.lpProp = lpspvDispName;
+		lpspvDispName->ulPropTag = PR_DISPLAY_NAME_A;
+		lpspvDispName->Value.lpszA = ConvertWideCharToMultiByte(lppszDisplayName);
+	}
 
 	// Query the table to get the entry for the Exchange message service.
 	HCK(HrQueryAllRows(lpMsgSvcTable,
@@ -2154,13 +2244,59 @@ HRESULT GetABServiceUid(LPSERVICEADMIN2 lpSvcAdmin2, LPTSTR lppszDisplayName, LP
 
 	if (lpSvcRows->cRows > 0)
 	{
-		if (ulcMapiUid)
-			* ulcMapiUid = lpSvcRows->cRows;
-		if (pMapiUid)
+		if (lppszDisplayName)
+		{
+			if (ulcMapiUid)
+				* ulcMapiUid = lpSvcRows->cRows;
+			if (pMapiUid)
+				for (int i = 0; i < lpSvcRows->cRows; i++)
+				{
+
+					*(&pMapiUid[i]) = *(LPMAPIUID)lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb;
+				}
+		}
+		else
+		{
+			// this is a not so pretty workaround for my not being able to get the MAPI table restriction to work with PROP_AB_PROVIDER_SERVER_NAME
+			// MFCMAPI also returns 0 rows which is strange
+			ULONG cEntries = 0;
+			LPPROFSECT lpProfSect = NULL;
+			LPMAPIPROP lpMapiProp = NULL;
+
+
 			for (int i = 0; i < lpSvcRows->cRows; i++)
 			{
-				*(&pMapiUid[i]) = *(LPMAPIUID)lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb;
+				HCK(lpSvcAdmin2->OpenProfileSection(LPMAPIUID(lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb), NULL, MAPI_FORCE_ACCESS, &lpProfSect));
+				ULONG ulPropVal = 0;
+				LPSPropValue lpsPropValues = NULL;
+				HCK(lpProfSect->GetProps((LPSPropTagArray)& sptaProps, NULL, &ulPropVal, &lpsPropValues));
+
+				if (0 == strcmp(ConvertWideCharToMultiByte(lppszServerName), lpsPropValues[iServerName].Value.lpszA))
+				{
+					cEntries++;
+				}
+				MAPIFreeBuffer(lpsPropValues);
+				if (lpProfSect) lpProfSect->Release();
 			}
+			if (ulcMapiUid)
+				* ulcMapiUid = cEntries;
+			if (pMapiUid)
+				for (int i = 0; i < lpSvcRows->cRows; i++)
+				{
+					HCK(lpSvcAdmin2->OpenProfileSection(LPMAPIUID(lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb), NULL, MAPI_FORCE_ACCESS, &lpProfSect));
+					ULONG ulPropVal = 0;
+					LPSPropValue lpsPropValues = NULL;
+					HCK(lpProfSect->GetProps((LPSPropTagArray)& sptaProps, NULL, &ulPropVal, &lpsPropValues));
+
+					if (0 == strcmp(ConvertWideCharToMultiByte(lppszServerName), lpsPropValues[iServerName].Value.lpszA))
+					{
+						*(&pMapiUid[i]) = *(LPMAPIUID)lpSvcRows->aRow[i].lpProps[iServiceUid].Value.bin.lpb;
+					}
+					MAPIFreeBuffer(lpsPropValues);
+					if (lpProfSect) lpProfSect->Release();
+				}
+		}
+
 	}
 
 
@@ -2178,69 +2314,109 @@ Error:
 
 // UpdateABService
 // Updates the AB service with the given service UID
-HRESULT UpdateABService(LPSERVICEADMIN2 lpSvcAdmin2, ABProvider* pABProvider, LPMAPIUID lpMapiUid)
+HRESULT UpdateABService(LPSERVICEADMIN2 lpSvcAdmin2, LPMAPIUID lpMapiUid)
 {
 	HRESULT				hRes = S_OK;
+	LPMAPITABLE			lpMsgSvcTable = NULL;		// MAPI table pointer.
+	LPSRowSet			lpSvcRows = NULL;		// Row set pointer.
 	SPropValue			rgval[12];						// Property value structure to hold configuration info.
 	DATA_BLOB			dataBlobIn = { 0 };
 	DATA_BLOB			dataBlobOut = { 0 };
 
-	// Setting up the props
+	LPWSTR lpszwPassword = (LPWSTR)Toolkit::g_addressBookMap.at(L"password").c_str();
+	std::vector<SPropValue> rgvalVector;
+	SPropValue sPropValue;
 
-	// The display name of the new LDAP AB. 
-	// PT_STRING8
-	ZeroMemory(&rgval[0], sizeof(SPropValue));
-	rgval[0].ulPropTag = PROP_AB_PROVIDER_DISPLAY_NAME;
-	rgval[0].Value.lpszA = ConvertWideCharToMultiByte(pABProvider->lpszDisplayName);
+	rgvalVector.resize(0);
 
-	// The LDAP server name.
-	// PT_STRING8
-	ZeroMemory(&rgval[1], sizeof(SPropValue));
-	rgval[1].ulPropTag = PROP_AB_PROVIDER_SERVER_NAME;
-	rgval[1].Value.lpszA = ConvertWideCharToMultiByte(pABProvider->lpszServerName);
+	if (!Toolkit::g_addressBookMap.at(L"newdisplayname").empty())
+	{
+	ZeroMemory(&sPropValue, sizeof(SPropValue));
+	sPropValue.ulPropTag = PROP_AB_PROVIDER_DISPLAY_NAME;
+		sPropValue.Value.lpszA = ConvertWideCharToMultiByte(Toolkit::g_addressBookMap.at(L"newdisplayname").c_str());
+		rgvalVector.push_back(sPropValue);
+	}
+	else
+	{
+		if (!Toolkit::g_addressBookMap.at(L"displayname").empty())
+		{
+			ZeroMemory(&sPropValue, sizeof(SPropValue));
+			sPropValue.ulPropTag = PROP_AB_PROVIDER_DISPLAY_NAME;
+			sPropValue.Value.lpszA = ConvertWideCharToMultiByte(Toolkit::g_addressBookMap.at(L"displayname").c_str());
+			rgvalVector.push_back(sPropValue);
+		}
+	}
 
-	// The port to connect to.
-	// PT_STRING8
-	ZeroMemory(&rgval[2], sizeof(SPropValue));
-	rgval[2].ulPropTag = PROP_AB_PROVIDER_SERVER_PORT;
-	rgval[2].Value.lpszA = ConvertWideCharToMultiByte(pABProvider->lpszServerPort);
+	if (!Toolkit::g_addressBookMap.at(L"newservername").empty())
+	{
+	ZeroMemory(&sPropValue, sizeof(SPropValue));
+	sPropValue.ulPropTag = PROP_AB_PROVIDER_SERVER_NAME;
+		sPropValue.Value.lpszA = ConvertWideCharToMultiByte(Toolkit::g_addressBookMap.at(L"newservername").c_str());
+		rgvalVector.push_back(sPropValue);
+	}
+	else
+	{
+		if (!Toolkit::g_addressBookMap.at(L"servername").empty())
+		{
+			ZeroMemory(&sPropValue, sizeof(SPropValue));
+			sPropValue.ulPropTag = PROP_AB_PROVIDER_SERVER_NAME;
+			sPropValue.Value.lpszA = ConvertWideCharToMultiByte(Toolkit::g_addressBookMap.at(L"servername").c_str());
+			rgvalVector.push_back(sPropValue);
+		}
 
-	// LDAP AB username.
-	// PT_STRING8
-	ZeroMemory(&rgval[3], sizeof(SPropValue));
-	rgval[3].ulPropTag = PROP_AB_PROVIDER_USER_NAME;
-	rgval[3].Value.lpszA = ConvertWideCharToMultiByte(pABProvider->lpszUsername);
+	}
+	
+	if (!Toolkit::g_addressBookMap.at(L"newserverport").empty())
+	{
+	ZeroMemory(&sPropValue, sizeof(SPropValue));
+	sPropValue.ulPropTag = PROP_AB_PROVIDER_SERVER_PORT;
+		sPropValue.Value.lpszA = ConvertWideCharToMultiByte(Toolkit::g_addressBookMap.at(L"newserverport").c_str());
+		rgvalVector.push_back(sPropValue);
+	}
+	else
+	{
+		if (!Toolkit::g_addressBookMap.at(L"serverport").empty())
+		{
+			ZeroMemory(&sPropValue, sizeof(SPropValue));
+			sPropValue.ulPropTag = PROP_AB_PROVIDER_SERVER_PORT;
+			sPropValue.Value.lpszA = ConvertWideCharToMultiByte(Toolkit::g_addressBookMap.at(L"serverport").c_str());
+			rgvalVector.push_back(sPropValue);
+		}
+	}
 
-	// Custom search base if needed.
-	// PT_STRING8
-	ZeroMemory(&rgval[4], sizeof(SPropValue));
-	rgval[4].ulPropTag = PROP_AB_PROVIDER_SEARCH_BASE;
-	rgval[4].Value.lpszA = ConvertWideCharToMultiByte(pABProvider->lpszCustomSearchBase);
+	if (0 < wcslen(Toolkit::g_addressBookMap.at(L"username").c_str()))
+	{
+		ZeroMemory(&sPropValue, sizeof(SPropValue));
+		sPropValue.ulPropTag = PROP_AB_PROVIDER_USER_NAME;
+		sPropValue.Value.lpszA = ConvertWideCharToMultiByte(Toolkit::g_addressBookMap.at(L"username").c_str());
+		rgvalVector.push_back(sPropValue);
+	}
 
-	// AB search time out.
-	// PT_STRING8
-	ZeroMemory(&rgval[5], sizeof(SPropValue));
-	rgval[5].ulPropTag = PROP_AB_PROVIDER_SEARCH_TIMEOUT;
-	rgval[5].Value.lpszA = ConvertWideCharToMultiByte(pABProvider->lpszTimeout);
+	ZeroMemory(&sPropValue, sizeof(SPropValue));
+	sPropValue.ulPropTag = PROP_AB_PROVIDER_SEARCH_BASE;
+	sPropValue.Value.lpszA = ConvertWideCharToMultiByte(Toolkit::g_addressBookMap.at(L"customsearchbase").c_str());
+	rgvalVector.push_back(sPropValue);
 
-	// Maximum number of entries to be returned.
-	// PT_STRING8
-	ZeroMemory(&rgval[6], sizeof(SPropValue));
-	rgval[6].ulPropTag = PROP_AB_PROVIDER_MAX_ENTRIES;
-	rgval[6].Value.lpszA = ConvertWideCharToMultiByte(pABProvider->lpszMaxResults);
+	ZeroMemory(&sPropValue, sizeof(SPropValue));
+	sPropValue.ulPropTag = PROP_AB_PROVIDER_SEARCH_TIMEOUT;
+	sPropValue.Value.lpszA = ConvertWideCharToMultiByte(Toolkit::g_addressBookMap.at(L"searchtimeout").c_str());
+	rgvalVector.push_back(sPropValue);
 
-	// Indicates whether the AB requires an SSL connection or not.
-	ZeroMemory(&rgval[7], sizeof(SPropValue));
-	rgval[7].ulPropTag = PROP_AB_PROVIDER_USE_SSL;
-	rgval[7].Value.b = pABProvider->bUseSSL;
+	ZeroMemory(&sPropValue, sizeof(SPropValue));
+	sPropValue.ulPropTag = PROP_AB_PROVIDER_MAX_ENTRIES;
+	sPropValue.Value.lpszA = ConvertWideCharToMultiByte(Toolkit::g_addressBookMap.at(L"maxentries").c_str());
+	rgvalVector.push_back(sPropValue);
 
-	// Indicates whether the AB requires secure password auth.
-	ZeroMemory(&rgval[8], sizeof(SPropValue));
-	rgval[8].ulPropTag = PROP_AB_PROVIDER_SERVER_SPA;
-	rgval[8].Value.b = pABProvider->bRequireSPA;
+	ZeroMemory(&sPropValue, sizeof(SPropValue));
+	sPropValue.ulPropTag = PROP_AB_PROVIDER_USE_SSL;
+	sPropValue.Value.b = (0 == wcscmp(Toolkit::g_addressBookMap.at(L"usessl").c_str(), L"true"));
+	rgvalVector.push_back(sPropValue);
 
-	// Logic to encrypt the password if password supplied.
-	LPWSTR lpszwPassword = pABProvider->lpszPassword;
+	ZeroMemory(&sPropValue, sizeof(SPropValue));
+	sPropValue.ulPropTag = PROP_AB_PROVIDER_SERVER_SPA;
+	sPropValue.Value.b = (0 == wcscmp(Toolkit::g_addressBookMap.at(L"requirespa").c_str(), L"true"));
+	rgvalVector.push_back(sPropValue);
+
 	// Encrypt the password if supplied
 	if (0 < wcslen(lpszwPassword))
 	{
@@ -2263,31 +2439,29 @@ HRESULT UpdateABService(LPSERVICEADMIN2 lpSvcAdmin2, ABProvider* pABProvider, LP
 			hRes = E_FAIL;
 			goto Error;
 		}
+		ZeroMemory(&sPropValue, sizeof(SPropValue));
+		sPropValue.ulPropTag = PROP_AB_PROVIDER_USER_PASSWORD_ENCODED;
+		sPropValue.Value.bin.cb = dataBlobOut.cbData;
+		sPropValue.Value.bin.lpb = dataBlobOut.pbData;
+		rgvalVector.push_back(sPropValue);
 	}
 
-	// Password for the AB.
-	ZeroMemory(&rgval[9], sizeof(SPropValue));
-	rgval[9].ulPropTag = PROP_AB_PROVIDER_USER_PASSWORD_ENCODED;
-	rgval[9].Value.bin.cb = dataBlobOut.cbData;
-	rgval[9].Value.bin.lpb = dataBlobOut.pbData;
 
-	// AB browsing support.
-	ZeroMemory(&rgval[10], sizeof(SPropValue));
-	rgval[10].ulPropTag = PROP_AB_PROVIDER_ENABLE_BROWSING;
-	rgval[10].Value.b = pABProvider->bEnableBrowsing;
 
-	// Indicates whether to use the default search base.
-	ZeroMemory(&rgval[11], sizeof(SPropValue));
-	rgval[11].ulPropTag = PROP_AB_PROVIDER_SEARCH_BASE_DEFAULT;
-	rgval[11].Value.ul = pABProvider->ulDefaultSearchBase;
+	ZeroMemory(&sPropValue, sizeof(SPropValue));
+	sPropValue.ulPropTag = PROP_AB_PROVIDER_ENABLE_BROWSING;
+	sPropValue.Value.b = (0 == wcscmp(Toolkit::g_addressBookMap.at(L"enablebrowsing").c_str(), L"true"));
+	rgvalVector.push_back(sPropValue);
+
+	ZeroMemory(&sPropValue, sizeof(SPropValue));
+	sPropValue.ulPropTag = PROP_AB_PROVIDER_SEARCH_BASE_DEFAULT;
+	sPropValue.Value.ul = (0 == wcscmp(Toolkit::g_addressBookMap.at(L"defaultsearchbase").c_str(), L"true"));
+	rgvalVector.push_back(sPropValue);
 
 	// Reconfigures a message service with the new props.
-	CHK_HR_MSG(lpSvcAdmin2->ConfigureMsgService(lpMapiUid, NULL, 0, 12, rgval), L"Configuring service with the new properties");
+	CHK_HR_DBG(lpSvcAdmin2->ConfigureMsgService(lpMapiUid, NULL, 0, (ULONG)rgvalVector.size(), rgvalVector.data()), L"ConfigureMsgService");
 
 Error:
-	MAPIFreeBuffer(rgval);
-	if (hRes != S_OK)
-		HCK(hRes);
 	return hRes;
 }
 
@@ -2297,12 +2471,7 @@ HRESULT RemoveABService(LPSERVICEADMIN2 lpSvcAdmin2, LPMAPIUID lpMapiUid)
 {
 	HRESULT hRes = S_OK;
 	// Deletes a message service from a profile.
-	CHK_HR_MSG(lpSvcAdmin2->DeleteMsgService(lpMapiUid), L"Deleting address book service");
-	if SUCCEEDED(hRes)
-		wprintf(L"DONE\n");
-	else
-		wprintf(L"FAILED\n");
-	HCK(hRes);
+	CHK_HR_DBG(lpSvcAdmin2->DeleteMsgService(lpMapiUid), L"DeleteMsgService");
 Error:
 	
 	return hRes;
