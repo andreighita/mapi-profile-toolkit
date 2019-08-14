@@ -21,6 +21,7 @@ namespace MAPIToolkit
 		static ULONG WriteLine(ULONG llLevel, std::wstring szMessage, ULONG loggingMode);
 		static ULONG WriteLine(ULONG llLevel, std::wstring szMessage);
 		static void SetLoggingMode(ULONG loggingMode);
+		static void SetFilePath(std::wstring wszFilePath);
 	private:
 		~Logger();
 

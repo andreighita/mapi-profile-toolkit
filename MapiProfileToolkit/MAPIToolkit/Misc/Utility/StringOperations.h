@@ -44,4 +44,8 @@ namespace MAPIToolkit
 	std::wstring MapiUidToString(MAPIUID* pMapiUid);
 
 	std::wstring ConvertIntToHexString(int t);
+
+	std::wstring Concatenate(std::wstring start, ...);
+
+	std::wstring SpaceIt(std::wstring wszValue, int len);
 }

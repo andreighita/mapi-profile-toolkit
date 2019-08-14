@@ -49,8 +49,10 @@ namespace MAPIToolkit
 		static std::map<std::wstring, std::wstring> g_addressBookMap;
 		static std::map<std::wstring, std::wstring> g_toolkitMap;
 		static std::map<std::wstring, std::wstring> g_regKeyMap;
-		static std::map <int, std::wstring > g_hexMap;
+		static std::map<int, std::wstring > g_hexMap;
 		static std::map<std::wstring, ULONG> g_saveConfigMap;
+		static std::map<std::wstring, std::wstring> g_parameterHelpInfo;
+		static std::map <std::wstring, std::wstring > g_parameterHelpValues;
 	public:
 		 static VOID Run(int argc, wchar_t* argv[]);
 

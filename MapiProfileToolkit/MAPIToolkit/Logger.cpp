@@ -30,6 +30,11 @@ namespace MAPIToolkit
 		Logger::m_loggingMode = loggingMode;
 	}
 
+	void Logger::SetFilePath(std::wstring wszFilePath)
+	{
+		Initialise(wszFilePath);
+	}
+
 	Logger::~Logger()
 	{
 		{

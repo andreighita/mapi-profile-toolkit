@@ -174,6 +174,27 @@ namespace MAPIToolkit
 		return wss.str();
 	}
 
+	std::wstring Concatenate(std::wstring start, ...)
+	{
+		std::wstring concatenatedString = L"";
+		return concatenatedString;
+	}
+
+	std::wstring SpaceIt(std::wstring wszValue, int len)
+	{
+		std::wstring wszSpacedString = wszValue;
+		int cSpaces = len - wszValue.length();
+		if (cSpaces > 0)
+		{
+			for (int i = 0; i < cSpaces; i++)
+			{
+				wszSpacedString.append(L" ");
+			}
+		}
+
+		return wszSpacedString;
+	}
+
 	VOID ConvertStringToBinary(std::wstring szValue, BYTE* pbValue)
 	{
 		DWORD hex_len = szValue.length() / 2;

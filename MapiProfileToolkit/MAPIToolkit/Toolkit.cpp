@@ -105,7 +105,6 @@ namespace MAPIToolkit
 		{ L"defaultsearchbase",	L"true" },
 		{ L"customsearchbase",	L"" },
 		{ L"enablebrowsing",	L"false" },
-		{ L"configfilepath",	L"" },
 		{ L"newservername",		L"" },
 		{ L"newdisplayname",	L"" },
 		{ L"newserverport",		L"" }
@@ -133,7 +132,6 @@ namespace MAPIToolkit
 		{ L"action",			L""},
 		{ L"outlookversion",	L"" },
 		{ L"loggingmode",		L"console" },
-		{ L"profileCount",		L"" },
 		{ L"exportpath",		L"" },
 		{ L"exportmode",		L"" },
 		{ L"logfilepath",		L"" },
@@ -145,7 +143,7 @@ namespace MAPIToolkit
 		{ L"providermode",		L"default" },
 		{ L"providertype",		L"" },
 		{ L"configfilepath",	L"" },
-		{ L"saveconfig",		L"true"}
+		{ L"saveconfig",		L"false"}
 	};
 
 	std::map<std::wstring, std::wstring> Toolkit::g_regKeyMap =
@@ -174,19 +172,66 @@ namespace MAPIToolkit
 		{ 15, L"F"}
 	};
 
+	std::map <std::wstring, std::wstring > Toolkit::g_parameterHelpInfo =
+	{
+		{ L"?",					L"Displays the help info."},
+		{ L"registry",			L"Indicates whether to read the configuration from the registry if previously saved with \"-saveconfig true\"."},
+		{ L"action",			L"Action(s) to perform."},
+		{ L"action",			L"Action(s) to perform."},
+		{ L"configfilepath",	L"Path to the input configuration file." },
+		{ L"customsearchbase",	L"custom search base in case defaultsearchbase is set to false." },
+		{ L"defaultsearchbase",	L"If \"true\" the default search base is to be used. The default value is 'true'." },
+		{ L"displayname",		L"The display name of the service to run the action(s) against."},
+		{ L"enablebrowsing",	L"Indicates whether browsing the address book contens is supported. " },
+		{ L"logfilepath",		L"Path towards the log file where informatin is to be logged." },
+		{ L"loggingmode",		L"Indicates how logging is captured." },
+		{ L"maxentries",		L"The maximum number of results returned by a search in the address book. The default value is 100." },
+		{ L"newdisplayname",	L"Display name to replace the current display name of the service with." },
+		{ L"newservername",		L"Server name to replace the current server name with in the speciifed service." },
+		{ L"newserverport",		L"Server port to replace the current server port with in the speciifed service." },
+		{ L"password",			L"The password to use for authenticating. This must be a clear text passord. It will be encrypted via CryptoAPI and stored in the address book settings." },
+		{ L"profilemode",		L"Indicates whether to run the action on all profiles or a specific profile." },
+		{ L"profilename",		L"Indicates the name of the profile to run the action against. If left empty, the default profile will be used, unles the profilemode specified is \"all\"."},
+		{ L"requirespa",		L"\"true\" if Secure Password Authentication is required is required. The default value is \"false\"" },
+		{ L"saveconfig",		L"Indicates whether to save the current configuration in teh registry or no"},
+		{ L"searchtimeout",		L"The number of seconds before the search request times out. The default value is 60 seconds." },
+		{ L"servername",		L"The LDAP address book server address. For example \"ldap.contoso.com\"." },
+		{ L"serverport",		L"The LDAP port to connect to. The standard port for Active Directory is 389." },
+		{ L"servicetype",		L"Indicates the type of service to run the action against." },
+		{ L"username",			L"The Username to use for authenticating in the form of domain\\username, UPN or just the username if domain name not applicable or not required. Leave blank if a username and password are not required." },
+		{ L"usessl",			L"\"true\" if a SSL connection is required.The default value is \"false\"." }
+	};
+
+	std::map <std::wstring, std::wstring > Toolkit::g_parameterHelpValues =
+	{
+		{ L"action",			L"{addservice, listservice, listallservices, removeservice, removeallservices, updateservice}"},
+		{ L"configfilepath",	L"<string>" },
+		{ L"customsearchbase",	L"<string>" },
+		{ L"defaultsearchbase",	L"{true, false}" },
+		{ L"displayname",		L"<string>"},
+		{ L"enablebrowsing",	L"{true, false}" },
+		{ L"exportpath",		L"<string>" },
+		{ L"logfilepath",		L"<string>" },
+		{ L"loggingmode",		L"{none, console, file, all, debug}" },
+		{ L"maxentries",		L"<int>" },
+		{ L"newdisplayname",	L"<string>" },
+		{ L"newservername",		L"<string>" },
+		{ L"newserverport",		L"<int>" },
+		{ L"password",			L"<string>" },
+		{ L"profilemode",		L"{default, specific, all}" },
+		{ L"profilename",		L"<string>"},
+		{ L"requirespa",		L"{true, false}" },
+		{ L"saveconfig",		L"{true, false}"},
+		{ L"searchtimeout",		L"<int>" },
+		{ L"servername",		L"<string>" },
+		{ L"serverport",		L"<int>" },
+		{ L"servicetype",		L"{addressbook}" },
+		{ L"username",			L"<string>" },
+		{ L"usessl",			L"{true, false}" }
+	};
+
 	ULONG Toolkit::m_action;
-	//int Toolkit::m_OutlookVersion;
-	//ULONG Toolkit::m_loggingMode;
-	//ServiceWorker* Toolkit::m_serviceWorker;
-	//ProviderWorker* Toolkit::m_providerWorker;
-	//ProfileWorker* Toolkit::m_profileWorker;
-	//ULONG Toolkit::m_profileCount;
-	//std::wstring Toolkit::m_wszExportPath;
-	//ULONG Toolkit::m_exportMode; // 0 = no export; 1 = export;
-	//std::wstring Toolkit::m_wszLogFilePath;
-	//ULONG Toolkit::m_profileMode; // pm
 	LPPROFADMIN Toolkit::m_pProfAdmin;
-	//ULONG Toolkit::m_serviceType;
 	BOOL Toolkit::m_registry = FALSE;
 
 	// Is64BitProcess
@@ -203,6 +248,34 @@ namespace MAPIToolkit
 	void Toolkit::DisplayUsage()
 	{
 		std::wprintf(L"MAPIToolkit - MAPI profile utility\n");
+		std::wprintf(L"       Allows the management of Outlook / MAPI profiles at the command line.\n");
+		std::wprintf(L"Usage:\n");
+		for (auto const& keyValuePair : g_parameterHelpInfo)
+		{
+			try
+			{
+				if (!g_parameterHelpValues.at(keyValuePair.first).empty())
+				{
+					std::wstring wszLine = L"       [-" + SpaceIt(keyValuePair.first, 20) + L" " + g_parameterHelpValues.at(keyValuePair.first) + L"]\n";
+					std::wprintf(wszLine.c_str());
+				}
+			}
+			catch (const std::exception& e)
+			{
+				std::wstring wszLine = L"       [-" + keyValuePair.first+ L"]\n";
+				std::wprintf(wszLine.c_str());
+			}
+		}
+
+		std::wprintf(L"Options:\n");
+
+		for (auto const& keyValuePair : g_parameterHelpInfo)
+		{
+			std::wstring wszLine = L" -" + SpaceIt(keyValuePair.first, 20) + L": " + keyValuePair.second + L"\n";
+				std::wprintf(wszLine.c_str());
+		}
+
+	/*	std::wprintf(L"MAPIToolkit - MAPI profile utility\n");
 		std::wprintf(L"       Allows the management of Outlook / MAPI profiles at the command line.\n");
 		std::wprintf(L"\n");
 		std::wprintf(L"Usage: [-?] \n");
@@ -225,57 +298,38 @@ namespace MAPIToolkit
 		std::wprintf(L"       [-configfilepath path]\n");
 		std::wprintf(L"       \n");
 		std::wprintf(L"Options:\n");
-		std::wprintf(L" -?:			                Displays this information.\n");
-		std::wprintf(L" -action:                    \"addservice\" adds a service with the type specified by \"servicetype\".\n");
-		std::wprintf(L"								\"listallservices\" lists all services with the type specified by \"servicetype\".\n");
-		std::wprintf(L"                             \"listservice\" lists a specific service with the type specified by \"servicetype\".\n");
-		std::wprintf(L"                             \"removeallservices\" removes all services with the type specified by \"servicetype\".\n");
-		std::wprintf(L"                             \"removeservice\" removes a specific service with the type specified by \"servicetype\".\n");
-		std::wprintf(L"                             \"updateservice\" updates a specific service with the type specified by \"servicetype\".\n");
-		std::wprintf(L"                             \n");
-		std::wprintf(L" -profilemode:               \"default\" to run the selected action on the default profile.\n");
-		std::wprintf(L"                             \"specific\" to run the selected action on the profile specified by the \"profilename\" value.\n");
-		std::wprintf(L"                             \"all\" to run the selected action against all profiles.\n");
-		std::wprintf(L"                             The default profile will be used if a profile mode is not specified.\n");
-		std::wprintf(L"                             \n");
-		std::wprintf(L" -profilename:               Name of the profile to run the specified actiona against. The profile name is mandatory\n");
-		std::wprintf(L"                             if \"profilename\" is set to \"specific\" \n");
-		std::wprintf(L"                             \n");
-		std::wprintf(L" -servicetype:               \"addressbook\" to run an addressbook specific operation.\n");
-		std::wprintf(L"                             \n");
-		std::wprintf(L" -servicetype:               This is the only operation currently supported.\n");
-		std::wprintf(L"                             \n");
-		std::wprintf(L" -displayname:               The display name of the address book service to create, update, list or remove.\n");
-		std::wprintf(L"                             \n");
-		std::wprintf(L" -servername:                The display name of the LDAP server configured in the address book.\n");
-		std::wprintf(L"                             \n");
-		std::wprintf(L" -configfilepath:            The path towards the address book configuration XML to use.\n");
-		std::wprintf(L"                             \n");
-		std::wprintf(L" -serverport:                The LDAP port to connect to. The standard port for Active Directory is 389.\n");
-		std::wprintf(L"                             \n");
-		std::wprintf(L" -usessl:                    \"true\" if a SSL connection is required. The default value is \"false\".\n");
-		std::wprintf(L"                             \n");
-		std::wprintf(L" -username:                  The Username to use for authenticating in the form of domain\\username, UPN or just the username \n");
-		std::wprintf(L"                             if domain name not applicable or not required. Leave blank if a username and password are not required.\n");
-		std::wprintf(L"                             \n");
-		std::wprintf(L" -password:                  The Password to use for authenticating. This must be a clear text passord. It will be encrypted via \n");
-		std::wprintf(L"                             CryptoAPIand stored in the AB settings. \n");
-		std::wprintf(L"                             \n");
-		std::wprintf(L" -requirespa:                \"true\" if Secure Password Authentication is required is required. The default value is \"false\".\n");
-		std::wprintf(L"                             \n");
-		std::wprintf(L" -searchtimeout:             The number of seconds before the search request times out. The default value is 60 seconds.]\n");
-		std::wprintf(L"                             \n");
-		std::wprintf(L" -maxentries:                The maximum number of results returned by a search in this AB. The default value is 100.\n");
-		std::wprintf(L"                             \n");
-		std::wprintf(L" -defaultsearchbase:         \"true\" the default search base is to be used. The default value is \"true\". \n");
-		std::wprintf(L"                             \n");
-		std::wprintf(L" -customsearchbase:          Custom search base in case DefaultSearchBase is set to False. \n");
-		std::wprintf(L"                             \n");
-		std::wprintf(L" -enablebrowsing:            Indicates whether browsing the AB contens is supported.\n");
-		std::wprintf(L"                             \n");
-		std::wprintf(L" -configfilepath:            The path towards the address book configuration XML to use.\n");
-		std::wprintf(L"                             \n");
-		std::wprintf(L" -?                          Displays this usage information.\n");
+		std::wprintf(L" -?:			         Displays this information.\n");
+		std::wprintf(L" -action:             \"addservice\" adds a service with the type specified by \"servicetype\".\n");
+		std::wprintf(L"                      \"listallservices\" lists all services with the type specified by \"servicetype\".\n");
+		std::wprintf(L"                      \"listservice\" lists a specific service with the type specified by \"servicetype\".\n");
+		std::wprintf(L"                      \"removeallservices\" removes all services with the type specified by \"servicetype\".\n");
+		std::wprintf(L"                      \"removeservice\" removes a specific service with the type specified by \"servicetype\".\n");
+		std::wprintf(L"                      \"updateservice\" updates a specific service with the type specified by \"servicetype\".\n");
+		std::wprintf(L" -profilemode:        \"default\" to run the selected action on the default profile.\n");
+		std::wprintf(L"                      \"specific\" to run the selected action on the profile specified by the \"profilename\" value.\n");
+		std::wprintf(L"                      \"all\" to run the selected action against all profiles.\n");
+		std::wprintf(L"                      The default profile will be used if a profile mode is not specified.\n");
+		std::wprintf(L" -profilename:        Name of the profile to run the specified actiona against. The profile name is mandatory\n");
+		std::wprintf(L"                      if \"profilename\" is set to \"specific\" \n");
+		std::wprintf(L" -servicetype:        \"addressbook\" to run an addressbook specific operation.\n");
+		std::wprintf(L" -servicetype:        This is the only operation currently supported.\n");
+		std::wprintf(L" -displayname:        The display name of the address book service to create, update, list or remove.\n");
+		std::wprintf(L" -servername:         The display name of the LDAP server configured in the address book.\n");
+		std::wprintf(L" -configfilepath:     The path towards the address book configuration XML to use.\n");
+		std::wprintf(L" -serverport:         The LDAP port to connect to. The standard port for Active Directory is 389.\n");
+		std::wprintf(L" -usessl:             \"true\" if a SSL connection is required. The default value is \"false\".\n");
+		std::wprintf(L" -username:           The Username to use for authenticating in the form of domain\\username, UPN or just the username \n");
+		std::wprintf(L"                      if domain name not applicable or not required. Leave blank if a username and password are \n");
+		std::wprintf(L"                      not required.\n");
+		std::wprintf(L" -password:           The Password to use for authenticating. This must be a clear text passord. It will be encrypted \n");
+		std::wprintf(L"                      via CryptoAPIand stored in the AB settings. \n");
+		std::wprintf(L" -requirespa:         \"true\" if Secure Password Authentication is required is required. The default value is \"false\".\n");
+		std::wprintf(L" -searchtimeout:      The number of seconds before the search request times out. The default value is 60 seconds.]\n");
+		std::wprintf(L" -maxentries:         The maximum number of results returned by a search in this AB. The default value is 100.\n");
+		std::wprintf(L" -defaultsearchbase:  \"true\" the default search base is to be used. The default value is \"true\". \n");
+		std::wprintf(L" -customsearchbase:   Custom search base in case DefaultSearchBase is set to False. \n");
+		std::wprintf(L" -enablebrowsing:     Indicates whether browsing the AB contens is supported.\n");
+		std::wprintf(L" -configfilepath:     The path towards the address book configuration XML to use.\n");*/
 	}
 
 	// GetOutlookVersion
@@ -417,8 +471,10 @@ namespace MAPIToolkit
 		std::wstring wszActionItem;
 		std::wstringstream wss;
 
-		if (!g_addressBookMap.at(L"configfilepath").empty())
-			CHK_HR_DBG(ParseAddressBookXml((LPTSTR)g_addressBookMap.at(L"configfilepath").c_str()), L"ParseAddressBookXml");
+		if (!g_toolkitMap.at(L"logfilepath").empty())
+			Logger::SetFilePath(g_toolkitMap.at(L"logfilepath"));
+		if (!g_toolkitMap.at(L"configfilepath").empty())
+			CHK_HR_DBG(ParseAddressBookXml((LPTSTR)g_toolkitMap.at(L"configfilepath").c_str()), L"ParseAddressBookXml");
 
 		wss << g_toolkitMap.at(L"action");
 		while (std::getline(wss, wszActionItem, L'|'))
@@ -510,10 +566,6 @@ namespace MAPIToolkit
 			break;
 		}
 		case SERVICETYPE_EXCHANGEACCOUNT:
-		{
-			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
-			break;
-		}
 		case SERVICETYPE_DATAFILE:
 		{
 			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
@@ -561,10 +613,6 @@ namespace MAPIToolkit
 			break;
 		}
 		case SERVICETYPE_EXCHANGEACCOUNT:
-		{
-			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
-			break;
-		}
 		case SERVICETYPE_DATAFILE:
 		{
 			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
@@ -597,6 +645,7 @@ namespace MAPIToolkit
 			if SUCCEEDED(GetABServiceUid(pServiceAdmin, &cServices, pMAPIUid), L"Fetching existing service UIDs")
 				if ((cServices > 0) && pMAPIUid)
 				{
+					Logger::WriteLine(LOGLEVEL_INFO, L"Action " + g_toolkitMap.at(L"action") + L" will run against " + ConvertIntToString(cServices) + L" services");
 					Logger::Write(LOGLEVEL_INFO, L"Number of services found: " + ConvertIntToString(cServices));
 					for (int i = 0; i < cServices; i++)
 					{
@@ -618,21 +667,17 @@ namespace MAPIToolkit
 		HRESULT hRes = S_OK;
 		switch (g_serviceTypeMap.at(g_toolkitMap.at(L"servicetype")))
 		{
-		case SERVICETYPE_ADDRESSBOOK:
-		{
-			CHK_HR_DBG(ListABService(pServiceAdmin, lpMAPIUid), L"ListABService");
-			break;
-		}
-		case SERVICETYPE_EXCHANGEACCOUNT:
-		{
-			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
-			break;
-		}
-		case SERVICETYPE_DATAFILE:
-		{
-			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
-			break;
-		}
+			case SERVICETYPE_ADDRESSBOOK:
+			{
+				CHK_HR_DBG(ListABService(pServiceAdmin, lpMAPIUid), L"ListABService");
+				break;
+			}
+			case SERVICETYPE_EXCHANGEACCOUNT:
+			case SERVICETYPE_DATAFILE:
+			{
+				Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
+				break;
+			}
 		}
 	Error:
 		goto CleanUp;
@@ -658,6 +703,7 @@ namespace MAPIToolkit
 				if SUCCEEDED(GetABServiceUid(pServiceAdmin, &cServices, pMAPIUid), L"Fetching existing service UIDs")
 					if ((cServices > 0) && pMAPIUid)
 					{	
+						Logger::WriteLine(LOGLEVEL_INFO, L"Action " + g_toolkitMap.at(L"action") + L" will run against " + ConvertIntToString(cServices) + L" services");
 						Logger::Write(LOGLEVEL_INFO, L"Number of services found: " + ConvertIntToString(cServices));
 						for (int i = 0; i < cServices; i++)
 						{
@@ -668,10 +714,6 @@ namespace MAPIToolkit
 			break;
 		}
 		case SERVICETYPE_EXCHANGEACCOUNT:
-		{
-			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
-			break;
-		}
 		case SERVICETYPE_DATAFILE:
 		{
 			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
@@ -692,50 +734,14 @@ namespace MAPIToolkit
 			break;
 		}
 		case ACTION_PROFILE_ADD:
-		{
-			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
-			break;
-		}
 		case ACTION_PROFILE_CLONE:
-		{
-			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
-			break;
-		}
 		case ACTION_PROFILE_RENAME:
-		{
-			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
-			break;
-		}
 		case ACTION_PROFILE_LIST:
-		{
-			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
-			break;
-		}
 		case ACTION_PROFILE_LISTALL:
-		{
-			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
-			break;
-		}
 		case ACTION_PROFILE_REMOVE:
-		{
-			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
-			break;
-		}
 		case ACTION_PROFILE_REMOVEALL:
-		{
-			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
-			break;
-		}
 		case ACTION_PROFILE_SETDEFAULT:
-		{
-			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
-			break;
-		}
 		case ACTION_PROFILE_PROMOTEDELEGATES:
-		{
-			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
-			break;
-		}
 		case ACTION_PROFILE_PROMOTEONEDELEGATE:
 		{
 			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
@@ -795,7 +801,6 @@ namespace MAPIToolkit
 
 		switch (m_action)
 		{
-
 		case ACTION_SERVICE_ADD:
 		{
 			AddService(pServiceAdmin2);
@@ -813,6 +818,7 @@ namespace MAPIToolkit
 					hRes = GetABServiceUid(pServiceAdmin2, g_addressBookMap.at(L"displayname").empty() ? NULL : (LPTSTR)g_addressBookMap.at(L"displayname").c_str(), g_addressBookMap.at(L"servername").empty() ? NULL : (LPTSTR)g_addressBookMap.at(L"servername").c_str(), NULL, pMAPIUid), L"Fetching existing service UIDs";
 					if ((cServices > 0) && pMAPIUid)
 					{
+						Logger::WriteLine(LOGLEVEL_INFO, L"Action " + g_toolkitMap.at(L"action") + L" will run against " + ConvertIntToString(cServices) + L" services");
 						for (int i = 0; i < cServices; i++)
 						{
 							if (RunActionOneService(pServiceAdmin2, &pMAPIUid[i]))
@@ -832,7 +838,6 @@ namespace MAPIToolkit
 		case ACTION_SERVICE_REMOVEALL:
 		{
 			RemoveAllServices(pServiceAdmin2);
-
 			break;
 		}
 		case ACTION_SERVICE_REMOVE:
@@ -851,6 +856,7 @@ namespace MAPIToolkit
 						hRes = GetABServiceUid(pServiceAdmin2, g_addressBookMap.at(L"displayname").empty() ? NULL : (LPTSTR)g_addressBookMap.at(L"displayname").c_str(), g_addressBookMap.at(L"servername").empty() ? NULL : (LPTSTR)g_addressBookMap.at(L"servername").c_str(), NULL, pMAPIUid), L"Fetching existing service UIDs";
 						if ((cServices > 0) && pMAPIUid)
 						{
+							Logger::WriteLine(LOGLEVEL_INFO, L"Action " + g_toolkitMap.at(L"action") + L" will run against " + ConvertIntToString(cServices) + L" services");
 							for (int i = 0; i < cServices; i++)
 							{
 								if (RunActionOneService(pServiceAdmin2, &pMAPIUid[i]))
@@ -888,6 +894,7 @@ namespace MAPIToolkit
 						hRes = GetABServiceUid(pServiceAdmin2, g_addressBookMap.at(L"displayname").empty() ? NULL : (LPTSTR)g_addressBookMap.at(L"displayname").c_str(), g_addressBookMap.at(L"servername").empty() ? NULL : (LPTSTR)g_addressBookMap.at(L"servername").c_str(), NULL, pMAPIUid), L"Fetching existing service UIDs";
 						if ((cServices > 0) && pMAPIUid)
 						{
+							Logger::WriteLine(LOGLEVEL_INFO, L"Action " + g_toolkitMap.at(L"action") + L" will run against " + ConvertIntToString(cServices) + L" services");
 							for (int i = 0; i < cServices; i++)
 							{
 								if (RunActionOneService(pServiceAdmin2, &pMAPIUid[i]))
@@ -926,67 +933,42 @@ namespace MAPIToolkit
 
 		switch (m_action)
 		{
-
-		case ACTION_PROVIDER_ADD:
-		{
-			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
-			break;
-		}
-		case ACTION_PROVIDER_UPDATE:
-		{
-			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
-			break;
-		}
-		case ACTION_PROVIDER_LIST:
-		{
-			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
-			break;
-		}
-		case ACTION_PROVIDER_LISTALL:
-		{
-			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
-			break;
-		}
-		case ACTION_PROVIDER_REMOVE:
-		{
-			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
-			break;
-		}
-		case ACTION_PROVIDER_REMOVEALL:
-		{
-			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
-			break;
-		}
-		case ACTION_SERVICE_UPDATE:
-		{
-			UpdateService(pServiceAdmin, pMapiUid);
-			break;
-		}
-		case ACTION_SERVICE_SETCACHEDMODE:
-		{
-			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
-			break;
-		}
-		case ACTION_SERVICE_LIST:
-		{
-			ListService(pServiceAdmin, pMapiUid);
-			break;
-		}
-		case ACTION_SERVICE_REMOVE:
-		{
-			RemoveService(pServiceAdmin, pMapiUid);
-			break;
-		}
-		case ACTION_SERVICE_CHANGEDATAFILEPATH:
-		{
-			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
-			break;
-		}
-		case ACTION_SERVICE_SETDEFAULT:
-		{
-			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
-			break;
-		}
+			case ACTION_PROVIDER_ADD:
+			case ACTION_PROVIDER_UPDATE:
+			case ACTION_PROVIDER_LIST:
+			case ACTION_PROVIDER_LISTALL:
+			case ACTION_PROVIDER_REMOVE:
+			case ACTION_PROVIDER_REMOVEALL:
+			{
+				Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
+				break;
+			}
+			case ACTION_SERVICE_UPDATE:
+			{
+				UpdateService(pServiceAdmin, pMapiUid);
+				break;
+			}
+			case ACTION_SERVICE_SETCACHEDMODE:
+			{
+				Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
+				break;
+			}
+			case ACTION_SERVICE_LIST:
+			{
+				ListService(pServiceAdmin, pMapiUid);
+				break;
+			}
+			case ACTION_SERVICE_REMOVE:
+			{
+				RemoveService(pServiceAdmin, pMapiUid);
+				break;
+			}
+			case ACTION_SERVICE_CHANGEDATAFILEPATH:
+			case ACTION_SERVICE_SETDEFAULT:
+			{
+				Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
+				break;
+			}
 		}
 
 	Error:
@@ -1000,22 +982,18 @@ namespace MAPIToolkit
 	{
 		switch (g_serviceTypeMap.at(g_toolkitMap.at(L"servicetype")))
 		{
-		case SERVICETYPE_ADDRESSBOOK:
-		{
-			if SUCCEEDED(ListAllABServices(pServiceAdmin))
-				Logger::WriteLine(LOGLEVEL_SUCCESS, L"Address book services succesfully listed");
-			break;
-		}
-		case SERVICETYPE_EXCHANGEACCOUNT:
-		{
-			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
-			break;
-		}
-		case SERVICETYPE_DATAFILE:
-		{
-			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
-			break;
-		}
+			case SERVICETYPE_ADDRESSBOOK:
+			{
+				if SUCCEEDED(ListAllABServices(pServiceAdmin))
+					Logger::WriteLine(LOGLEVEL_SUCCESS, L"Address book services succesfully listed");
+				break;
+			}
+			case SERVICETYPE_EXCHANGEACCOUNT:
+			case SERVICETYPE_DATAFILE:
+			{
+				Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
+				break;
+			}
 		}
 	}
 
@@ -1024,21 +1002,17 @@ namespace MAPIToolkit
 		HRESULT hRes = S_OK;
 		switch (g_serviceTypeMap.at(g_toolkitMap.at(L"servicetype")))
 		{
-		case SERVICETYPE_ADDRESSBOOK:
-		{
-			CHK_HR_DBG(RemoveABService(pServiceAdmin, pMapiUid), L"RemoveABService");
-			break;
-		}
-		case SERVICETYPE_EXCHANGEACCOUNT:
-		{
-			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
-			break;
-		}
-		case SERVICETYPE_DATAFILE:
-		{
-			Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
-			break;
-		}
+			case SERVICETYPE_ADDRESSBOOK:
+			{
+				CHK_HR_DBG(RemoveABService(pServiceAdmin, pMapiUid), L"RemoveABService");
+				break;
+			}
+			case SERVICETYPE_EXCHANGEACCOUNT:
+			case SERVICETYPE_DATAFILE:
+			{
+				Logger::Write(LOGLEVEL_FAILED, L"The selected action is not currently implemented");
+				break;
+			}
 		}
 	Error:
 		goto CleanUp;
@@ -1054,24 +1028,39 @@ namespace MAPIToolkit
 		// check if we're supposed to list the help menu
 		for (int i = 1; i < argc; i++)
 		{
-			std::wstring wsArg = argv[i];
-			std::transform(wsArg.begin(), wsArg.end(), wsArg.begin(), ::tolower);
-
-			if (wsArg == L"-?")
+			switch (argv[i][0])
 			{
-				return false;
+			case '-':
+			case '/':
+			case '\\':
+				std::wstring wsArg = SubstringFromStart(1, argv[i]);
+				std::transform(wsArg.begin(), wsArg.end(), wsArg.begin(), ::tolower);
+
+
+				if (wsArg == L"?")
+				{
+					return false;
+				}
+				break;
 			}
 		}
 
 		// check if we're supposed to read the configuration from the registry
 		for (int i = 1; i < argc; i++)
 		{
-			std::wstring wsArg = argv[i];
-			std::transform(wsArg.begin(), wsArg.end(), wsArg.begin(), ::tolower);
-
-			if (wsArg == L"-registry")
+			switch (argv[i][0])
 			{
-				ReadConfig();
+			case '-':
+			case '/':
+			case '\\':
+				std::wstring wsArg = wsArg = SubstringFromStart(1, argv[i]);
+				std::transform(wsArg.begin(), wsArg.end(), wsArg.begin(), ::tolower);
+
+				if (wsArg == L"registry")
+				{
+					ReadConfig();
+				}
+				break;
 			}
 		}
 
@@ -1081,6 +1070,8 @@ namespace MAPIToolkit
 			switch (argv[i][0])
 			{
 			case '-':
+			case '/':
+			case '\\':
 				std::wstring wsArg = SubstringFromStart(1, argv[i]);
 				std::transform(wsArg.begin(), wsArg.end(), wsArg.begin(), ::tolower);
 
