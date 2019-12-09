@@ -424,7 +424,7 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 				}
 			}
 		}
-		else if ((wsArg == L"-setdefaultservice") || (wsArg == L"-sds"))
+		else if ((wsArg == L"-setprimaryidentity") || (wsArg == L"-spi"))
 		{
 			pRunOpts->serviceOptions->bSetDefaultservice = true;
 
