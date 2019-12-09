@@ -262,7 +262,6 @@ BOOL ValidateScenario(int argc, _TCHAR* argv[], RuntimeOptions * pRunOpts)
 		else if ((wsArg == L"-setdefaultprofile") || (wsArg == L"-sdp"))
 		{
 			pRunOpts->profileOptions->bSetDefaultProfile = true;
-
 		}
 		else if ((wsArg == L"-service") || (wsArg == L"-s"))
 		{
@@ -1439,7 +1438,7 @@ void _tmain(int argc, _TCHAR* argv[])
 			switch (tkOptions->serviceOptions->ulServiceAction)
 			{
 			case ACTION_ADD:
-				EC_HRES_LOG(HrCreateMsemsService(tkOptions->profileOptions->ulProfileMode == PROFILEMODE_DEFAULT, 
+				EC_HRES_LOG(HrCreateMsemsService(tkOptions->profileOptions->ulProfileMode, 
 					(LPWSTR)tkOptions->profileOptions->wszProfileName.c_str(), 
 					tkOptions->iOutlookVersion, 
 					tkOptions->serviceOptions), L"Calling HrCreateMsemsService");

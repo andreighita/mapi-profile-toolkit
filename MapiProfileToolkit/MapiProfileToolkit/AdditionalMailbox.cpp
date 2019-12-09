@@ -858,11 +858,13 @@ HRESULT HrPromoteOneDelegate(LPWSTR lpwszProfileName, int iOutlookVersion, ULONG
 
 		break;
 	case 2016:
+		// we don't have a service options variable here so defaulting bSetDefault to false
 		Logger::Write(logLevelInfo, L"Creating and configuring new service.");
 		if (SUCCEEDED(HrCreateMsemsServiceModern(FALSE,
 			lpwszProfileName,
 			(LPWSTR)SubstringToEnd(L"smtp:", mailboxInfo.wszSmtpAddress).c_str(),
-			(LPWSTR)SubstringToEnd(L"smtp:", mailboxInfo.wszSmtpAddress).c_str())))
+			(LPWSTR)SubstringToEnd(L"smtp:", mailboxInfo.wszSmtpAddress).c_str(), 
+			FALSE)))
 		{
 			EC_HRES_MSG(HrDeleteProvider(lpwszProfileName, &mailboxInfo.muidServiceUid, &mailboxInfo.muidProviderUid), L"Calling HrDeleteProvider");
 		}

@@ -46,7 +46,8 @@ HRESULT HrCreateMsemsServiceModernExt(BOOL bDefaultProfile,
 HRESULT HrCreateMsemsServiceModern(BOOL bDefaultProfile,
 	LPWSTR lpwszProfileName,
 	LPWSTR lpszSmtpAddress,
-	LPWSTR lpszDisplayName);
+	LPWSTR lpszDisplayName, 
+	BOOL bSetDefault);
 
 // HrCreateMsemsServiceLegacyUnresolved
 // Crates a new message store service and configures the following properties it with a default property set. 

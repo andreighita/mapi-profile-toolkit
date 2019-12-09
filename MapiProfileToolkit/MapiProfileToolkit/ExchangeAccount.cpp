@@ -160,7 +160,8 @@ HRESULT HrCreateMsemsServiceOneProfile(LPWSTR lpwszProfileName, int iOutlookVers
 		EC_HRES_MSG(HrCreateMsemsServiceModern(FALSE,
 			lpwszProfileName,
 			(LPWSTR)pServiceOptions->wszSmtpAddress.c_str(),
-			(LPWSTR)pServiceOptions->wszSmtpAddress.c_str()), L"Calling HrCreateMsemsServiceModern");
+			(LPWSTR)pServiceOptions->wszSmtpAddress.c_str(), 
+			pServiceOptions->bSetDefaultservice), L"Calling HrCreateMsemsServiceModern");
 
 		break;
 	}
@@ -359,11 +360,13 @@ Cleanup:
 HRESULT HrCreateMsemsServiceModern(BOOL bDefaultProfile,
 	LPWSTR lpwszProfileName,
 	LPWSTR lpszSmtpAddress,
-	LPWSTR lpszDisplayName)
+	LPWSTR lpszDisplayName, 
+	BOOL bSetDefault)
 {
 	HRESULT			hRes = S_OK; // Result code returned from MAPI calls.
 	SPropValue		rgvalEmsMdbSect[5]; // Property value structure to hold configuration info.
 	SPropValue		rgvalStoreProvider[2];
+	SPropValue		resflags;
 	//	SPropValue		rgvalService[1];
 	MAPIUID			uidService = { 0 };
 	LPMAPIUID		lpServiceUid = &uidService;
@@ -472,6 +475,11 @@ HRESULT HrCreateMsemsServiceModern(BOOL bDefaultProfile,
 			nullptr), L"Calling SetProps.");
 
 		EC_HRES_MSG(lpStoreProviderSect->SaveChanges(KEEP_OPEN_READWRITE), L"Calling SaveChanges.");
+	}
+
+	if (bSetDefault)
+	{
+		lpServiceAdmin2->SetPrimaryIdentity(lpServiceUid, 0);
 	}
 
 	goto Cleanup;
